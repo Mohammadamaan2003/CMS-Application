@@ -286,12 +286,140 @@ router.get('/', async (req, res, next) => {
 });
 
 /**
+ * GET /api/leads/ids
+ * Returns all lead IDs matching current query criteria (for Select All throughout report).
+ */
+router.get('/ids', async (req, res, next) => {
+  try {
+    const {
+      search = '',
+      company_name = '',
+      account_manager = '',
+      coordinator = '',
+      name_of_coordinator = '',
+      industry = '',
+      country = '',
+      technology = '',
+      probability = '',
+      company_type = '',
+      lead_type = '',
+      city = '',
+      contacts = '',
+      lead_date = '',
+      status = '',
+    } = req.query;
+
+    const whereClauses = [];
+    const values = [];
+
+    if (search && search.trim()) {
+      values.push(`%${search.trim().toLowerCase()}%`);
+      const idx = values.length;
+      whereClauses.push(`(
+        LOWER(COALESCE(company_name, '')) LIKE $${idx} OR
+        LOWER(COALESCE(name_of_coordinator, '')) LIKE $${idx} OR
+        LOWER(COALESCE(account_manager, '')) LIKE $${idx} OR
+        LOWER(COALESCE(industry, '')) LIKE $${idx} OR
+        LOWER(COALESCE(technology, '')) LIKE $${idx} OR
+        LOWER(COALESCE(city, '')) LIKE $${idx} OR
+        LOWER(COALESCE(country, '')) LIKE $${idx} OR
+        LOWER(COALESCE(probability, '')) LIKE $${idx} OR
+        LOWER(COALESCE(company_type, '')) LIKE $${idx} OR
+        LOWER(COALESCE(contacts, '')) LIKE $${idx} OR
+        CAST(sr_no AS TEXT) LIKE $${idx}
+      )`);
+    }
+
+    if (company_name && company_name.trim()) {
+      values.push(`%${company_name.trim().toLowerCase()}%`);
+      whereClauses.push(`LOWER(COALESCE(company_name, '')) LIKE $${values.length}`);
+    }
+
+    if (account_manager && account_manager.trim()) {
+      values.push(account_manager.trim().toLowerCase());
+      whereClauses.push(`LOWER(COALESCE(account_manager, '')) = $${values.length}`);
+    }
+
+    const coordVal = coordinator || name_of_coordinator || '';
+    if (coordVal && coordVal.trim()) {
+      values.push(`%${coordVal.trim().toLowerCase()}%`);
+      whereClauses.push(`LOWER(COALESCE(name_of_coordinator, '')) LIKE $${values.length}`);
+    }
+
+    if (industry && industry.trim()) {
+      values.push(`%${industry.trim().toLowerCase()}%`);
+      whereClauses.push(`LOWER(COALESCE(industry, '')) LIKE $${values.length}`);
+    }
+
+    if (country && country.trim()) {
+      values.push(`%${country.trim().toLowerCase()}%`);
+      whereClauses.push(`LOWER(COALESCE(country, '')) LIKE $${values.length}`);
+    }
+
+    if (technology && technology.trim()) {
+      values.push(`%${technology.trim().toLowerCase()}%`);
+      whereClauses.push(`LOWER(COALESCE(technology, '')) LIKE $${values.length}`);
+    }
+
+    if (probability && probability.trim()) {
+      values.push(probability.trim().toLowerCase());
+      whereClauses.push(`LOWER(COALESCE(probability, '')) = $${values.length}`);
+    }
+
+    if (company_type && company_type.trim()) {
+      values.push(company_type.trim().toLowerCase());
+      whereClauses.push(`LOWER(COALESCE(company_type, '')) = $${values.length}`);
+    }
+
+    if (lead_type && lead_type.trim()) {
+      values.push(lead_type.trim().toLowerCase());
+      whereClauses.push(`LOWER(COALESCE(lead_type, '')) = $${values.length}`);
+    }
+
+    if (city && city.trim()) {
+      values.push(`%${city.trim().toLowerCase()}%`);
+      whereClauses.push(`LOWER(COALESCE(city, '')) LIKE $${values.length}`);
+    }
+
+    if (contacts && contacts.trim()) {
+      values.push(`%${contacts.trim().toLowerCase()}%`);
+      whereClauses.push(`LOWER(COALESCE(contacts, '')) LIKE $${values.length}`);
+    }
+
+    if (lead_date && lead_date.trim()) {
+      values.push(`%${lead_date.trim().toLowerCase()}%`);
+      whereClauses.push(`LOWER(COALESCE(lead_date, '')) LIKE $${values.length}`);
+    }
+
+    if (status && status.trim()) {
+      values.push(`%${status.trim().toLowerCase()}%`);
+      whereClauses.push(`LOWER(COALESCE(status, '')) LIKE $${values.length}`);
+    }
+
+    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const idRes = await pool.query(`SELECT lead_id FROM leads ${whereSql} ORDER BY lead_id ASC`, values);
+    const ids = idRes.rows.map((r) => r.lead_id);
+
+    res.json({
+      success: true,
+      ids,
+      total: ids.length,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * GET /api/leads/:id
  * Get single lead details
  */
 router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
+    if (!/^\d+$/.test(id)) {
+      return res.status(404).json({ success: false, message: `Invalid lead ID: ${id}` });
+    }
     const result = await pool.query(`SELECT * FROM leads WHERE lead_id = $1`, [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: `Lead with ID ${id} was not found.` });
@@ -348,6 +476,41 @@ router.post('/', async (req, res, next) => {
 
     if (!company_name && !company_id) {
       return res.status(400).json({ success: false, message: 'Company Name is required.' });
+    }
+
+    // Foreign key validation matching Oracle constraint FK_LEAD_COMPANY
+    let parsedCompanyId = null;
+    if (company_id !== undefined && company_id !== null && String(company_id).trim() !== '') {
+      parsedCompanyId = parseInt(company_id, 10);
+      if (isNaN(parsedCompanyId) || parsedCompanyId <= 0) {
+        return res.status(400).json({ success: false, message: 'Company ID must be a valid positive integer.' });
+      }
+      const compCheck = await pool.query('SELECT id FROM companies WHERE id = $1 LIMIT 1', [parsedCompanyId]);
+      if (compCheck.rows.length === 0) {
+        return res.status(400).json({ success: false, message: `Company ID ${parsedCompanyId} does not exist.` });
+      }
+    }
+
+    // Validate non-negative numbers on amount
+    if (amount !== undefined && amount !== null && String(amount).trim() !== '') {
+      const numAmt = Number(amount);
+      if (isNaN(numAmt) || numAmt < 0) {
+        return res.status(400).json({ success: false, message: 'Amount must be a non-negative number.' });
+      }
+    }
+    if (amount_in_inr !== undefined && amount_in_inr !== null && String(amount_in_inr).trim() !== '') {
+      const numInr = Number(amount_in_inr);
+      if (isNaN(numInr) || numInr < 0) {
+        return res.status(400).json({ success: false, message: 'Amount (INR) must be a non-negative number.' });
+      }
+    }
+
+    // Date format validations
+    if (lead_date && !/^\d{2}\/\d{2}\/\d{4}$/.test(lead_date) && !/^\d{4}-\d{2}-\d{2}$/.test(lead_date)) {
+      return res.status(400).json({ success: false, message: 'Invalid Lead Date format (expected DD/MM/YYYY).' });
+    }
+    if (last_followup && !/^\d{2}\/\d{2}\/\d{4}$/.test(last_followup) && !/^\d{4}-\d{2}-\d{2}$/.test(last_followup)) {
+      return res.status(400).json({ success: false, message: 'Invalid Last Followup date format (expected DD/MM/YYYY).' });
     }
 
     // Auto-generate next sr_no
@@ -456,6 +619,40 @@ router.put('/:id', async (req, res, next) => {
     const leadRes = await pool.query('SELECT * FROM leads WHERE lead_id = $1', [id]);
     if (leadRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: `Lead with ID ${id} not found.` });
+    }
+
+    // Foreign key validation matching Oracle constraint FK_LEAD_COMPANY
+    if (company_id !== undefined && company_id !== null && String(company_id).trim() !== '') {
+      const parsedCompanyId = parseInt(company_id, 10);
+      if (isNaN(parsedCompanyId) || parsedCompanyId <= 0) {
+        return res.status(400).json({ success: false, message: 'Company ID must be a valid positive integer.' });
+      }
+      const compCheck = await pool.query('SELECT id FROM companies WHERE id = $1 LIMIT 1', [parsedCompanyId]);
+      if (compCheck.rows.length === 0) {
+        return res.status(400).json({ success: false, message: `Company ID ${parsedCompanyId} does not exist.` });
+      }
+    }
+
+    // Validate non-negative numbers on amount
+    if (amount !== undefined && amount !== null && String(amount).trim() !== '') {
+      const numAmt = Number(amount);
+      if (isNaN(numAmt) || numAmt < 0) {
+        return res.status(400).json({ success: false, message: 'Amount must be a non-negative number.' });
+      }
+    }
+    if (amount_in_inr !== undefined && amount_in_inr !== null && String(amount_in_inr).trim() !== '') {
+      const numInr = Number(amount_in_inr);
+      if (isNaN(numInr) || numInr < 0) {
+        return res.status(400).json({ success: false, message: 'Amount (INR) must be a non-negative number.' });
+      }
+    }
+
+    // Date format validations
+    if (lead_date && !/^\d{2}\/\d{2}\/\d{4}$/.test(lead_date) && !/^\d{4}-\d{2}-\d{2}$/.test(lead_date)) {
+      return res.status(400).json({ success: false, message: 'Invalid Lead Date format (expected DD/MM/YYYY).' });
+    }
+    if (last_followup && !/^\d{2}\/\d{2}\/\d{4}$/.test(last_followup) && !/^\d{4}-\d{2}-\d{2}$/.test(last_followup)) {
+      return res.status(400).json({ success: false, message: 'Invalid Last Followup date format (expected DD/MM/YYYY).' });
     }
 
     // Duplicate check on contract_no if provided

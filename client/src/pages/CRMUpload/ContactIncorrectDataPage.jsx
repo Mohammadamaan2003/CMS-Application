@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import ApexInteractiveReport from '../../components/ApexInteractiveReport';
+import ApexMultiSelect from '../../components/ApexMultiSelect';
 import { api } from '../../api/client';
 import {
   IconSearch,
@@ -10,6 +12,7 @@ import {
   IconAlertTriangle,
   IconCheckCircle,
   IconEdit,
+  IconCalendar,
 } from '../../components/Icons';
 
 export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUpload }) {
@@ -17,7 +20,64 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(false);
-  const [isEditingGrid, setIsEditingGrid] = useState(false);
+  const [applyingChanges, setApplyingChanges] = useState(false);
+
+  // Tabs: 'insert', 'update', 'fix_designation'
+  const [activeTab, setActiveTab] = useState('fix_designation');
+
+  // Top Filter Card State (Multi-Select Arrays)
+  const [posTypeIncorrectFilter, setPosTypeIncorrectFilter] = useState([]);
+  const [linkedinUrlIncorrectFilter, setLinkedinUrlIncorrectFilter] = useState([]);
+  const [compEmailIncorrectFilter, setCompEmailIncorrectFilter] = useState([]);
+  const [preferredLinkedinIncorrectFilter, setPreferredLinkedinIncorrectFilter] = useState([]);
+
+  const [compIdFilter, setCompIdFilter] = useState('');
+  const [designationFilter, setDesignationFilter] = useState([]);
+  const [errorDateFilter, setErrorDateFilter] = useState('');
+  const [createdByFilter, setCreatedByFilter] = useState([]);
+  const [createdFromFilter, setCreatedFromFilter] = useState('');
+  const [createdToFilter, setCreatedToFilter] = useState('');
+
+  const [compNameFilter, setCompNameFilter] = useState([]);
+  const [errorMessageFilter, setErrorMessageFilter] = useState([]);
+
+  // Committed/Applied filters - only update when clicking Search or Clear
+  const [appliedFilters, setAppliedFilters] = useState({
+    pos_type_incorrect: [],
+    linkedin_url_incorrect: [],
+    comp_email_incorrect: [],
+    preferred_linkedin_incorrect: [],
+    comp_id: '',
+    designation: [],
+    error_date: '',
+    created_by: [],
+    created_from: '',
+    created_to: '',
+    comp_name: [],
+    error_message: [],
+  });
+
+  // Bulk Apply Changes (under tabs)
+  const [selectedPositionType, setSelectedPositionType] = useState('Other IT');
+
+  // Filter options from API
+  const [filterOptions, setFilterOptions] = useState({
+    createdByList: [],
+    posTypeList: [
+      'Business Application',
+      'Digital Transformation Leader',
+      'Head of CRM',
+      'Head of IT',
+      'IT Manager',
+      'Non IT',
+      'Other IT',
+      'Procurement',
+      'Project Manager',
+    ],
+    designationList: [],
+    compNameList: [],
+    errorMessageList: [],
+  });
 
   // Batch filter
   const [batches, setBatches] = useState([]);
@@ -29,23 +89,35 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(50);
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [showActionsDropdown, setShowActionsDropdown] = useState(false);
 
-  // Fetch batches
-  const fetchBatches = useCallback(async () => {
+  // Fetch batches & filter options
+  const fetchFilterOptions = useCallback(async () => {
     try {
-      const res = await api.getUploadBatches();
-      if (res && res.success && Array.isArray(res.contactBatches)) {
-        setBatches(res.contactBatches);
+      const [batchRes, optRes] = await Promise.all([
+        api.getUploadBatches().catch(() => null),
+        api.getContactIncorrectFilterOptions().catch(() => null),
+      ]);
+      if (batchRes && batchRes.success && Array.isArray(batchRes.contactBatches)) {
+        setBatches(batchRes.contactBatches);
+      }
+      if (optRes && optRes.success) {
+        setFilterOptions((prev) => ({
+          ...prev,
+          createdByList: optRes.createdByList || prev.createdByList,
+          posTypeList: optRes.posTypeList || prev.posTypeList,
+          designationList: optRes.designationList || prev.designationList,
+          compNameList: optRes.compNameList || prev.compNameList,
+          errorMessageList: optRes.errorMessageList || prev.errorMessageList,
+        }));
       }
     } catch (err) {
-      console.error('Error fetching contact batches:', err);
+      console.error('Error fetching filter options:', err);
     }
   }, []);
 
   useEffect(() => {
-    fetchBatches();
-  }, [fetchBatches]);
+    fetchFilterOptions();
+  }, [fetchFilterOptions]);
 
   // Fetch contact error records from PostgreSQL
   const fetchData = useCallback(async () => {
@@ -58,6 +130,19 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
         limit,
         sortBy: 'error_id',
         sortOrder: 'DESC',
+        mode: activeTab,
+        pos_type_incorrect: appliedFilters.pos_type_incorrect.join(','),
+        linkedin_url_incorrect: appliedFilters.linkedin_url_incorrect.join(','),
+        comp_email_incorrect: appliedFilters.comp_email_incorrect.join(','),
+        preferred_linkedin_incorrect: appliedFilters.preferred_linkedin_incorrect.join(','),
+        comp_id: appliedFilters.comp_id,
+        designation: appliedFilters.designation.join(','),
+        error_date: appliedFilters.error_date,
+        created_by: appliedFilters.created_by.join(','),
+        created_from: appliedFilters.created_from,
+        created_to: appliedFilters.created_to,
+        comp_name: appliedFilters.comp_name.join(','),
+        error_message: appliedFilters.error_message.join(','),
       });
       if (res && res.success) {
         setData(res.data || []);
@@ -72,13 +157,75 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedBatchId, page, limit, onShowToast]);
+  }, [
+    searchQuery,
+    selectedBatchId,
+    page,
+    limit,
+    activeTab,
+    appliedFilters,
+    onShowToast,
+  ]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Handle Search
+  // Handle Search from Top Filter Card
+  const handleFilterSearch = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setAppliedFilters({
+      pos_type_incorrect: posTypeIncorrectFilter,
+      linkedin_url_incorrect: linkedinUrlIncorrectFilter,
+      comp_email_incorrect: compEmailIncorrectFilter,
+      preferred_linkedin_incorrect: preferredLinkedinIncorrectFilter,
+      comp_id: compIdFilter,
+      designation: designationFilter,
+      error_date: errorDateFilter,
+      created_by: createdByFilter,
+      created_from: createdFromFilter,
+      created_to: createdToFilter,
+      comp_name: compNameFilter,
+      error_message: errorMessageFilter,
+    });
+    setPage(1);
+  };
+
+  // Handle Clear Filter
+  const handleClearFilters = () => {
+    setPosTypeIncorrectFilter([]);
+    setLinkedinUrlIncorrectFilter([]);
+    setCompEmailIncorrectFilter([]);
+    setPreferredLinkedinIncorrectFilter([]);
+    setCompIdFilter('');
+    setDesignationFilter([]);
+    setErrorDateFilter('');
+    setCreatedByFilter([]);
+    setCreatedFromFilter('');
+    setCreatedToFilter('');
+    setCompNameFilter([]);
+    setErrorMessageFilter([]);
+    setAppliedFilters({
+      pos_type_incorrect: [],
+      linkedin_url_incorrect: [],
+      comp_email_incorrect: [],
+      preferred_linkedin_incorrect: [],
+      comp_id: '',
+      designation: [],
+      error_date: '',
+      created_by: [],
+      created_from: '',
+      created_to: '',
+      comp_name: [],
+      error_message: [],
+    });
+    setSearchInput('');
+    setSearchQuery('');
+    setSelectedBatchId('');
+    setPage(1);
+  };
+
+  // Handle Toolbar Search
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
     setPage(1);
@@ -101,19 +248,70 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
     });
   };
 
-  const handleSelectAll = () => {
-    if (selectedIds.size === data.length) {
+  const handleSelectAll = async () => {
+    const isAllSelected = total > 0 && selectedIds.size >= total;
+    if (isAllSelected) {
       setSelectedIds(new Set());
+      if (onShowToast) onShowToast('info', 'Deselected all records.');
     } else {
-      setSelectedIds(new Set(data.map((r) => r.error_id)));
+      try {
+        const res = await api.getContactIncorrectData({
+          limit: 100000,
+          search: searchQuery,
+          batch_id: selectedBatchId,
+          mode: activeTab,
+          pos_type_incorrect: posTypeIncorrectFilter.join(','),
+          linkedin_url_incorrect: linkedinUrlIncorrectFilter.join(','),
+          comp_email_incorrect: compEmailIncorrectFilter.join(','),
+          preferred_linkedin_incorrect: preferredLinkedinIncorrectFilter.join(','),
+          comp_id: compIdFilter,
+          designation: designationFilter.join(','),
+          error_date: errorDateFilter,
+          created_by: createdByFilter.join(','),
+          created_from: createdFromFilter,
+          created_to: createdToFilter,
+          comp_name: compNameFilter.join(','),
+          error_message: errorMessageFilter.join(','),
+        });
+        if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+          setSelectedIds(new Set(res.data.map((r) => r.error_id)));
+          if (onShowToast) onShowToast('info', `Selected all ${res.data.length} records throughout report.`);
+        } else {
+          setSelectedIds(new Set(data.map((r) => r.error_id)));
+        }
+      } catch (err) {
+        setSelectedIds(new Set(data.map((r) => r.error_id)));
+      }
     }
   };
 
-  // Inline Cell Change
-  const handleCellChange = (errorId, field, val) => {
-    setData((prev) =>
-      prev.map((row) => (row.error_id === errorId ? { ...row, [field]: val } : row))
-    );
+  // Bulk Apply Changes for selected records
+  const handleApplyChanges = async () => {
+    if (selectedIds.size === 0) {
+      if (onShowToast) onShowToast('info', 'Please select at least one record using the checkboxes.');
+      return;
+    }
+    try {
+      setApplyingChanges(true);
+      const res = await api.applyContactIncorrectChanges(Array.from(selectedIds), {
+        pos_type: selectedPositionType,
+      });
+      if (res && res.success) {
+        if (onShowToast) {
+          onShowToast(
+            'success',
+            res.message || `Successfully applied Position Type "${selectedPositionType}" to ${selectedIds.size} record(s).`
+          );
+        }
+        fetchData();
+      } else {
+        if (onShowToast) onShowToast('error', res.message || 'Failed to apply changes.');
+      }
+    } catch (err) {
+      if (onShowToast) onShowToast('error', `Apply changes failed: ${err.message}`);
+    } finally {
+      setApplyingChanges(false);
+    }
   };
 
   // Retry Import for corrected rows
@@ -130,7 +328,7 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
 
     try {
       setRetrying(true);
-      const res = await api.retryContactIncorrectData(rowsToRetry, 'insert');
+      const res = await api.retryContactIncorrectData(rowsToRetry, activeTab === 'update' ? 'update' : 'insert');
       if (res && res.success) {
         if (res.importedCount > 0) {
           if (onShowToast) {
@@ -149,7 +347,6 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
         }
         setSelectedIds(new Set());
         fetchData();
-        fetchBatches();
       } else {
         if (onShowToast) onShowToast('error', res.message || 'Retry failed.');
       }
@@ -173,43 +370,9 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
           return next;
         });
         fetchData();
-        fetchBatches();
       }
     } catch (err) {
       if (onShowToast) onShowToast('error', `Delete failed: ${err.message}`);
-    }
-  };
-
-  // Clear selected or clear all
-  const handleClearSelected = async () => {
-    if (selectedIds.size === 0) return;
-    if (!window.confirm(`Delete ${selectedIds.size} selected contact error record(s)?`)) return;
-    try {
-      const res = await api.clearContactIncorrectData(Array.from(selectedIds));
-      if (res && res.success) {
-        if (onShowToast) onShowToast('success', `Removed ${selectedIds.size} record(s).`);
-        setSelectedIds(new Set());
-        fetchData();
-        fetchBatches();
-      }
-    } catch (err) {
-      if (onShowToast) onShowToast('error', `Bulk delete failed: ${err.message}`);
-    }
-  };
-
-  const handleClearAll = async () => {
-    if (total === 0) return;
-    if (!window.confirm(`Are you sure you want to clear ALL ${total} contact error records?`)) return;
-    try {
-      const res = await api.clearContactIncorrectData(null);
-      if (res && res.success) {
-        if (onShowToast) onShowToast('success', 'All contact incorrect data cleared.');
-        setSelectedIds(new Set());
-        fetchData();
-        fetchBatches();
-      }
-    } catch (err) {
-      if (onShowToast) onShowToast('error', `Clear failed: ${err.message}`);
     }
   };
 
@@ -230,11 +393,9 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
       'Designation',
       'Position Type',
       'Country',
-      'Email',
-      'Phone',
+      'Company Email',
       'LinkedIn URL',
       'Salesperson',
-      'Source',
       'Created By',
       'Error Date',
     ];
@@ -258,10 +419,8 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
           r.pos_type,
           r.country,
           r.comp_email,
-          r.contact_phone,
           r.linkedin_url,
           r.salesperson,
-          r.source,
           r.created_by,
           r.error_date,
         ]
@@ -282,909 +441,532 @@ export default function ContactIncorrectDataPage({ onShowToast, onNavigateToUplo
     if (onShowToast) onShowToast('success', `Exported ${data.length} row(s) to CSV.`);
   };
 
-  const startRecord = total > 0 ? (page - 1) * limit + 1 : 0;
-  const endRecord = Math.min(page * limit, total);
-  const totalPages = Math.ceil(total / limit) || 1;
+  const invalidColumns = useMemo(
+    () => [
+      {
+        key: 'error_message',
+        label: 'Error Message',
+        minWidth: '220px',
+        getValue: (r) => r.error_message || '',
+        render: (r) => (
+          <span
+            style={{
+              color: 'var(--danger, #f87171)',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+              lineHeight: 1.4,
+            }}
+          >
+            {r.error_message}
+          </span>
+        ),
+      },
+      { key: 'designation', label: 'Designation', minWidth: '180px', getValue: (r) => r.designation || '' },
+      { key: 'desig', label: 'Desig', minWidth: '120px', getValue: (r) => r.designation || '' },
+      { key: 'pos_type', label: 'Pos Type', minWidth: '130px', getValue: (r) => r.pos_type || '' },
+      {
+        key: 'pos_type_incorrect',
+        label: 'Pos Type Incorrect',
+        minWidth: '140px',
+        getValue: (r) => (r.error_message && (r.error_message.toLowerCase().includes('position') || r.error_message.toLowerCase().includes('pos_type')) ? 'Yes' : 'No'),
+      },
+      { key: 'comp_name', label: 'Comp Name', minWidth: '160px', getValue: (r) => r.comp_name || '' },
+      { key: 'comp_id', label: 'Company ID', minWidth: '100px', getValue: (r) => r.comp_id || '' },
+      { key: 'comp_email', label: 'Company Email', minWidth: '160px', getValue: (r) => r.comp_email || '' },
+      { key: 'linkedin_url', label: 'LinkedIn URL', minWidth: '160px', getValue: (r) => r.linkedin_url || '' },
+      { key: 'created_by', label: 'Created By', minWidth: '120px', getValue: (r) => r.created_by || '' },
+      { key: 'error_date', label: 'Error Date', minWidth: '120px', getValue: (r) => r.error_date || r.created_date || '' },
+    ],
+    []
+  );
 
   return (
     <div className="apex-master-page" style={{ padding: '0.75rem 1.25rem 2.5rem' }}>
       {/* Top Banner Strip */}
       <div className="apex-pattern-strip" style={{ marginBottom: '1rem', height: '4px' }} />
 
-      {/* Page Title & Summary Header */}
+      {/* 1. TOP MULTI-SELECT FILTER CARD MATCHING SCREENSHOT 2 */}
       <div
+        className="apex-card"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          backgroundColor: '#071531',
-          color: '#ffffff',
-          borderRadius: '8px 8px 0 0',
-          padding: '0.875rem 1.25rem',
-          marginBottom: 0,
+          backgroundColor: 'var(--bg-surface, #ffffff)',
+          border: '1px solid var(--border, #e2e8f0)',
+          borderRadius: '12px',
+          padding: '1.25rem 1.5rem',
+          marginBottom: '1.25rem',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <IconAlertTriangle size={20} className="text-amber-400" />
-          <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
-            Contact Incorrect Data
-          </h2>
-          <span
-            style={{
-              backgroundColor: total > 0 ? '#ef4444' : '#10b981',
-              color: '#ffffff',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              padding: '2px 8px',
-              borderRadius: '12px',
-            }}
-          >
-            {total} {total === 1 ? 'Error' : 'Errors'}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {onNavigateToUpload && (
-            <button
-              type="button"
-              onClick={onNavigateToUpload}
-              style={{
-                backgroundColor: '#ffffff',
-                color: '#071531',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '6px 12px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Back to Contact Upload
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Main Interactive Report Card */}
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '0 0 8px 8px',
-          border: '1px solid #e2e8f0',
-          borderTop: 'none',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          padding: '1rem',
-        }}
-      >
-        {/* Toolbar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-            marginBottom: '1rem',
-            paddingBottom: '0.75rem',
-            borderBottom: '1px solid #f1f5f9',
-          }}
-        >
-          {/* Left: Search input + Go + Batch Filter */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <form
-              onSubmit={handleSearchSubmit}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-            >
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: '10px',
-                    color: '#94a3b8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <IconSearch size={15} />
-                </span>
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search All Text Columns"
-                  style={{
-                    height: '34px',
-                    width: '240px',
-                    paddingLeft: '32px',
-                    paddingRight: '10px',
-                    fontSize: '0.825rem',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '4px',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-              <button
-                type="submit"
-                style={{
-                  height: '34px',
-                  padding: '0 12px',
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  color: '#334155',
-                  cursor: 'pointer',
-                }}
-              >
-                Go
-              </button>
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={handleResetSearch}
-                  style={{
-                    height: '34px',
-                    padding: '0 10px',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '4px',
-                    fontSize: '0.775rem',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Clear
-                </button>
-              )}
-            </form>
-
-            {/* Batch ID Filter */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: '#475569' }}>
-              <span style={{ fontWeight: 500 }}>Batch:</span>
-              <select
-                value={selectedBatchId}
-                onChange={(e) => {
-                  setSelectedBatchId(e.target.value);
-                  setPage(1);
-                }}
-                style={{
-                  height: '34px',
-                  padding: '0 8px',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  fontSize: '0.8rem',
-                  backgroundColor: '#ffffff',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  maxWidth: '170px',
-                }}
-              >
-                <option value="">All Batches</option>
-                {batches.map((b) => (
-                  <option key={b.batch_id} value={b.batch_id}>
-                    Batch #{b.batch_id} ({b.count} err)
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Right: Rows, Edit Mode, Revalidate & Import, Actions, Refresh */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: '#475569' }}>
-              <span>Rows</span>
-              <select
-                value={limit}
-                onChange={(e) => {
-                  setLimit(Number(e.target.value));
-                  setPage(1);
-                }}
-                style={{
-                  height: '34px',
-                  padding: '0 8px',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  fontSize: '0.8rem',
-                  backgroundColor: '#ffffff',
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value={15}>15</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-
-            {/* Edit Mode Toggle */}
-            <button
-              type="button"
-              onClick={() => setIsEditingGrid(!isEditingGrid)}
-              title="Toggle inline edit mode to fix values before retry"
-              style={{
-                height: '34px',
-                padding: '0 12px',
-                backgroundColor: isEditingGrid ? '#eff6ff' : '#ffffff',
-                border: isEditingGrid ? '1px solid #3b82f6' : '1px solid #cbd5e1',
-                borderRadius: '4px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                color: isEditingGrid ? '#1d4ed8' : '#334155',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}
-            >
-              <IconEdit size={14} />
-              {isEditingGrid ? 'Done Editing' : 'Edit Mode'}
-            </button>
-
-            {/* Revalidate & Import Button */}
-            <button
-              type="button"
-              disabled={retrying || (selectedIds.size === 0 && data.length === 0)}
-              onClick={() => handleRetryImport(selectedIds.size > 0)}
-              title="Re-validate rows and import valid ones into the CRM database"
-              style={{
-                height: '34px',
-                padding: '0 14px',
-                backgroundColor: '#071531',
-                border: '1px solid #071531',
-                borderRadius: '4px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                color: '#ffffff',
-                cursor: retrying || (selectedIds.size === 0 && data.length === 0) ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                opacity: retrying ? 0.7 : 1,
-              }}
-            >
-              <IconRefresh size={14} className={retrying ? 'animate-spin' : ''} />
-              {retrying
-                ? 'Importing...'
-                : selectedIds.size > 0
-                ? `Revalidate & Import (${selectedIds.size})`
-                : 'Revalidate & Import All'}
-            </button>
-
-            {/* Actions Menu */}
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setShowActionsDropdown(!showActionsDropdown)}
-                style={{
-                  height: '34px',
-                  padding: '0 12px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  color: '#334155',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                Actions ▾
-              </button>
-
-              {showActionsDropdown && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '38px',
-                    right: 0,
-                    width: '180px',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    zIndex: 50,
-                    overflow: 'hidden',
-                  }}
-                  onMouseLeave={() => setShowActionsDropdown(false)}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowActionsDropdown(false);
-                      handleExportCsv();
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      textAlign: 'left',
-                      fontSize: '0.8rem',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      color: '#334155',
-                    }}
-                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
-                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                  >
-                    <IconDownload size={14} /> Download CSV
-                  </button>
-
-                  {selectedIds.size > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowActionsDropdown(false);
-                        handleClearSelected();
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        textAlign: 'left',
-                        fontSize: '0.8rem',
-                        border: 'none',
-                        backgroundColor: 'transparent',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        color: '#dc2626',
-                      }}
-                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
-                      onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                    >
-                      <IconTrash size={14} /> Delete Selected ({selectedIds.size})
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowActionsDropdown(false);
-                      handleClearAll();
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      textAlign: 'left',
-                      fontSize: '0.8rem',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      color: '#dc2626',
-                    }}
-                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
-                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                  >
-                    <IconTrash size={14} /> Clear All Records
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                fetchData();
-                fetchBatches();
-              }}
-              title="Refresh Data"
-              style={{
-                height: '34px',
-                width: '34px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #cbd5e1',
-                borderRadius: '4px',
-                color: '#475569',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <IconRefresh size={15} />
-            </button>
-          </div>
-        </div>
-
-        {/* Selected rows action bar */}
-        {selectedIds.size > 0 && (
+        <form onSubmit={handleFilterSearch}>
+          {/* Row 1: 4 Multi-Select Columns */}
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: '#eff6ff',
-              border: '1px solid #bfdbfe',
-              borderRadius: '4px',
-              padding: '6px 12px',
-              marginBottom: '0.75rem',
-              fontSize: '0.8rem',
-              color: '#1e40af',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '1.25rem',
+              marginBottom: '1rem',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontWeight: 600 }}>{selectedIds.size} row(s) selected</span>
-              <span>— edit values in table and click "Revalidate & Import" to save to CRM database</span>
+            {/* Position Type Incorrect */}
+            <ApexMultiSelect
+              label="Position Type Incorrect"
+              options={['Yes', 'No']}
+              value={posTypeIncorrectFilter}
+              onChange={setPosTypeIncorrectFilter}
+              placeholder=""
+            />
+
+            {/* LinkedIn URL Incorrect */}
+            <ApexMultiSelect
+              label="LinkedIn URL Incorrect"
+              options={['Yes', 'No']}
+              value={linkedinUrlIncorrectFilter}
+              onChange={setLinkedinUrlIncorrectFilter}
+              placeholder=""
+            />
+
+            {/* Company Email Incorrect */}
+            <ApexMultiSelect
+              label="Company Email Incorrect"
+              options={['Yes', 'No']}
+              value={compEmailIncorrectFilter}
+              onChange={setCompEmailIncorrectFilter}
+              placeholder=""
+            />
+
+            {/* Preferred LinkedIn Connected Account Incorrect */}
+            <ApexMultiSelect
+              label="Preferred LinkedIn Connected Account Incorrect"
+              options={['Yes', 'No']}
+              value={preferredLinkedinIncorrectFilter}
+              onChange={setPreferredLinkedinIncorrectFilter}
+              placeholder=""
+            />
+          </div>
+
+          {/* Row 2: Company ID, Designation, Error Date, Created By, Created From, Created To */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(6, 1fr)',
+              gap: '1rem',
+              marginBottom: '1rem',
+            }}
+          >
+            {/* Company ID */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '5px', color: 'var(--text-main, #0f172a)' }}>
+                Company ID
+              </label>
+              <input
+                type="text"
+                placeholder="Company ID"
+                value={compIdFilter}
+                onChange={(e) => setCompIdFilter(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: '36px',
+                  backgroundColor: 'var(--bg-input, #ffffff)',
+                  border: '1px solid var(--border, #cbd5e1)',
+                  borderRadius: '6px',
+                  padding: '0 10px',
+                  fontSize: '0.825rem',
+                  color: 'var(--text-main, #0f172a)',
+                }}
+              />
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                type="button"
-                onClick={() => handleRetryImport(true)}
-                disabled={retrying}
+
+            {/* Designation (Multi-Select) */}
+            <ApexMultiSelect
+              label="Designation"
+              options={filterOptions.designationList}
+              value={designationFilter}
+              onChange={setDesignationFilter}
+              placeholder=""
+            />
+
+            {/* Error Date */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '5px', color: 'var(--text-main, #0f172a)' }}>
+                Error Date
+              </label>
+              <input
+                type="date"
+                value={errorDateFilter}
+                onChange={(e) => setErrorDateFilter(e.target.value)}
                 style={{
-                  backgroundColor: '#071531',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '3px',
-                  padding: '4px 12px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: retrying ? 'not-allowed' : 'pointer',
+                  width: '100%',
+                  height: '36px',
+                  backgroundColor: 'var(--bg-input, #ffffff)',
+                  border: '1px solid var(--border, #cbd5e1)',
+                  borderRadius: '6px',
+                  padding: '0 10px',
+                  fontSize: '0.825rem',
+                  color: 'var(--text-main, #0f172a)',
+                  outline: 'none',
                 }}
-              >
-                {retrying ? 'Importing...' : 'Revalidate & Import'}
-              </button>
-              <button
-                type="button"
-                onClick={handleClearSelected}
+              />
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', marginTop: '2px', display: 'block' }}>
+                Required
+              </span>
+            </div>
+
+            {/* Created By (Multi-Select) */}
+            <ApexMultiSelect
+              label="Created By"
+              options={filterOptions.createdByList}
+              value={createdByFilter}
+              onChange={setCreatedByFilter}
+              placeholder=""
+            />
+
+            {/* Created From */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '5px', color: 'var(--text-main, #0f172a)' }}>
+                Created From
+              </label>
+              <input
+                type="date"
+                value={createdFromFilter}
+                onChange={(e) => setCreatedFromFilter(e.target.value)}
                 style={{
-                  backgroundColor: '#dc2626',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '3px',
-                  padding: '4px 10px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
+                  width: '100%',
+                  height: '36px',
+                  backgroundColor: 'var(--bg-input, #ffffff)',
+                  border: '1px solid var(--border, #cbd5e1)',
+                  borderRadius: '6px',
+                  padding: '0 10px',
+                  fontSize: '0.825rem',
+                  color: 'var(--text-main, #0f172a)',
+                  outline: 'none',
                 }}
-              >
-                Delete Selected
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedIds(new Set())}
+              />
+            </div>
+
+            {/* Created To */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '5px', color: 'var(--text-main, #0f172a)' }}>
+                Created To
+              </label>
+              <input
+                type="date"
+                value={createdToFilter}
+                onChange={(e) => setCreatedToFilter(e.target.value)}
                 style={{
-                  backgroundColor: '#ffffff',
-                  color: '#64748b',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '3px',
-                  padding: '4px 8px',
-                  fontSize: '0.75rem',
-                  cursor: 'pointer',
+                  width: '100%',
+                  height: '36px',
+                  backgroundColor: 'var(--bg-input, #ffffff)',
+                  border: '1px solid var(--border, #cbd5e1)',
+                  borderRadius: '6px',
+                  padding: '0 10px',
+                  fontSize: '0.825rem',
+                  color: 'var(--text-main, #0f172a)',
+                  outline: 'none',
                 }}
-              >
-                Deselect All
-              </button>
+              />
             </div>
           </div>
-        )}
 
-        {/* Data Table */}
-        <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
-          <table
+          {/* Row 3: Company Name, Error Message, Search Button, Clear Filter Button */}
+          <div
             style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              textAlign: 'left',
-              fontSize: '0.8rem',
-              color: '#334155',
+              display: 'grid',
+              gridTemplateColumns: '1.5fr 2fr auto auto',
+              gap: '1rem',
+              alignItems: 'end',
             }}
           >
-            <thead>
-              <tr
+            {/* Company Name (Multi-Select) */}
+            <ApexMultiSelect
+              label="Company Name"
+              options={filterOptions.compNameList}
+              value={compNameFilter}
+              onChange={setCompNameFilter}
+              placeholder=""
+            />
+
+            {/* Error Message (Multi-Select) */}
+            <ApexMultiSelect
+              label="Error Message"
+              options={filterOptions.errorMessageList}
+              value={errorMessageFilter}
+              onChange={setErrorMessageFilter}
+              placeholder=""
+            />
+
+            {/* Search Button */}
+            <div>
+              <button
+                type="submit"
+                className="btn-primary btn-filter-search"
                 style={{
-                  backgroundColor: '#f8fafc',
-                  borderBottom: '2px solid #e2e8f0',
-                  color: '#475569',
+                  height: '36px',
+                  padding: '0 26px',
+                  borderRadius: '6px',
+                  fontSize: '0.85rem',
                   fontWeight: 600,
+                  cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
               >
-                <th style={{ padding: '8px 10px', width: '36px', textAlign: 'center' }}>
-                  <input
-                    type="checkbox"
-                    checked={data.length > 0 && selectedIds.size === data.length}
-                    onChange={handleSelectAll}
-                  />
-                </th>
-                <th style={{ padding: '8px 10px', width: '40px', textAlign: 'center' }}>Del</th>
-                <th style={{ padding: '8px 10px' }}>Error ID</th>
-                <th style={{ padding: '8px 10px' }}>Batch ID</th>
-                <th style={{ padding: '8px 10px' }}>Row No</th>
-                <th style={{ padding: '8px 10px', minWidth: '160px' }}>Contact Name</th>
-                <th style={{ padding: '8px 10px', minWidth: '150px' }}>Company Name</th>
-                <th style={{ padding: '8px 10px', minWidth: '220px' }}>Error Message</th>
-                <th style={{ padding: '8px 10px', minWidth: '130px' }}>Designation</th>
-                <th style={{ padding: '8px 10px', minWidth: '120px' }}>Pos Type</th>
-                <th style={{ padding: '8px 10px', minWidth: '120px' }}>Country</th>
-                <th style={{ padding: '8px 10px', minWidth: '150px' }}>Company Email</th>
-                <th style={{ padding: '8px 10px', minWidth: '120px' }}>Contact Phone</th>
-                <th style={{ padding: '8px 10px', minWidth: '140px' }}>LinkedIn URL</th>
-                <th style={{ padding: '8px 10px', minWidth: '120px' }}>Salesperson</th>
-                <th style={{ padding: '8px 10px', minWidth: '110px' }}>Source</th>
-                <th style={{ padding: '8px 10px' }}>Error Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={17} style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-                    Loading contact incorrect data...
-                  </td>
-                </tr>
-              ) : data.length === 0 ? (
-                <tr>
-                  <td colSpan={17} style={{ padding: '2.5rem', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                      <IconCheckCircle size={32} style={{ color: '#10b981' }} />
-                      <div style={{ fontWeight: 600, color: '#1e293b' }}>No Contact Errors Found</div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                        All uploaded contact records passed validation without errors.
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                data.map((r) => {
-                  const isSelected = selectedIds.has(r.error_id);
-                  return (
-                    <tr
-                      key={r.error_id}
-                      style={{
-                        borderBottom: '1px solid #f1f5f9',
-                        backgroundColor: isSelected ? '#fef2f2' : 'transparent',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                      onMouseOver={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = '#fafafa';
-                      }}
-                      onMouseOut={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                      }}
-                    >
-                      <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleSelect(r.error_id)}
-                        />
-                      </td>
-                      <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteSingle(r.error_id)}
-                          title="Delete Record"
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#94a3b8',
-                            cursor: 'pointer',
-                            padding: '2px',
-                          }}
-                          onMouseOver={(e) => (e.currentTarget.style.color = '#dc2626')}
-                          onMouseOut={(e) => (e.currentTarget.style.color = '#94a3b8')}
-                        >
-                          <IconTrash size={14} />
-                        </button>
-                      </td>
-                      <td style={{ padding: '8px 10px', fontWeight: 600, color: '#64748b' }}>
-                        {r.error_id}
-                      </td>
-                      <td style={{ padding: '8px 10px', color: '#64748b' }}>{r.batch_id}</td>
-                      <td style={{ padding: '8px 10px', fontWeight: 600 }}>{r.excel_row_no}</td>
+                Search
+              </button>
+            </div>
 
-                      {/* Contact Name */}
-                      <td style={{ padding: '6px 10px', fontWeight: 600, color: '#1e293b' }}>
-                        {isEditingGrid ? (
-                          <input
-                            type="text"
-                            value={r.contact_name || ''}
-                            onChange={(e) => handleCellChange(r.error_id, 'contact_name', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              fontSize: '0.775rem',
-                              border: '1px solid #93c5fd',
-                              borderRadius: '3px',
-                              backgroundColor: '#ffffff',
-                            }}
-                          />
-                        ) : (
-                          r.contact_name || '—'
-                        )}
-                      </td>
+            {/* Clear Filter Button */}
+            <div>
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="btn-secondary btn-filter-clear"
+                style={{
+                  height: '36px',
+                  padding: '0 22px',
+                  borderRadius: '6px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Clear Filter
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
 
-                      {/* Company Name */}
-                      <td style={{ padding: '6px 10px', color: '#334155' }}>
-                        {isEditingGrid ? (
-                          <input
-                            type="text"
-                            value={r.comp_name || ''}
-                            onChange={(e) => handleCellChange(r.error_id, 'comp_name', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              fontSize: '0.775rem',
-                              border: '1px solid #93c5fd',
-                              borderRadius: '3px',
-                              backgroundColor: '#ffffff',
-                            }}
-                          />
-                        ) : (
-                          r.comp_name || '—'
-                        )}
-                      </td>
-
-                      {/* Error Message */}
-                      <td style={{ padding: '8px 10px' }}>
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            backgroundColor: '#fee2e2',
-                            color: '#991b1b',
-                            border: '1px solid #fca5a5',
-                            borderRadius: '4px',
-                            padding: '3px 8px',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {r.error_message}
-                        </span>
-                      </td>
-
-                      {/* Designation */}
-                      <td style={{ padding: '6px 10px' }}>
-                        {isEditingGrid ? (
-                          <input
-                            type="text"
-                            value={r.designation || ''}
-                            onChange={(e) => handleCellChange(r.error_id, 'designation', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              fontSize: '0.775rem',
-                              border: '1px solid #93c5fd',
-                              borderRadius: '3px',
-                              backgroundColor: '#ffffff',
-                            }}
-                          />
-                        ) : (
-                          r.designation || '—'
-                        )}
-                      </td>
-
-                      {/* Pos Type */}
-                      <td style={{ padding: '6px 10px' }}>
-                        {isEditingGrid ? (
-                          <input
-                            type="text"
-                            value={r.pos_type || ''}
-                            onChange={(e) => handleCellChange(r.error_id, 'pos_type', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              fontSize: '0.775rem',
-                              border: '1px solid #93c5fd',
-                              borderRadius: '3px',
-                              backgroundColor: '#ffffff',
-                            }}
-                          />
-                        ) : (
-                          r.pos_type || '—'
-                        )}
-                      </td>
-
-                      {/* Country */}
-                      <td style={{ padding: '6px 10px' }}>
-                        {isEditingGrid ? (
-                          <input
-                            type="text"
-                            value={r.country || ''}
-                            onChange={(e) => handleCellChange(r.error_id, 'country', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              fontSize: '0.775rem',
-                              border: '1px solid #93c5fd',
-                              borderRadius: '3px',
-                              backgroundColor: '#ffffff',
-                            }}
-                          />
-                        ) : (
-                          r.country || '—'
-                        )}
-                      </td>
-
-                      {/* Company Email */}
-                      <td style={{ padding: '6px 10px' }}>
-                        {isEditingGrid ? (
-                          <input
-                            type="text"
-                            value={r.comp_email || ''}
-                            onChange={(e) => handleCellChange(r.error_id, 'comp_email', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              fontSize: '0.775rem',
-                              border: '1px solid #93c5fd',
-                              borderRadius: '3px',
-                              backgroundColor: '#ffffff',
-                            }}
-                          />
-                        ) : (
-                          r.comp_email || '—'
-                        )}
-                      </td>
-
-                      {/* Contact Phone */}
-                      <td style={{ padding: '6px 10px' }}>
-                        {isEditingGrid ? (
-                          <input
-                            type="text"
-                            value={r.contact_phone || ''}
-                            onChange={(e) => handleCellChange(r.error_id, 'contact_phone', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              fontSize: '0.775rem',
-                              border: '1px solid #93c5fd',
-                              borderRadius: '3px',
-                              backgroundColor: '#ffffff',
-                            }}
-                          />
-                        ) : (
-                          r.contact_phone || '—'
-                        )}
-                      </td>
-
-                      {/* LinkedIn URL */}
-                      <td style={{ padding: '6px 10px' }}>
-                        {isEditingGrid ? (
-                          <input
-                            type="text"
-                            value={r.linkedin_url || ''}
-                            onChange={(e) => handleCellChange(r.error_id, 'linkedin_url', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              fontSize: '0.775rem',
-                              border: '1px solid #93c5fd',
-                              borderRadius: '3px',
-                              backgroundColor: '#ffffff',
-                            }}
-                          />
-                        ) : (
-                          <span title={r.linkedin_url} style={{ display: 'block', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {r.linkedin_url || '—'}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Salesperson */}
-                      <td style={{ padding: '6px 10px' }}>
-                        {isEditingGrid ? (
-                          <input
-                            type="text"
-                            value={r.salesperson || ''}
-                            onChange={(e) => handleCellChange(r.error_id, 'salesperson', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              fontSize: '0.775rem',
-                              border: '1px solid #93c5fd',
-                              borderRadius: '3px',
-                              backgroundColor: '#ffffff',
-                            }}
-                          />
-                        ) : (
-                          r.salesperson || '—'
-                        )}
-                      </td>
-
-                      {/* Source */}
-                      <td style={{ padding: '6px 10px' }}>
-                        {isEditingGrid ? (
-                          <input
-                            type="text"
-                            value={r.source || ''}
-                            onChange={(e) => handleCellChange(r.error_id, 'source', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              fontSize: '0.775rem',
-                              border: '1px solid #93c5fd',
-                              borderRadius: '3px',
-                              backgroundColor: '#ffffff',
-                            }}
-                          />
-                        ) : (
-                          r.source || '—'
-                        )}
-                      </td>
-
-                      {/* Error Date */}
-                      <td style={{ padding: '8px 10px', color: '#64748b', whiteSpace: 'nowrap' }}>
-                        {r.error_date || r.created_date || '—'}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+      {/* 2. THREE TABS MATCHING SCREENSHOT 2 */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: '1px solid var(--border, #cbd5e1)',
+          marginBottom: '1rem',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}
+      >
+        <div style={{ display: 'flex', gap: '1.75rem' }}>
+          <button
+            type="button"
+            onClick={() => { setActiveTab('insert'); setPage(1); }}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'insert' ? '3px solid #16a34a' : '3px solid transparent',
+              padding: '8px 2px 10px 2px',
+              fontSize: '0.9rem',
+              fontWeight: activeTab === 'insert' ? 700 : 500,
+              color: activeTab === 'insert' ? 'var(--text-main, #0f172a)' : 'var(--text-muted, #64748b)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            Contact Invalid Data (Insert Mode)
+          </button>
+          <button
+            type="button"
+            onClick={() => { setActiveTab('update'); setPage(1); }}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'update' ? '3px solid #16a34a' : '3px solid transparent',
+              padding: '8px 2px 10px 2px',
+              fontSize: '0.9rem',
+              fontWeight: activeTab === 'update' ? 700 : 500,
+              color: activeTab === 'update' ? 'var(--text-main, #0f172a)' : 'var(--text-muted, #64748b)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            Contact Invalid Data (Update Mode)
+          </button>
+          <button
+            type="button"
+            onClick={() => { setActiveTab('fix_designation'); setPage(1); }}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'fix_designation' ? '3px solid #16a34a' : '3px solid transparent',
+              padding: '8px 2px 10px 2px',
+              fontSize: '0.9rem',
+              fontWeight: activeTab === 'fix_designation' ? 700 : 500,
+              color: activeTab === 'fix_designation' ? 'var(--text-main, #0f172a)' : 'var(--text-muted, #64748b)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            Fix Designation
+          </button>
         </div>
 
-        {/* Pagination Bar */}
+        {/* 3. SUB-ACTION BAR: Position Type dropdown & Apply Changes button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingBottom: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted, #64748b)' }}>
+              Position Type
+            </span>
+            <select
+              value={selectedPositionType}
+              onChange={(e) => setSelectedPositionType(e.target.value)}
+              style={{
+                height: '34px',
+                minWidth: '150px',
+                backgroundColor: 'var(--bg-input, #ffffff)',
+                border: '1px solid var(--border, #cbd5e1)',
+                borderRadius: '4px',
+                padding: '0 8px',
+                fontSize: '0.825rem',
+                color: 'var(--text-main, #0f172a)',
+                fontWeight: 600,
+              }}
+            >
+              {filterOptions.posTypeList.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={handleApplyChanges}
+            disabled={applyingChanges || selectedIds.size === 0}
+            className="btn-primary"
+            style={{
+              height: '34px',
+              padding: '0 18px',
+              borderRadius: '6px',
+              fontSize: '0.825rem',
+              fontWeight: 600,
+              cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
+              whiteSpace: 'nowrap',
+              alignSelf: 'flex-end',
+            }}
+          >
+            {applyingChanges ? 'Applying...' : 'Apply Changes'}
+          </button>
+        </div>
+      </div>
+
+      {/* 4. MAIN INTERACTIVE REPORT REGION */}
+      <div
+        className="apex-card"
+        style={{
+          backgroundColor: 'var(--bg-surface, #ffffff)',
+          borderRadius: '8px',
+          border: '1px solid var(--border, #cbd5e1)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          padding: '0.75rem',
+        }}
+      >
+        <ApexInteractiveReport
+          columns={invalidColumns}
+          data={data}
+          total={total}
+          page={page}
+          onPageChange={setPage}
+          rowsPerPage={limit}
+          onRowsPerPageChange={(nl) => { setLimit(nl); setPage(1); }}
+          search={searchInput}
+          onSearchChange={setSearchInput}
+          onSearchSubmit={handleSearchSubmit}
+          searchPlaceholder="Search: All Text Columns"
+          isServerSide={true}
+          isLoading={loading}
+          leadingHeader={
+            <input
+              type="checkbox"
+              checked={total > 0 && selectedIds.size >= total}
+              ref={(el) => {
+                if (el) {
+                  el.indeterminate = selectedIds.size > 0 && selectedIds.size < total;
+                }
+              }}
+              onChange={handleSelectAll}
+              title={
+                selectedIds.size >= total && total > 0
+                  ? `All ${total} records selected`
+                  : `Select all ${total} records throughout report`
+              }
+            />
+          }
+          renderLeadingCell={(r) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+              <input
+                type="checkbox"
+                checked={selectedIds.has(r.error_id)}
+                onChange={() => handleToggleSelect(r.error_id)}
+              />
+              <button
+                type="button"
+                onClick={() => handleDeleteSingle(r.error_id)}
+                title="Delete Record"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted, #94a3b8)',
+                  cursor: 'pointer',
+                  padding: '2px',
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.color = '#dc2626')}
+                onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-muted, #94a3b8)')}
+              >
+                <IconTrash size={14} />
+              </button>
+            </div>
+          )}
+          toolbarButtons={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => handleRetryImport(true)}
+                disabled={retrying || (selectedIds.size === 0 && total === 0)}
+                className="btn-primary"
+                style={{
+                  height: '34px',
+                  padding: '0 14px',
+                  borderRadius: '4px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <IconRefresh size={14} className={retrying ? 'animate-spin' : ''} />
+                {retrying ? 'Importing...' : selectedIds.size > 0 ? `Revalidate (${selectedIds.size})` : 'Revalidate All'}
+              </button>
+            </div>
+          }
+          onRefresh={fetchData}
+          onReset={handleResetSearch}
+          onDownload={handleExportCsv}
+          onShowToast={onShowToast}
+        />
+
+        {/* Footer Record & Selection Count */}
         <div
           style={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: '1rem',
-            marginTop: '1rem',
-            paddingTop: '0.75rem',
-            borderTop: '1px solid #f1f5f9',
-            fontSize: '0.8rem',
-            color: '#64748b',
+            padding: '8px 12px',
+            fontSize: '0.825rem',
+            color: 'var(--text-muted, #64748b)',
+            borderTop: '1px solid var(--border, #cbd5e1)',
+            marginTop: '8px',
           }}
         >
           <span>
-            {startRecord} - {endRecord} of {total}
+            {selectedIds.size} rows selected
           </span>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              style={{
-                height: '30px',
-                width: '30px',
-                backgroundColor: page <= 1 ? '#f8fafc' : '#ffffff',
-                border: '1px solid #cbd5e1',
-                borderRadius: '4px',
-                color: page <= 1 ? '#cbd5e1' : '#334155',
-                cursor: page <= 1 ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <IconChevronLeft size={14} />
-            </button>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              style={{
-                height: '30px',
-                width: '30px',
-                backgroundColor: page >= totalPages ? '#f8fafc' : '#ffffff',
-                border: '1px solid #cbd5e1',
-                borderRadius: '4px',
-                color: page >= totalPages ? '#cbd5e1' : '#334155',
-                cursor: page >= totalPages ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <IconChevronRight size={14} />
-            </button>
-          </div>
+          <span style={{ fontWeight: 600 }}>
+            Total {total.toLocaleString()}
+          </span>
         </div>
       </div>
     </div>

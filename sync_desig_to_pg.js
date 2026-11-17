@@ -60,21 +60,34 @@ async function syncDesignationPositions() {
     const rows = await executeMcpSql(sql);
     if (!rows || rows.length === 0) break;
 
-    // Batch insert
-    for (const r of rows) {
-      const id = parseInt(r.ID, 10);
-      const designation = r.DESIGNATION || '';
-      const positionType = r.POSITION_TYPE || '';
-      const cby = r.CREATED_BY || 'ADMIN';
-      const cdate = formatOracleDate(r.CDATE) || '09-SEP-2026';
-      const mby = r.MODIFIED_BY || '';
-      const mdate = formatOracleDate(r.MDATE) || '';
-      const desigCount = parseInt(r.DESIGNATION_COUNT || 0, 10);
-      const posCount = parseInt(r.POSITION_TYPE_COUNT || 0, 10);
+    // Fast Multi-Row Batch insert (250 rows per INSERT)
+    const subBatch = 250;
+    for (let i = 0; i < rows.length; i += subBatch) {
+      const slice = rows.slice(i, i + subBatch);
+      const values = [];
+      const placeholders = [];
+      let paramIdx = 1;
+
+      for (const r of slice) {
+        placeholders.push(`($${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++})`);
+        values.push(
+          parseInt(r.ID, 10),
+          r.DESIGNATION || '',
+          r.POSITION_TYPE || '',
+          r.CREATED_BY || 'ADMIN',
+          formatOracleDate(r.CDATE) || '09-SEP-2026',
+          r.MODIFIED_BY || '',
+          formatOracleDate(r.MDATE) || '',
+          parseInt(r.DESIGNATION_COUNT || 0, 10),
+          parseInt(r.POSITION_TYPE_COUNT || 0, 10)
+        );
+      }
 
       await pool.query(`
-        INSERT INTO master_designation_positions (id, designation, position_type, created_by, created_date, modified_by, modified_date, designation_count, position_type_count)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO master_designation_positions (
+          id, designation, position_type, created_by, created_date,
+          modified_by, modified_date, designation_count, position_type_count
+        ) VALUES ${placeholders.join(', ')}
         ON CONFLICT (id) DO UPDATE SET
           designation = EXCLUDED.designation,
           position_type = EXCLUDED.position_type,
@@ -84,8 +97,8 @@ async function syncDesignationPositions() {
           modified_date = EXCLUDED.modified_date,
           designation_count = EXCLUDED.designation_count,
           position_type_count = EXCLUDED.position_type_count
-      `, [id, designation, positionType, cby, cdate, mby, mdate, desigCount, posCount]);
-      totalInserted++;
+      `, values);
+      totalInserted += slice.length;
     }
 
     console.log(`Inserted chunk. Cumulative: ${totalInserted}/${total}`);

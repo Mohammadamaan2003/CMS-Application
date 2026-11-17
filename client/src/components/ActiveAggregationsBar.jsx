@@ -16,6 +16,7 @@ export default function ActiveAggregationsBar({
 
   return (
     <div
+      className="apex-active-aggregations-bar"
       style={{
         display: 'flex',
         alignItems: 'center',

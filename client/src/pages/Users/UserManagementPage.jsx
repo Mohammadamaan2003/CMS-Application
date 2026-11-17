@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import ApexInteractiveReport from '../../components/ApexInteractiveReport';
 import { api } from '../../api/client';
 import {
   IconSearch,
@@ -215,6 +216,29 @@ export default function UserManagementPage({ onShowToast, currentUser, onUserSwi
     return userRole || 'Sales';
   };
 
+  const userColumns = useMemo(() => [
+    { key: 'username', label: 'User Name', minWidth: '140px', getValue: (u) => u.username || '' },
+    { key: 'full_name', label: 'Full Name', minWidth: '180px', getValue: (u) => u.full_name || '' },
+    { key: 'email', label: 'Email', minWidth: '200px', getValue: (u) => u.email || '' },
+    { key: 'role', label: 'Application Role', minWidth: '180px', getValue: (u) => getRoleDisplay(u.role) },
+    {
+      key: 'status',
+      label: 'Status',
+      minWidth: '100px',
+      getValue: (u) => (!u.can_login || u.status === 'Inactive' || u.status === 'Blocked' ? 'Inactive' : 'Active'),
+      render: (u) => {
+        const isDeactivated = !u.can_login || u.status === 'Inactive' || u.status === 'Blocked';
+        return (
+          <span style={{ color: isDeactivated ? '#dc2626' : '#059669', fontWeight: 600 }}>
+            {isDeactivated ? 'Inactive' : 'Active'}
+          </span>
+        );
+      },
+    },
+    { key: 'created_at', label: 'Date Created', minWidth: '130px', getValue: (u) => formatDate(u.created_at) || '11/2/2026' },
+    { key: 'last_login_at', label: 'Date Last Login', minWidth: '140px', getValue: (u) => formatDate(u.last_login_at) || (u.id === 1 ? '11/13/2026' : '') },
+  ], []);
+
   return (
     <div style={{ padding: '1.25rem 2rem 3rem', backgroundColor: '#f8fafc', minHeight: 'calc(100vh - 60px)' }}>
       {/* ========================================================
@@ -247,7 +271,7 @@ export default function UserManagementPage({ onShowToast, currentUser, onUserSwi
             }}
           >
             <span>
-              <strong>Editing Mode:</strong> Updating details for user ID #{editingUserId}. (Leave password blank to keep current password).
+              <strong>Editing Mode:</strong> Updating details for user ID {editingUserId}. (Leave password blank to keep current password).
             </span>
             <button
               type="button"
@@ -606,344 +630,152 @@ export default function UserManagementPage({ onShowToast, currentUser, onUserSwi
           </button>
         </div>
 
-        {/* Interactive Report Toolbar (Search + Go + Actions) */}
-        <div
-          style={{
-            padding: '10px 16px',
-            backgroundColor: '#f8fafc',
-            borderBottom: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-          }}
-        >
-          {/* Left Toolbar Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            {/* Search Input matching screenshot */}
-            <form onSubmit={handleSearchSubmit} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  height: '34px',
-                  width: '240px',
-                  overflow: 'hidden',
-                }}
-              >
-                <div
+        {/* Standardized APEX Interactive Report */}
+        <ApexInteractiveReport
+          columns={userColumns}
+          data={users}
+          total={total}
+          search={searchInput}
+          onSearchChange={setSearchInput}
+          onSearchSubmit={() => setActiveSearch(searchInput.trim())}
+          isLoading={loading}
+          isServerSide={true}
+          toolbarButtons={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowActionsDropdown(!showActionsDropdown)}
                   style={{
+                    height: '34px',
+                    padding: '0 12px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    fontSize: '0.825rem',
+                    fontWeight: 500,
+                    color: '#1e293b',
+                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '2px',
-                    padding: '0 6px 0 8px',
-                    color: '#64748b',
+                    gap: '0.35rem',
                   }}
                 >
-                  <IconSearch size={14} />
-                  <IconChevronDown size={11} />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  style={{
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: '0.825rem',
-                    width: '100%',
-                    height: '100%',
-                    paddingRight: '8px',
-                  }}
-                />
-              </div>
-
-              {/* Go Button */}
-              <button
-                type="submit"
-                style={{
-                  height: '34px',
-                  padding: '0 14px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  fontSize: '0.825rem',
-                  fontWeight: 600,
-                  color: '#1e293b',
-                  cursor: 'pointer',
-                }}
-              >
-                Go
-              </button>
-            </form>
-
-            {/* Actions Dropdown */}
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setShowActionsDropdown(!showActionsDropdown)}
-                style={{
-                  height: '34px',
-                  padding: '0 12px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  fontSize: '0.825rem',
-                  fontWeight: 500,
-                  color: '#1e293b',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                }}
-              >
-                <span>Actions</span>
-                <IconChevronDown size={12} />
-              </button>
-
-              {showActionsDropdown && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    marginTop: '4px',
-                    width: '180px',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '4px',
-                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-                    zIndex: 50,
-                    padding: '4px 0',
-                  }}
-                >
-                  <div style={{ padding: '4px 12px', fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600 }}>
-                    FILTER BY ROLE
+                  <span>Role: {selectedRoleFilter === 'all' ? 'All' : selectedRoleFilter}</span>
+                  <IconChevronDown size={12} />
+                </button>
+                {showActionsDropdown && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      marginTop: '4px',
+                      width: '180px',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '4px',
+                      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                      zIndex: 50,
+                      padding: '4px 0',
+                    }}
+                  >
+                    <div style={{ padding: '4px 12px', fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600 }}>
+                      FILTER BY ROLE
+                    </div>
+                    {['all', 'admin', 'sales', 'marketing', 'viewer'].map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => {
+                          setSelectedRoleFilter(r);
+                          setShowActionsDropdown(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '6px 12px',
+                          background: selectedRoleFilter === r ? '#eff6ff' : 'none',
+                          border: 'none',
+                          fontSize: '0.8rem',
+                          color: selectedRoleFilter === r ? '#1d4ed8' : '#334155',
+                          fontWeight: selectedRoleFilter === r ? 600 : 400,
+                          cursor: 'pointer',
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {r === 'all' ? 'All Roles' : r}
+                      </button>
+                    ))}
                   </div>
-                  {['all', 'admin', 'sales', 'marketing', 'viewer'].map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => {
-                        setSelectedRoleFilter(r);
-                        setShowActionsDropdown(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '6px 12px',
-                        background: selectedRoleFilter === r ? '#eff6ff' : 'none',
-                        border: 'none',
-                        fontSize: '0.8rem',
-                        color: selectedRoleFilter === r ? '#1d4ed8' : '#334155',
-                        fontWeight: selectedRoleFilter === r ? 600 : 400,
-                        cursor: 'pointer',
-                        textTransform: 'capitalize',
-                      }}
-                    >
-                      {r === 'all' ? 'All Roles' : r}
-                    </button>
-                  ))}
-                </div>
-              )}
+                )}
+              </div>
             </div>
-
-            {(activeSearch || selectedRoleFilter !== 'all') && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchInput('');
-                  setActiveSearch('');
-                  setSelectedRoleFilter('all');
-                }}
-                style={{
-                  height: '34px',
-                  padding: '0 10px',
-                  backgroundColor: '#f1f5f9',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '4px',
-                  fontSize: '0.775rem',
-                  color: '#64748b',
-                  cursor: 'pointer',
-                }}
-              >
-                Clear Filter
-              </button>
-            )}
-          </div>
-
-          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-            Total Users: <strong>{total}</strong>
-          </div>
-        </div>
-
-        {/* Data Table */}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                <th style={{ padding: '12px 16px', fontSize: '0.825rem', fontWeight: 600, color: '#334155' }}>
-                  User Name
-                </th>
-                <th style={{ padding: '12px 16px', fontSize: '0.825rem', fontWeight: 600, color: '#334155' }}>
-                  Full Name
-                </th>
-                <th style={{ padding: '12px 16px', fontSize: '0.825rem', fontWeight: 600, color: '#334155' }}>
-                  Email
-                </th>
-                <th style={{ padding: '12px 16px', fontSize: '0.825rem', fontWeight: 600, color: '#334155' }}>
-                  Application Role
-                </th>
-                <th style={{ padding: '12px 16px', fontSize: '0.825rem', fontWeight: 600, color: '#334155' }}>
-                  Status
-                </th>
-                <th style={{ padding: '12px 16px', fontSize: '0.825rem', fontWeight: 600, color: '#334155' }}>
-                  Date Created
-                </th>
-                <th style={{ padding: '12px 16px', fontSize: '0.825rem', fontWeight: 600, color: '#334155' }}>
-                  Date Last Login
-                </th>
-                <th style={{ padding: '12px 16px', fontSize: '0.825rem', fontWeight: 600, color: '#334155', textAlign: 'center', width: '220px' }}>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
-                    Loading application users...
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
-                    No users found matching current filters.
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => {
-                  const isDeactivated = !user.can_login || user.status === 'Inactive' || user.status === 'Blocked';
-                  const isProtectedAdmin = user.id === 1;
-
-                  return (
-                    <tr
-                      key={user.id}
-                      style={{
-                        borderBottom: '1px solid #f1f5f9',
-                        backgroundColor: '#ffffff',
-                        transition: 'background-color 0.15s',
-                      }}
-                    >
-                      {/* User Name */}
-                      <td style={{ padding: '12px 16px', fontSize: '0.825rem', fontWeight: 600, color: '#0f172a' }}>
-                        {user.username}
-                      </td>
-
-                      {/* Full Name */}
-                      <td style={{ padding: '12px 16px', fontSize: '0.825rem', color: '#334155' }}>
-                        {user.full_name || '—'}
-                      </td>
-
-                      {/* Email */}
-                      <td style={{ padding: '12px 16px', fontSize: '0.825rem', color: '#334155' }}>
-                        {user.email}
-                      </td>
-
-                      {/* Application Role */}
-                      <td style={{ padding: '12px 16px', fontSize: '0.825rem', color: '#334155' }}>
-                        {getRoleDisplay(user.role)}
-                      </td>
-
-                      {/* Status */}
-                      <td style={{ padding: '12px 16px', fontSize: '0.825rem' }}>
-                        <span
-                          style={{
-                            color: isDeactivated ? '#dc2626' : '#059669',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {isDeactivated ? 'Inactive' : 'Active'}
-                        </span>
-                      </td>
-
-                      {/* Date Created */}
-                      <td style={{ padding: '12px 16px', fontSize: '0.825rem', color: '#475569' }}>
-                        {formatDate(user.created_at) || '11/2/2026'}
-                      </td>
-
-                      {/* Date Last Login */}
-                      <td style={{ padding: '12px 16px', fontSize: '0.825rem', color: '#475569' }}>
-                        {formatDate(user.last_login_at) || (user.id === 1 ? '11/13/2026' : '')}
-                      </td>
-
-                      {/* Actions: Edit (amber) & Deactivate / Activate (red/green) */}
-                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
-                          {/* Edit Button (Amber / Golden Brown) */}
-                          <button
-                            type="button"
-                            onClick={() => handleEditClick(user)}
-                            style={{
-                              backgroundColor: '#b45309',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '4px',
-                              padding: '5px 16px',
-                              fontSize: '0.8rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              minWidth: '60px',
-                              boxShadow: '0 1px 2px rgba(180,83,9,0.2)',
-                            }}
-                          >
-                            Edit
-                          </button>
-
-                          {/* Deactivate / Activate Button */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleDeactivate(user)}
-                            disabled={isProtectedAdmin}
-                            title={
-                              isProtectedAdmin
-                                ? 'Primary Administrator cannot be deactivated'
-                                : isDeactivated
-                                ? 'Activate login for this user'
-                                : 'Deactivate login for this user'
-                            }
-                            style={{
-                              backgroundColor: isDeactivated ? '#16a34a' : '#dc2626',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '4px',
-                              padding: '5px 14px',
-                              fontSize: '0.8rem',
-                              fontWeight: 600,
-                              cursor: isProtectedAdmin ? 'not-allowed' : 'pointer',
-                              opacity: isProtectedAdmin ? 0.45 : 1,
-                              minWidth: '85px',
-                              boxShadow: isDeactivated
-                                ? '0 1px 2px rgba(22,163,74,0.2)'
-                                : '0 1px 2px rgba(220,38,38,0.2)',
-                            }}
-                          >
-                            {isDeactivated ? 'Activate' : 'Deactivate'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+          }
+          renderTrailingCell={(user) => {
+            const isDeactivated = !user.can_login || user.status === 'Inactive' || user.status === 'Blocked';
+            const isProtectedAdmin = user.id === 1;
+            return (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
+                <button
+                  type="button"
+                  onClick={() => handleEditClick(user)}
+                  style={{
+                    backgroundColor: '#b45309',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '5px 16px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    minWidth: '60px',
+                    boxShadow: '0 1px 2px rgba(180,83,9,0.2)',
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleDeactivate(user)}
+                  disabled={isProtectedAdmin}
+                  title={
+                    isProtectedAdmin
+                      ? 'Primary Administrator cannot be deactivated'
+                      : isDeactivated
+                      ? 'Activate login for this user'
+                      : 'Deactivate login for this user'
+                  }
+                  style={{
+                    backgroundColor: isDeactivated ? '#16a34a' : '#dc2626',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '5px 14px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: isProtectedAdmin ? 'not-allowed' : 'pointer',
+                    opacity: isProtectedAdmin ? 0.45 : 1,
+                    minWidth: '85px',
+                    boxShadow: isDeactivated
+                      ? '0 1px 2px rgba(22,163,74,0.2)'
+                      : '0 1px 2px rgba(220,38,38,0.2)',
+                  }}
+                >
+                  {isDeactivated ? 'Activate' : 'Deactivate'}
+                </button>
+              </div>
+            );
+          }}
+          trailingHeader="Actions"
+          onRefresh={loadUsers}
+          onReset={() => {
+            setSearchInput('');
+            setActiveSearch('');
+            setSelectedRoleFilter('all');
+          }}
+          onShowToast={onShowToast}
+        />
       </div>
     </div>
   );

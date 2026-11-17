@@ -92,24 +92,26 @@ export default function ApexAggregateModal({
   return (
     <div className="apex-modal-overlay" style={{ zIndex: 1200 }}>
       <div
-        className="apex-modal"
+        className="apex-modal-card apex-modal-container"
         style={{
-          maxWidth: '440px',
+          maxWidth: '460px',
           width: '92%',
           backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15)',
+          borderRadius: '10px',
+          boxShadow: '0 20px 45px rgba(0, 0, 0, 0.25)',
           overflow: 'hidden',
         }}
       >
-        {/* Header matching Screenshot */}
+        {/* Header matching Oracle APEX Reference Screenshot */}
         <div
+          className="apex-modal-header"
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '1rem 1.25rem',
+            padding: '14px 20px',
             borderBottom: '1px solid #f1f5f9',
+            backgroundColor: '#ffffff',
           }}
         >
           <h3
@@ -124,18 +126,33 @@ export default function ApexAggregateModal({
           </h3>
           <button
             type="button"
+            className="apex-modal-close"
             onClick={onClose}
+            aria-label="Close"
             style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              border: '1px solid #e2e8f0',
+              background: '#ffffff',
               color: '#64748b',
-              padding: '2px',
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              transition: 'all 0.15s ease',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#f1f5f9';
+              e.currentTarget.style.color = '#0f172a';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#ffffff';
+              e.currentTarget.style.color = '#64748b';
             }}
           >
-            <IconClose size={18} />
+            <IconClose size={14} />
           </button>
         </div>
 
@@ -297,19 +314,22 @@ export default function ApexAggregateModal({
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <button
                 type="button"
+                className="apex-modal-cancel-btn"
                 onClick={onClose}
                 style={{
-                  height: '36px',
-                  padding: '0 1.25rem',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  fontSize: '0.85rem',
-                  fontWeight: 500,
+                  height: '34px',
+                  padding: '0 16px',
+                  borderRadius: '6px',
+                  border: '1px solid #e2e8f0',
+                  background: '#ffffff',
                   color: '#475569',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
                   cursor: 'pointer',
+                  transition: 'background-color 0.15s ease',
                 }}
               >
                 Cancel
@@ -317,20 +337,22 @@ export default function ApexAggregateModal({
 
               <button
                 type="submit"
+                className="apex-modal-apply-btn"
                 style={{
-                  height: '36px',
-                  padding: '0 1.5rem',
-                  backgroundColor: '#1e293b',
-                  border: 'none',
+                  height: '34px',
+                  padding: '0 20px',
                   borderRadius: '6px',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
+                  border: 'none',
+                  backgroundColor: '#7048e8',
                   color: '#ffffff',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
                   cursor: 'pointer',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                  boxShadow: '0 1px 3px rgba(112, 72, 232, 0.35)',
+                  transition: 'background-color 0.15s ease',
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#0f172a')}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#1e293b')}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#5f3dc4')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#7048e8')}
               >
                 Apply
               </button>

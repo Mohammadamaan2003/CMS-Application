@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import iqraLogo from '../assets/iqra-logo.png';
 import {
   IconMenu,
   IconUser,
@@ -9,6 +10,8 @@ import {
   IconEye,
   IconCheckCircle,
   IconAlertTriangle,
+  IconSun,
+  IconMoon,
 } from './Icons';
 
 export default function ApexHeader({
@@ -18,12 +21,22 @@ export default function ApexHeader({
   currentUser,
   onSwitchUser,
   availableUsers = [],
+  theme = 'light',
+  onToggleTheme,
 }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const role = (currentUser?.role || 'admin').toLowerCase();
 
-  const roleBadgeStyles = {
+  const isDark = theme === 'dark';
+
+  const roleBadgeStyles = isDark ? {
+    admin: { bg: 'rgba(99, 102, 241, 0.25)', text: '#e0e7ff', border: 'rgba(129, 140, 248, 0.5)', label: 'Admin', icon: IconShield },
+    sales: { bg: 'rgba(56, 189, 248, 0.25)', text: '#e0f2fe', border: 'rgba(56, 189, 248, 0.5)', label: 'Sales', icon: IconBriefcase },
+    marketing: { bg: 'rgba(52, 211, 153, 0.25)', text: '#d1fae5', border: 'rgba(52, 211, 153, 0.5)', label: 'Marketing', icon: IconUsers },
+    viewer: { bg: 'rgba(148, 163, 184, 0.25)', text: '#f1f5f9', border: 'rgba(148, 163, 184, 0.5)', label: 'Viewer', icon: IconEye },
+  }[role] || { bg: 'rgba(148, 163, 184, 0.25)', text: '#f1f5f9', border: 'rgba(148, 163, 184, 0.5)', label: role, icon: IconUser }
+  : {
     admin: { bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe', label: 'Admin', icon: IconShield },
     sales: { bg: '#f0f9ff', text: '#0369a1', border: '#bae6fd', label: 'Sales', icon: IconBriefcase },
     marketing: { bg: '#ecfdf5', text: '#047857', border: '#a7f3d0', label: 'Marketing', icon: IconUsers },
@@ -62,19 +75,11 @@ export default function ApexHeader({
           tabIndex={0}
           title="Home"
         >
-          <div className="iqra-logo-mark">
-            <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
-              <circle cx="50" cy="50" r="46" stroke="#1d4ed8" strokeWidth="4" strokeDasharray="6 3" />
-              <ellipse cx="50" cy="50" rx="46" ry="18" stroke="#0284c7" strokeWidth="3" />
-              <ellipse cx="50" cy="50" rx="18" ry="46" stroke="#0284c7" strokeWidth="3" />
-              <line x1="4" y1="50" x2="96" y2="50" stroke="#1d4ed8" strokeWidth="3" />
-              <line x1="50" y1="4" x2="50" y2="96" stroke="#1d4ed8" strokeWidth="3" />
-            </svg>
-          </div>
-          <div className="iqra-logo-text">
-            <span className="iqra-title">IQRA</span>
-            <span className="iqra-subtitle">TECHNOLOGY</span>
-          </div>
+          <img
+            src={iqraLogo}
+            alt="IQRA Technology"
+            className="iqra-brand-logo"
+          />
         </div>
 
         {/* System Title */}
@@ -83,8 +88,30 @@ export default function ApexHeader({
         </div>
       </div>
 
-      {/* User Role Switcher & Profile Dropdown on the far right */}
+      {/* User Role Switcher, Theme Switcher & Profile Dropdown on the far right */}
       <div className="apex-topbar-right">
+        {/* Light / Dark / Blue Theme Switcher Pill Button */}
+        <button
+          type="button"
+          className="apex-theme-toggle-btn"
+          onClick={() => onToggleTheme && onToggleTheme()}
+          title={`Currently ${theme === 'dark' ? 'Dark' : theme === 'blue' ? 'Blue' : 'Light'} theme. Click to switch theme.`}
+          aria-label={`Switch theme`}
+        >
+          <span className="apex-theme-toggle-indicator">
+            {theme === 'dark' ? (
+              <IconMoon size={14} className="theme-icon-moon" />
+            ) : theme === 'blue' ? (
+              <span style={{ fontSize: '11px', lineHeight: 1 }}>🔷</span>
+            ) : (
+              <IconSun size={14} className="theme-icon-sun" />
+            )}
+          </span>
+          <span className="apex-theme-toggle-label">
+            {theme === 'dark' ? 'Dark' : theme === 'blue' ? 'Blue' : 'Light'}
+          </span>
+        </button>
+
         {/* Quick Role Simulation Badge */}
         <div
           className="role-simulator-badge"
@@ -159,23 +186,23 @@ export default function ApexHeader({
                 right: 0,
                 top: 'calc(100% + 6px)',
                 width: '290px',
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--bg-surface, #111C2E)',
+                border: '1px solid var(--border, #26364F)',
                 borderRadius: '8px',
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                boxShadow: '0 10px 25px -3px rgba(0,0,0,0.5)',
                 zIndex: 1000,
                 padding: '0.75rem 0',
               }}
             >
               {/* User Identity Info */}
-              <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--border, #26364F)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <CurrentRoleIcon size={16} style={{ color: roleBadgeStyles.text }} />
-                  <strong style={{ fontSize: '0.875rem', color: '#0f172a' }}>
+                  <strong style={{ fontSize: '0.875rem', color: 'var(--text-main, #F1F5F9)' }}>
                     {currentUser?.full_name || 'Amaan'}
                   </strong>
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94A3B8)', marginTop: '2px' }}>
                   {currentUser?.email || 'amaan@iqratechnology.com'}
                 </div>
                 <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -197,8 +224,8 @@ export default function ApexHeader({
                       fontSize: '0.7rem',
                       padding: '2px 8px',
                       borderRadius: '10px',
-                      backgroundColor: currentUser?.can_login !== false ? '#dcfce7' : '#fee2e2',
-                      color: currentUser?.can_login !== false ? '#15803d' : '#b91c1c',
+                      backgroundColor: currentUser?.can_login !== false ? (isDark ? 'rgba(52, 211, 153, 0.2)' : '#dcfce7') : (isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2'),
+                      color: currentUser?.can_login !== false ? (isDark ? '#6ee7b7' : '#15803d') : (isDark ? '#fca5a5' : '#b91c1c'),
                       fontWeight: 600,
                     }}
                   >
@@ -208,7 +235,7 @@ export default function ApexHeader({
               </div>
 
               {/* Navigation Shortcuts based on role */}
-              <div style={{ padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ padding: '0.4rem 0', borderBottom: '1px solid var(--border, #26364F)' }}>
                 <button
                   type="button"
                   className="user-dropdown-item"
@@ -268,9 +295,99 @@ export default function ApexHeader({
                 )}
               </div>
 
+              {/* Theme Selection Section */}
+              <div
+                className="user-dropdown-theme-row"
+                style={{
+                  padding: '0.6rem 1rem',
+                  borderBottom: '1px solid var(--border, #26364F)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.785rem', fontWeight: 600, color: 'var(--text-main, #F1F5F9)' }}>
+                  {theme === 'dark' ? <IconMoon size={14} style={{ color: '#818cf8' }} /> : theme === 'blue' ? <span style={{ fontSize: '13px' }}>🔷</span> : <IconSun size={14} style={{ color: '#d97706' }} />}
+                  <span>Interface Theme:</span>
+                </div>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    background: 'var(--bg-input, #161616)',
+                    borderRadius: '6px',
+                    padding: '2px',
+                    gap: '2px',
+                    border: '1px solid var(--border, #2C2C2C)',
+                  }}
+                  className="theme-switch-pills"
+                >
+                  <button
+                    type="button"
+                    onClick={() => onToggleTheme && onToggleTheme('dark')}
+                    style={{
+                      border: 'none',
+                      background: theme === 'dark' ? 'var(--btn-primary, #2563EB)' : 'transparent',
+                      color: theme === 'dark' ? '#ffffff' : 'var(--text-muted, #A3A3A3)',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.725rem',
+                      fontWeight: theme === 'dark' ? 700 : 500,
+                      cursor: 'pointer',
+                      boxShadow: theme === 'dark' ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <IconMoon size={12} /> Dark
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onToggleTheme && onToggleTheme('blue')}
+                    style={{
+                      border: 'none',
+                      background: theme === 'blue' ? 'var(--btn-primary, #0284c7)' : 'transparent',
+                      color: theme === 'blue' ? '#ffffff' : 'var(--text-muted, #A3A3A3)',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.725rem',
+                      fontWeight: theme === 'blue' ? 700 : 500,
+                      cursor: 'pointer',
+                      boxShadow: theme === 'blue' ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span>🔷</span> Blue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onToggleTheme && onToggleTheme('light')}
+                    style={{
+                      border: 'none',
+                      background: theme === 'light' ? '#ffffff' : 'transparent',
+                      color: theme === 'light' ? '#0f172a' : 'var(--text-muted, #A3A3A3)',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.725rem',
+                      fontWeight: theme === 'light' ? 700 : 500,
+                      cursor: 'pointer',
+                      boxShadow: theme === 'light' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <IconSun size={12} /> Light
+                  </button>
+                </div>
+              </div>
+
               {/* Switch Role / User List */}
               <div style={{ padding: '0.5rem 1rem 0.25rem' }}>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted, #94A3B8)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
                   Simulate Another User:
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', maxHeight: '180px', overflowY: 'auto' }}>
@@ -289,8 +406,9 @@ export default function ApexHeader({
                           justifyContent: 'space-between',
                           padding: '0.35rem 0.5rem',
                           borderRadius: '4px',
-                          border: isSelected ? '1px solid #93c5fd' : '1px solid transparent',
-                          background: isSelected ? '#eff6ff' : 'transparent',
+                          border: isSelected ? '1px solid #2563EB' : '1px solid transparent',
+                          background: isSelected ? (isDark ? 'rgba(37, 99, 235, 0.25)' : '#eff6ff') : 'transparent',
+                          color: 'var(--text-main, #F1F5F9)',
                           cursor: !u.can_login ? 'not-allowed' : 'pointer',
                           opacity: !u.can_login ? 0.45 : 1,
                           textAlign: 'left',

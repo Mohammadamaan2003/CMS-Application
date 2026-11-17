@@ -145,12 +145,15 @@ export default function GenericMasterView({ masterKey, title, onShowToast }) {
     setPage(1);
   };
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = new Set(pagedData.map((m) => m.id));
-      setSelectedIds(allIds);
-    } else {
+  const handleSelectAll = () => {
+    const isAllSelected = filteredData.length > 0 && selectedIds.size >= filteredData.length;
+    if (isAllSelected) {
       setSelectedIds(new Set());
+      if (onShowToast) onShowToast('info', 'Deselected all records.');
+    } else {
+      const allIds = new Set(filteredData.map((m) => m.id));
+      setSelectedIds(allIds);
+      if (onShowToast) onShowToast('info', `Selected all ${allIds.size} records throughout master list.`);
     }
   };
 
@@ -314,11 +317,39 @@ export default function GenericMasterView({ masterKey, title, onShowToast }) {
               <ApexActionsMenu
                 isOpen={showActions}
                 onClose={() => setShowActions(false)}
+                columns={columns}
+                data={filteredData}
+                reportId={`master_${masterKey}`}
                 onOpenColumns={() => setShowColumnsModal(true)}
                 onOpenAggregate={() => setShowAggregateModal(true)}
                 onDownload={handleDownloadCsv}
                 onRefresh={loadData}
+                onApplySort={(rules) => {
+                  if (rules && rules[0] && rules[0].key) {
+                    setSortKey(rules[0].key);
+                    setSortDir(rules[0].dir || 'asc');
+                  }
+                }}
+                onChangeRows={(newRows) => {
+                  setRows(newRows);
+                  setPage(1);
+                }}
+                onResetReport={() => {
+                  setSearch('');
+                  setActiveSearch('');
+                  setHeaderFilter({ key: null, value: null });
+                  setSortKey(null);
+                  setSortDir('asc');
+                  setRows(50);
+                  setPage(1);
+                  setAggregations([]);
+                  if (onShowToast) onShowToast('info', 'Report reset to default.');
+                }}
                 currentRows={rows}
+                isEditableGrid={true}
+                hasSelection={selectedIds.size > 0}
+                onSelectAll={handleSelectAll}
+                onDeselectAll={() => setSelectedIds(new Set())}
               />
             </div>
           </div>
@@ -518,14 +549,32 @@ export default function GenericMasterView({ masterKey, title, onShowToast }) {
           <table className="apex-master-table">
             <thead>
               <tr>
-                <th style={{ width: '40px', textAlign: 'center' }}></th>
+                <th style={{ width: '40px', textAlign: 'center' }}>
+                  <span
+                    style={{ cursor: 'pointer', fontSize: '1rem', color: '#1e293b' }}
+                    title="Select Columns"
+                    onClick={() => setShowColumnsModal(true)}
+                  >
+                    ✎
+                  </span>
+                </th>
                 <th style={{ width: '80px', textAlign: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <input
                       type="checkbox"
-                      checked={pagedData.length > 0 && selectedIds.size === pagedData.length}
+                      checked={filteredData.length > 0 && selectedIds.size >= filteredData.length}
+                      ref={(el) => {
+                        if (el) {
+                          el.indeterminate = selectedIds.size > 0 && selectedIds.size < filteredData.length;
+                        }
+                      }}
                       onChange={handleSelectAll}
                       style={{ cursor: 'pointer' }}
+                      title={
+                        selectedIds.size >= filteredData.length && filteredData.length > 0
+                          ? `All ${filteredData.length} records selected`
+                          : `Select all ${filteredData.length} records throughout report`
+                      }
                     />
                   </div>
                 </th>

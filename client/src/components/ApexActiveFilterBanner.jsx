@@ -13,6 +13,7 @@ export default function ApexActiveFilterBanner({ filter, columns = [], onClear }
 
   return (
     <div
+      className="apex-active-filter-banner"
       style={{
         display: 'flex',
         alignItems: 'center',

@@ -140,6 +140,45 @@ export const api = {
     const qStr = query.toString() ? `?${query.toString()}` : '';
     return request(`/dashboard/lead/resources-report${qStr}`);
   },
+
+  // Company Dashboard (APEX Page 74)
+  getCompanyDashboardFilters: () => request('/dashboard/company/filter-options'),
+  getCompanyDashboardKpis: (params = {}) => {
+    const query = new URLSearchParams();
+    for (const [key, val] of Object.entries(params)) {
+      if (val !== undefined && val !== null && val !== '') {
+        if (Array.isArray(val)) {
+          val.forEach((item) => {
+            if (item !== undefined && item !== null && item !== '') {
+              query.append(`${key}[]`, item);
+            }
+          });
+        } else {
+          query.append(key, val);
+        }
+      }
+    }
+    const qStr = query.toString() ? `?${query.toString()}` : '';
+    return request(`/dashboard/company/kpis${qStr}`);
+  },
+  getCompanyDashboardReport: (params = {}) => {
+    const query = new URLSearchParams();
+    for (const [key, val] of Object.entries(params)) {
+      if (val !== undefined && val !== null && val !== '') {
+        if (Array.isArray(val)) {
+          val.forEach((item) => {
+            if (item !== undefined && item !== null && item !== '') {
+              query.append(`${key}[]`, item);
+            }
+          });
+        } else {
+          query.append(key, val);
+        }
+      }
+    }
+    const qStr = query.toString() ? `?${query.toString()}` : '';
+    return request(`/dashboard/company/report${qStr}`);
+  },
   getSyncStatus: () => request('/sync/status'),
   triggerSync: (limit = 1000) => request(`/sync?limit=${limit}`, { method: 'POST' }),
   syncMasters: () => request('/sync/masters', { method: 'POST' }),
@@ -276,6 +315,13 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ rows, mode }),
     }),
+  getCompanyInvalidFilterOptions: () =>
+    request('/crm-upload/company-invalid-data/filter-options'),
+  applyCompanyInvalidChanges: (ids, changes = {}) =>
+    request('/crm-upload/company-invalid-data/apply-changes', {
+      method: 'POST',
+      body: JSON.stringify({ ids, ...changes }),
+    }),
 
   getContactIncorrectData: (params = {}) => {
     const query = new URLSearchParams();
@@ -298,6 +344,13 @@ export const api = {
     request('/crm-upload/contact-incorrect-data/retry', {
       method: 'POST',
       body: JSON.stringify({ rows, mode }),
+    }),
+  getContactIncorrectFilterOptions: () =>
+    request('/crm-upload/contact-incorrect-data/filter-options'),
+  applyContactIncorrectChanges: (ids, changes = {}) =>
+    request('/crm-upload/contact-incorrect-data/apply-changes', {
+      method: 'POST',
+      body: JSON.stringify({ ids, ...changes }),
     }),
 
   // Masters - Company Size
@@ -817,6 +870,14 @@ export const api = {
     const qStr = query.toString() ? `?${query.toString()}` : '';
     return request(`/leads${qStr}`);
   },
+  getLeadIds: (params = {}) => {
+    const query = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== '') query.append(k, v);
+    }
+    const qStr = query.toString() ? `?${query.toString()}` : '';
+    return request(`/leads/ids${qStr}`);
+  },
   getLead: (id) => request(`/leads/${id}`),
   getLeadLovs: () => request('/leads/meta/lovs'),
   getLeadColumnValues: (column) => request(`/leads/meta/column-values?column=${encodeURIComponent(column)}`),
@@ -924,6 +985,38 @@ export const api = {
     }),
 
   // Duplicate Merger
+  getDuplicateCompanyReport: (params = {}) => {
+    const query = new URLSearchParams();
+    for (const [key, val] of Object.entries(params)) {
+      if (val !== undefined && val !== null && val !== '') {
+        query.append(key, val);
+      }
+    }
+    const qStr = query.toString() ? `?${query.toString()}` : '';
+    return request(`/duplicate-merger/company-report${qStr}`);
+  },
+  getDuplicateContactReport: (params = {}) => {
+    const query = new URLSearchParams();
+    for (const [key, val] of Object.entries(params)) {
+      if (val !== undefined && val !== null && val !== '') {
+        query.append(key, val);
+      }
+    }
+    const qStr = query.toString() ? `?${query.toString()}` : '';
+    return request(`/duplicate-merger/contact-report${qStr}`);
+  },
+  getCompanyById: (id) => request(`/duplicate-merger/companies/${id}`),
+  getContactById: (id) => request(`/duplicate-merger/contacts/${id}`),
+  mergeCompanyPair: (payload) =>
+    request('/duplicate-merger/companies/merge-pair', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  mergeContactPair: (payload) =>
+    request('/duplicate-merger/contacts/merge-pair', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
   getCompanyDuplicateCandidates: (params = {}) => {
     const query = new URLSearchParams();
     for (const [key, val] of Object.entries(params)) {
@@ -974,6 +1067,11 @@ export const api = {
     const qStr = query.toString() ? `?${query.toString()}` : '';
     return request(`/duplicate-merger/history${qStr}`);
   },
+  restoreMerge: (historyId, payload = {}) =>
+    request(`/duplicate-merger/restore/${historyId}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 
   // User Management
   getUsers: (params = {}) => {

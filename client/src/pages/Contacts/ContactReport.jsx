@@ -16,6 +16,7 @@ import SelectColumnsModal from '../../components/SelectColumnsModal';
 import ApexActionsMenu from '../../components/ApexActionsMenu';
 import ApexFilterModal from '../../components/ApexFilterModal';
 import ApexChartModal from '../../components/ApexChartModal';
+import ApexGroupByModal from '../../components/ApexGroupByModal';
 import ApexAggregateModal from '../../components/ApexAggregateModal';
 import ActiveAggregationsBar from '../../components/ActiveAggregationsBar';
 import ApexColumnHeaderMenu from '../../components/ApexColumnHeaderMenu';
@@ -81,9 +82,10 @@ export const CONTACT_ALL_COLUMNS = [
     key: 'contact_name',
     label: 'CONTACT_NAME',
     render: (c, handleOpenEdit) => (
-      <span style={{ fontWeight: 600, color: '#1d4ed8' }}>
+      <span>
         <button
           type="button"
+          className="apex-table-link-btn"
           onClick={() => handleOpenEdit && handleOpenEdit(c)}
           style={{
             background: 'none',
@@ -92,10 +94,7 @@ export const CONTACT_ALL_COLUMNS = [
             padding: 0,
             textAlign: 'left',
             fontWeight: 600,
-            color: '#1d4ed8',
           }}
-          onMouseOver={(e) => (e.currentTarget.style.textDecoration = 'underline')}
-          onMouseOut={(e) => (e.currentTarget.style.textDecoration = 'none')}
         >
           {c.contact_name}
         </button>
@@ -418,8 +417,11 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
   const [showColumnsModal, setShowColumnsModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showChartModal, setShowChartModal] = useState(false);
+  const [showGroupByModal, setShowGroupByModal] = useState(false);
   const [showAggregateModal, setShowAggregateModal] = useState(false);
   const [aggregations, setAggregations] = useState([]);
+  const [appliedGroupBy, setAppliedGroupBy] = useState(null);
+  const [appliedPivot, setAppliedPivot] = useState(null);
   const [visibleColumnKeys, setVisibleColumnKeys] = useState(() => {
     try {
       const saved = localStorage.getItem('contact_visible_columns');
@@ -436,6 +438,151 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
     () => visibleColumnKeys.map((k) => columnMap.get(k)).filter(Boolean),
     [visibleColumnKeys, columnMap]
   );
+
+  // Calculate Pivot Matrix when appliedPivot is active
+  const pivotMatrixData = useMemo(() => {
+    if (!appliedPivot) return null;
+    const { rowColumn, pivotColumn, func, measureColumn } = appliedPivot;
+    if (!rowColumn || !pivotColumn) return null;
+
+    const colHeaderSet = new Set();
+    const matrix = {};
+    const colTotals = {};
+
+    contacts.forEach((r) => {
+      const rVal = r[rowColumn] !== undefined && r[rowColumn] !== null && r[rowColumn] !== '' ? String(r[rowColumn]) : '(Blank)';
+      const cVal = r[pivotColumn] !== undefined && r[pivotColumn] !== null && r[pivotColumn] !== '' ? String(r[pivotColumn]) : '(Blank)';
+      colHeaderSet.add(cVal);
+
+      if (!matrix[rVal]) matrix[rVal] = {};
+      if (!matrix[rVal][cVal]) matrix[rVal][cVal] = { count: 0, sum: 0 };
+
+      matrix[rVal][cVal].count += 1;
+      if (measureColumn && r[measureColumn] !== undefined) {
+        const num = parseFloat(String(r[measureColumn]).replace(/[^0-9.-]/g, ''));
+        if (!isNaN(num)) matrix[rVal][cVal].sum += num;
+      }
+    });
+
+    const colHeaders = Array.from(colHeaderSet).sort();
+    colHeaders.forEach((cH) => { colTotals[cH] = 0; });
+    let grandTotal = 0;
+
+    const rows = Object.entries(matrix).map(([rVal, cellMap]) => {
+      let rowTotal = 0;
+      const cells = {};
+      colHeaders.forEach((cH) => {
+        const item = cellMap[cH];
+        let val = 0;
+        if (item) {
+          val = func === 'Sum' ? Math.round(item.sum * 100) / 100 : item.count;
+        }
+        cells[cH] = val;
+        rowTotal += val;
+        colTotals[cH] += val;
+      });
+      grandTotal += rowTotal;
+      return { rVal, cells, rowTotal };
+    }).sort((a, b) => b.rowTotal - a.rowTotal);
+
+    return { rows, colHeaders, colTotals, grandTotal, rowColumn, pivotColumn, func };
+  }, [appliedPivot, contacts]);
+
+  // Calculate Group By Matrix when appliedGroupBy is active
+  const groupByMatrixData = useMemo(() => {
+    if (!appliedGroupBy) return null;
+    const { groupColumn, groupByCols, func, measureColumn, label, formatMask, sum } = appliedGroupBy;
+    const activeCols = groupByCols && groupByCols.length > 0 ? groupByCols.filter(Boolean) : (groupColumn ? [groupColumn] : []);
+    if (activeCols.length === 0) return null;
+
+    const groups = {};
+    let totalCount = 0;
+    let totalMeasure = 0;
+    let minMeasure = Infinity;
+    let maxMeasure = -Infinity;
+
+    contacts.forEach((row) => {
+      const groupKey = activeCols.map((c) => {
+        const val = row[c];
+        return val !== undefined && val !== null && val !== '' ? String(val) : '(Blank)';
+      }).join(' / ');
+
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
+          key: groupKey,
+          colValues: activeCols.reduce((acc, c) => {
+            const val = row[c];
+            acc[c] = val !== undefined && val !== null && val !== '' ? String(val) : '(Blank)';
+            return acc;
+          }, {}),
+          count: 0,
+          measureValues: [],
+          measureSum: 0,
+        };
+      }
+
+      groups[groupKey].count += 1;
+      totalCount += 1;
+
+      if (measureColumn && row[measureColumn] !== undefined && row[measureColumn] !== null) {
+        const raw = String(row[measureColumn]).replace(/[^0-9.-]/g, '');
+        const num = parseFloat(raw);
+        if (!isNaN(num)) {
+          groups[groupKey].measureValues.push(num);
+          groups[groupKey].measureSum += num;
+          totalMeasure += num;
+          if (num < minMeasure) minMeasure = num;
+          if (num > maxMeasure) maxMeasure = num;
+        }
+      }
+    });
+
+    const formatVal = (v) => {
+      if (v === undefined || v === null || isNaN(v)) return '-';
+      if (formatMask === 'Currency') return `$${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      if (formatMask === 'Percent') return `${Number(v).toFixed(1)}%`;
+      if (formatMask === 'Integer') return Math.round(v).toLocaleString();
+      return typeof v === 'number' ? (Number.isInteger(v) ? v.toLocaleString() : v.toFixed(2)) : v;
+    };
+
+    const rows = Object.values(groups).map((g) => {
+      let computed = 0;
+      if (func === 'Count') {
+        computed = g.count;
+      } else if (func === 'Sum') {
+        computed = g.measureSum;
+      } else if (func === 'Average') {
+        computed = g.measureValues.length > 0 ? g.measureSum / g.measureValues.length : 0;
+      } else if (func === 'Minimum') {
+        computed = g.measureValues.length > 0 ? Math.min(...g.measureValues) : 0;
+      } else if (func === 'Maximum') {
+        computed = g.measureValues.length > 0 ? Math.max(...g.measureValues) : 0;
+      }
+      return {
+        ...g,
+        computedRaw: computed,
+        computedDisplay: formatVal(computed),
+      };
+    }).sort((a, b) => b.computedRaw - a.computedRaw);
+
+    let grandTotalComputed = 0;
+    if (func === 'Count') grandTotalComputed = totalCount;
+    else if (func === 'Sum') grandTotalComputed = totalMeasure;
+    else if (func === 'Average') grandTotalComputed = totalCount > 0 ? totalMeasure / totalCount : 0;
+    else if (func === 'Minimum') grandTotalComputed = minMeasure !== Infinity ? minMeasure : 0;
+    else if (func === 'Maximum') grandTotalComputed = maxMeasure !== -Infinity ? maxMeasure : 0;
+
+    return {
+      activeCols,
+      rows,
+      totalCount,
+      grandTotalComputed: formatVal(grandTotalComputed),
+      func,
+      measureColumn,
+      label: label || `${func} of ${measureColumn}`,
+      sum: sum !== false,
+    };
+  }, [appliedGroupBy, contacts]);
 
   // Initial filter state matching screenshot
   const initialFilterState = {
@@ -657,16 +804,21 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
   };
 
   // Selection handlers - report-wide select all across entire dataset
-  const handleToggleSelectAll = async (e) => {
-    if (e.target.checked) {
+  const handleToggleSelectAll = async () => {
+    const isAllSelected = totalCount > 0 && selectedIds.size >= totalCount;
+    if (isAllSelected) {
+      setSelectedIds(new Set());
+      if (onShowToast) onShowToast('info', 'Deselected all records.');
+    } else {
       try {
         const queryParams = {
           search: activeSearch,
           ...appliedFilters,
         };
         const res = await api.getContactIds(queryParams);
-        if (res.success && Array.isArray(res.ids)) {
+        if (res.success && Array.isArray(res.ids) && res.ids.length > 0) {
           setSelectedIds(new Set(res.ids));
+          if (onShowToast) onShowToast('info', `Selected all ${res.ids.length} records throughout report.`);
         } else {
           setSelectedIds(new Set(contacts.map((c) => c.id)));
         }
@@ -674,8 +826,6 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
         console.warn('Failed to select all contact records:', err.message);
         setSelectedIds(new Set(contacts.map((c) => c.id)));
       }
-    } else {
-      setSelectedIds(new Set());
     }
   };
 
@@ -843,6 +993,38 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
       const msg = `A contact with the name "${trimmedName}" already exists (Contact #${dupContact.id}). Duplicate contact records are not allowed.`;
       if (onShowToast) onShowToast('error', msg);
       return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const trimmedEmail = (formData.email || '').trim();
+    if (trimmedEmail && !emailRegex.test(trimmedEmail)) {
+      if (onShowToast) onShowToast('error', 'Please enter a valid email address (e.g. user@domain.com).');
+      return;
+    }
+
+    const trimmedOtherEmail = (formData.other_email || '').trim();
+    if (trimmedOtherEmail && !emailRegex.test(trimmedOtherEmail)) {
+      if (onShowToast) onShowToast('error', 'Please enter a valid other email address (e.g. user@domain.com).');
+      return;
+    }
+
+    const trimmedLinkedin = (formData.linkedin_url || '').trim();
+    if (trimmedLinkedin) {
+      if (/\s/.test(trimmedLinkedin)) {
+        if (onShowToast) onShowToast('error', 'LinkedIn URL cannot contain spaces.');
+        return;
+      }
+      const dupLinkedin = contacts.find(
+        (c) =>
+          c.linkedin_url &&
+          c.linkedin_url.trim().toLowerCase() === trimmedLinkedin.toLowerCase() &&
+          String(c.id) !== String(editingId)
+      );
+      if (dupLinkedin) {
+        const msg = `LinkedIn URL already exists for Contact #${dupLinkedin.id} (${dupLinkedin.contact_name}).`;
+        if (onShowToast) onShowToast('error', msg);
+        return;
+      }
     }
 
     try {
@@ -1263,25 +1445,27 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
             </div>
           </div>
 
-          {/* Audit Fields Row (4 dashed boxes matching Screenshot 4) */}
-          <div className="audit-grid" style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
-            <div className="audit-field">
-              <label>Created By</label>
-              <input type="text" readOnly value={formData.created_by} />
+          {/* Audit Fields Row (Only visible when editing an existing record) */}
+          {editingId && (
+            <div className="audit-grid" style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+              <div className="audit-field">
+                <label>Created By</label>
+                <input type="text" readOnly value={formData.created_by} />
+              </div>
+              <div className="audit-field">
+                <label>Created Date</label>
+                <input type="text" readOnly value={formatAppDate(formData.created_at || formData.created_date)} />
+              </div>
+              <div className="audit-field">
+                <label>Modified By</label>
+                <input type="text" readOnly value={formData.modified_by} />
+              </div>
+              <div className="audit-field">
+                <label>Modified Date</label>
+                <input type="text" readOnly value={formatAppDate(formData.updated_at || formData.modified_date)} />
+              </div>
             </div>
-            <div className="audit-field">
-              <label>Created Date</label>
-              <input type="text" readOnly value={formatAppDate(formData.created_at || formData.created_date)} />
-            </div>
-            <div className="audit-field">
-              <label>Modified By</label>
-              <input type="text" readOnly value={formData.modified_by} />
-            </div>
-            <div className="audit-field">
-              <label>Modified Date</label>
-              <input type="text" readOnly value={formatAppDate(formData.updated_at || formData.modified_date)} />
-            </div>
-          </div>
+          )}
 
           {/* Footer Actions matching Screenshot 4 */}
           <div className="form-footer-bar" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
@@ -1745,7 +1929,8 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
             </div>
 
             <div className="company-filter-field">
-              <div className="company-filter-date-wrapper" style={{ marginTop: 'auto' }}>
+              <label className="company-filter-label">Created From</label>
+              <div className="company-filter-date-wrapper">
                 <input
                   type="date"
                   placeholder="Created From"
@@ -1759,6 +1944,7 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
 
             {/* ROW 5: Created To | Modified From | Modified To | Search Button | Clear Filters Button | empty */}
             <div className="company-filter-field">
+              <label className="company-filter-label">Created To</label>
               <div className="company-filter-date-wrapper">
                 <input
                   type="date"
@@ -1772,6 +1958,7 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
             </div>
 
             <div className="company-filter-field">
+              <label className="company-filter-label">Modified From</label>
               <div className="company-filter-date-wrapper">
                 <input
                   type="date"
@@ -1785,6 +1972,7 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
             </div>
 
             <div className="company-filter-field">
+              <label className="company-filter-label">Modified To</label>
               <div className="company-filter-date-wrapper">
                 <input
                   type="date"
@@ -1797,21 +1985,21 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
               </div>
             </div>
 
-            <div className="company-filter-field" style={{ justifyContent: 'center' }}>
+            <div className="company-filter-field" style={{ justifyContent: 'flex-end' }}>
               <button
                 type="submit"
-                className="btn-apex-top"
-                style={{ background: '#0b192c', color: '#ffffff', width: '100%', height: '38px', borderRadius: '4px', fontWeight: 600, border: 'none', cursor: 'pointer' }}
+                className="btn-primary btn-filter-search"
+                style={{ width: '100%', height: '38px', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}
               >
                 Search
               </button>
             </div>
 
-            <div className="company-filter-field" style={{ justifyContent: 'center' }}>
+            <div className="company-filter-field" style={{ justifyContent: 'flex-end' }}>
               <button
                 type="button"
-                className="btn-apex-top"
-                style={{ background: '#0b192c', color: '#ffffff', width: '100%', height: '38px', borderRadius: '4px', fontWeight: 600, border: 'none', cursor: 'pointer' }}
+                className="btn-secondary btn-filter-clear"
+                style={{ width: '100%', height: '38px', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}
                 onClick={handleClearFilters}
               >
                 Clear Filters
@@ -1844,23 +2032,19 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
                   paddingLeft: '32px',
                   paddingRight: '10px',
                   borderRadius: '4px',
-                  border: '1px solid #cbd5e1',
                   fontSize: '0.825rem',
-                  backgroundColor: '#ffffff',
                 }}
               />
             </div>
             <button
               type="submit"
+              className="btn-apex-go"
               style={{
                 height: '34px',
                 padding: '0 14px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #cbd5e1',
                 borderRadius: '4px',
                 fontSize: '0.825rem',
                 fontWeight: 600,
-                color: '#1e293b',
                 cursor: 'pointer',
               }}
             >
@@ -1904,14 +2088,40 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
             <ApexActionsMenu
               isOpen={showActionsMenu}
               onClose={() => setShowActionsMenu(false)}
+              columns={CONTACT_ALL_COLUMNS}
+              data={contacts}
+              reportId="contact_master_report"
               onOpenColumns={() => setShowColumnsModal(true)}
               onOpenFilter={() => setShowFilterModal(true)}
               onOpenAggregate={() => setShowAggregateModal(true)}
-              onOpenGroupBy={() => setShowChartModal(true)}
               onToggleFilter={() => setShowFilters((prev) => !prev)}
               onDownload={handleDownloadCsv}
               onOpenChart={() => setShowChartModal(true)}
+              onOpenGroupBy={() => setShowGroupByModal(true)}
+              onApplyGroupBy={(newGroup) => {
+                setAppliedGroupBy(newGroup);
+                if (newGroup && onShowToast) {
+                  onShowToast('success', `Applied Group By: ${newGroup.groupColumn} (${newGroup.func})`);
+                } else if (!newGroup && onShowToast) {
+                  onShowToast('info', 'Group By view removed.');
+                }
+              }}
               onRefresh={loadContacts}
+              onApplyPivot={(newPivot) => {
+                setAppliedPivot(newPivot);
+                if (newPivot && onShowToast) {
+                  onShowToast('success', `Applied Pivot: ${newPivot.rowColumn} by ${newPivot.pivotColumn}`);
+                } else if (!newPivot && onShowToast) {
+                  onShowToast('info', 'Pivot view removed.');
+                }
+              }}
+              onApplySort={(rules) => {
+                if (rules && rules[0] && rules[0].key) {
+                  setSortBy(rules[0].key);
+                  setSortOrder((rules[0].dir || 'asc').toUpperCase());
+                  if (onShowToast) onShowToast('info', `Sorted by ${rules[0].key} (${(rules[0].dir || 'asc').toUpperCase()})`);
+                }
+              }}
               onResetReport={() => {
                 setVisibleColumnKeys(DEFAULT_CONTACT_COLUMN_KEYS);
                 try {
@@ -1921,6 +2131,8 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
                 setActiveSearch('');
                 setSearchInput('');
                 setShowFilters(false);
+                setAppliedGroupBy(null);
+                setAppliedPivot(null);
                 setLimit(50);
                 setPage(1);
                 if (onShowToast) onShowToast('info', 'Report reset to default configuration.');
@@ -1930,6 +2142,10 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
                 setPage(1);
               }}
               currentRows={limit}
+              isEditableGrid={true}
+              hasSelection={selectedIds.size > 0}
+              onSelectAll={handleToggleSelectAll}
+              onDeselectAll={() => setSelectedIds(new Set())}
             />
           </div>
         </div>
@@ -1990,6 +2206,290 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
         onClearAll={() => setAggregations([])}
       />
 
+      {/* Active Group By View Banner & Group By Table */}
+      {appliedGroupBy && groupByMatrixData && (
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div
+            className="apex-active-groupby-banner"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 14px',
+              backgroundColor: '#f5f3ff',
+              border: '1px solid #ddd6fe',
+              borderRadius: '6px',
+              marginBottom: '10px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#7048e8' }}>
+                Active Group By View:
+              </span>
+              <span style={{ fontSize: '0.8rem', color: '#1e293b' }}>
+                Grouped by <strong>{groupByMatrixData.activeCols.map((c) => CONTACT_ALL_COLUMNS.find((col) => col.key === c)?.label || c).join(' / ')}</strong> — Function: <strong>{groupByMatrixData.func}</strong> ({groupByMatrixData.measureColumn})
+              </span>
+              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                ({groupByMatrixData.rows.length} groups, {groupByMatrixData.totalCount} records)
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setShowGroupByModal(true)}
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #c084fc',
+                  color: '#7048e8',
+                  borderRadius: '4px',
+                  padding: '4px 10px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Edit Group By
+              </button>
+              <button
+                type="button"
+                onClick={() => setAppliedGroupBy(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#9333ea',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  padding: '4px 8px',
+                }}
+              >
+                ✕ Remove Group By
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="dense-table-wrapper"
+            style={{
+              overflowX: 'auto',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              backgroundColor: '#ffffff',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                  {groupByMatrixData.activeCols.map((colKey) => (
+                    <th key={colKey} style={{ padding: '8px 14px', fontWeight: 700, color: '#1e293b', borderRight: '1px solid #e2e8f0' }}>
+                      {CONTACT_ALL_COLUMNS.find((c) => c.key === colKey)?.label || colKey}
+                    </th>
+                  ))}
+                  <th style={{ padding: '8px 14px', fontWeight: 700, color: '#7048e8', textAlign: 'right', backgroundColor: '#faf5ff' }}>
+                    {groupByMatrixData.label}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {groupByMatrixData.rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={groupByMatrixData.activeCols.length + 1} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                      No group by data to display.
+                    </td>
+                  </tr>
+                ) : (
+                  groupByMatrixData.rows.map((r, rIdx) => (
+                    <tr
+                      key={rIdx}
+                      style={{
+                        borderBottom: '1px solid #f1f5f9',
+                        backgroundColor: rIdx % 2 === 1 ? '#fafafa' : '#ffffff',
+                      }}
+                    >
+                      {groupByMatrixData.activeCols.map((colKey) => (
+                        <td
+                          key={colKey}
+                          style={{
+                            padding: '7px 14px',
+                            fontWeight: 600,
+                            color: '#1e293b',
+                            borderRight: '1px solid #e2e8f0',
+                          }}
+                        >
+                          {r.colValues[colKey]}
+                        </td>
+                      ))}
+                      <td
+                        style={{
+                          padding: '7px 14px',
+                          textAlign: 'right',
+                          fontWeight: 700,
+                          color: '#7048e8',
+                          backgroundColor: '#faf5ff',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}
+                      >
+                        {r.computedDisplay}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+              {groupByMatrixData.sum && groupByMatrixData.rows.length > 0 && (
+                <tfoot>
+                  <tr style={{ backgroundColor: '#f1f5f9', borderTop: '2px solid #cbd5e1', fontWeight: 700 }}>
+                    <td
+                      colSpan={groupByMatrixData.activeCols.length}
+                      style={{ padding: '8px 14px', color: '#0f172a', borderRight: '1px solid #e2e8f0' }}
+                    >
+                      Total ({groupByMatrixData.rows.length} groups, {groupByMatrixData.totalCount} records)
+                    </td>
+                    <td style={{ padding: '8px 14px', textAlign: 'right', color: '#7048e8', backgroundColor: '#f3e8ff' }}>
+                      {groupByMatrixData.grandTotalComputed}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Active Pivot View Banner & Pivot Table */}
+      {appliedPivot && pivotMatrixData && (
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div
+            className="apex-active-pivot-banner"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 14px',
+              backgroundColor: '#faf5ff',
+              border: '1px solid #d8b4fe',
+              borderRadius: '6px',
+              marginBottom: '10px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#7048e8' }}>
+                Active Pivot View:
+              </span>
+              <span style={{ fontSize: '0.8rem', color: '#1e293b' }}>
+                Rows: <strong>{appliedPivot.rowColumn}</strong> × Columns: <strong>{appliedPivot.pivotColumn}</strong> ({appliedPivot.func} aggregation)
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setAppliedPivot(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#9333ea',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  padding: '4px 8px',
+                }}
+              >
+                ✕ Remove Pivot
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="dense-table-wrapper"
+            style={{
+              overflowX: 'auto',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              backgroundColor: '#ffffff',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                  <th style={{ padding: '8px 14px', fontWeight: 700, color: '#1e293b', borderRight: '1px solid #e2e8f0' }}>
+                    {pivotMatrixData.rowColumn} \ {pivotMatrixData.pivotColumn}
+                  </th>
+                  {pivotMatrixData.colHeaders.map((cH) => (
+                    <th key={cH} style={{ padding: '8px 12px', fontWeight: 700, color: '#1e293b', textAlign: 'right', borderRight: '1px solid #f1f5f9' }}>
+                      {cH}
+                    </th>
+                  ))}
+                  <th style={{ padding: '8px 14px', fontWeight: 700, color: '#7048e8', textAlign: 'right', backgroundColor: '#faf5ff' }}>
+                    Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {pivotMatrixData.rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={pivotMatrixData.colHeaders.length + 2} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                      No pivot data to display.
+                    </td>
+                  </tr>
+                ) : (
+                  pivotMatrixData.rows.map((r, rIdx) => (
+                    <tr
+                      key={rIdx}
+                      style={{
+                        borderBottom: '1px solid #f1f5f9',
+                        backgroundColor: rIdx % 2 === 1 ? '#fafafa' : '#ffffff',
+                      }}
+                    >
+                      <td style={{ padding: '7px 14px', fontWeight: 600, color: '#1e293b', borderRight: '1px solid #e2e8f0' }}>
+                        {r.rVal}
+                      </td>
+                      {pivotMatrixData.colHeaders.map((cH) => {
+                        const cellVal = r.cells[cH];
+                        return (
+                          <td
+                            key={cH}
+                            style={{
+                              padding: '7px 12px',
+                              textAlign: 'right',
+                              color: cellVal ? '#0f172a' : '#94a3b8',
+                              borderRight: '1px solid #f1f5f9',
+                              fontVariantNumeric: 'tabular-nums',
+                            }}
+                          >
+                            {cellVal ? cellVal.toLocaleString() : '-'}
+                          </td>
+                        );
+                      })}
+                      <td style={{ padding: '7px 14px', textAlign: 'right', fontWeight: 700, color: '#7048e8', backgroundColor: '#faf5ff' }}>
+                        {r.rowTotal.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+              {pivotMatrixData.rows.length > 0 && (
+                <tfoot>
+                  <tr style={{ backgroundColor: '#f1f5f9', borderTop: '2px solid #cbd5e1', fontWeight: 700 }}>
+                    <td style={{ padding: '8px 14px', color: '#0f172a', borderRight: '1px solid #e2e8f0' }}>
+                      Total ({pivotMatrixData.rows.length} rows)
+                    </td>
+                    {pivotMatrixData.colHeaders.map((cH) => (
+                      <td key={cH} style={{ padding: '8px 12px', textAlign: 'right', color: '#0f172a', borderRight: '1px solid #e2e8f0' }}>
+                        {pivotMatrixData.colTotals[cH]?.toLocaleString() || 0}
+                      </td>
+                    ))}
+                    <td style={{ padding: '8px 14px', textAlign: 'right', color: '#7048e8', backgroundColor: '#f3e8ff' }}>
+                      {pivotMatrixData.grandTotal.toLocaleString()}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Dense Wide Data Table strictly ordered matching 42 Contact Columns */}
       <div className="dense-table-wrapper" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
         {loading ? (
@@ -2017,7 +2517,7 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
                   <input
                     type="checkbox"
                     className="table-checkbox"
-                    checked={totalCount > 0 && selectedIds.size === totalCount}
+                    checked={totalCount > 0 && selectedIds.size >= totalCount}
                     ref={(el) => {
                       if (el) {
                         el.indeterminate = selectedIds.size > 0 && selectedIds.size < totalCount;
@@ -2025,7 +2525,7 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
                     }}
                     onChange={handleToggleSelectAll}
                     title={
-                      selectedIds.size === totalCount && totalCount > 0
+                      selectedIds.size >= totalCount && totalCount > 0
                         ? `All ${totalCount} records throughout report selected`
                         : `Select all ${totalCount} records throughout report`
                     }
@@ -2147,6 +2647,24 @@ export default function ContactReport({ onShowToast, onNavigateToCompany, initia
           if (onShowToast) onShowToast('info', 'Aggregation removed.');
         }}
       />
+      {/* Group By Modal */}
+      {showGroupByModal && (
+        <ApexGroupByModal
+          isOpen={showGroupByModal}
+          onClose={() => setShowGroupByModal(false)}
+          columns={CONTACT_ALL_COLUMNS}
+          data={contacts}
+          initialGroupBy={appliedGroupBy}
+          onApplyGroupBy={(newGroup) => {
+            setAppliedGroupBy(newGroup);
+            if (newGroup && onShowToast) {
+              onShowToast('success', `Applied Group By: ${newGroup.groupColumn} (${newGroup.func})`);
+            } else if (!newGroup && onShowToast) {
+              onShowToast('info', 'Group By view removed.');
+            }
+          }}
+        />
+      )}
       {/* Oracle APEX Interactive Column Header Menu */}
       <ApexColumnHeaderMenu
         isOpen={headerMenu.isOpen}

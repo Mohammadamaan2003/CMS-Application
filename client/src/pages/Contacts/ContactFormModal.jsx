@@ -216,7 +216,7 @@ export default function ContactFormModal({
         <div className="modal-footer">
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-secondary btn-apex-cancel"
             onClick={onClose}
             disabled={isLoading}
           >
@@ -224,7 +224,7 @@ export default function ContactFormModal({
           </button>
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary btn-apex-create"
             disabled={isLoading}
           >
             {isLoading

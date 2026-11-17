@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '../../api/client';
 import ValidationRulesModal from '../../components/ValidationRulesModal';
+import ApexActionsMenu from '../../components/ApexActionsMenu';
+import ApexHelpModal from '../../components/ApexHelpModal';
 import {
   IconUploadCloud,
   IconDownload,
   IconChevronRight,
   IconChevronLeft,
+  IconChevronDown,
   IconCheckCircle,
   IconAlertTriangle,
   IconClose,
@@ -155,7 +158,10 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
           return (
             clean === 'companyname' ||
             clean === 'compname' ||
+            clean === 'company' ||
             clean === 'name' ||
+            clean === 'organization' ||
+            clean === 'orgname' ||
             clean === 'companyid' ||
             clean === 'compid' ||
             clean === 'id'
@@ -173,17 +179,21 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
         for (let i = 0; i < parsed.length; i++) {
           const r = parsed[i];
           const cName = String(
-            r['Company Name'] || r['company_name'] || r['comp_name'] || r['Name'] || r['name'] || ''
+            r['Company Name'] || r['company_name'] || r['comp_name'] || r['Company'] || r['company'] || r['Name'] || r['name'] || r['Organization'] || ''
           ).trim();
           const cId = String(
             r['Company ID'] || r['Comp Id'] || r['comp_id'] || r['id'] || ''
           ).trim();
+          const lowerName = cName.toLowerCase();
+          const lowerId = cId.toLowerCase();
           if (
-            cName === 'Company_Categories' ||
-            cId === 'Company_Categories' ||
-            cName === 'Company_Type' ||
-            cId === 'Company_Type' ||
-            r['Company_Categories'] !== undefined
+            lowerName === 'company_categories' ||
+            lowerName === 'company categories' ||
+            lowerName === 'company_type' ||
+            lowerName === 'company type' ||
+            lowerName === '--- reference data ---' ||
+            lowerId === 'company_categories' ||
+            lowerId === 'company_type'
           ) {
             break; // Stop parsing: reached reference section
           }
@@ -358,6 +368,9 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
     handleRecheck();
   };
 
+  // Re-check alias for ApexActionsMenu and revert handlers
+  const handleRecheckValidation = handleRecheck;
+
   // STEP 2: Add blank row to preview grid
   const handleAddRow = () => {
     const newRowNo = editableRows.length > 0 ? Math.max(...editableRows.map((r) => r.excel_row_no || 0)) + 1 : 2;
@@ -451,6 +464,67 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
         );
       }
     });
+  };
+
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  const handleDeselectAll = () => {
+    setSelectedRowIds(new Set());
+  };
+
+  const handleInvertSelection = () => {
+    const next = new Set();
+    editableRows.forEach((r) => {
+      if (!selectedRowIds.has(r.stg_id)) next.add(r.stg_id);
+    });
+    setSelectedRowIds(next);
+  };
+
+  const handleCopyToClipboard = () => {
+    const rowsToCopy = selectedRowIds.size > 0
+      ? editableRows.filter((r) => selectedRowIds.has(r.stg_id))
+      : editableRows;
+    if (rowsToCopy.length === 0) return;
+    const headers = ['Company Name', 'Website', 'Country', 'State', 'City', 'Industry'];
+    const lines = [headers.join('\t')];
+    rowsToCopy.forEach((r) => {
+      lines.push([r.comp_name || '', r.website || '', r.country || '', r.state || '', r.city || '', r.industry || ''].join('\t'));
+    });
+    navigator.clipboard.writeText(lines.join('\n'));
+    if (onShowToast) onShowToast('success', `Copied ${rowsToCopy.length} rows to clipboard (TSV).`);
+  };
+
+  const handleRevertEdits = () => {
+    if (window.confirm('Revert all unsaved staging edits back to original file validation?')) {
+      handleRecheckValidation();
+      if (onShowToast) onShowToast('info', 'Reverted staging rows.');
+    }
+  };
+
+  const handleDownloadStagingCsv = () => {
+    if (editableRows.length === 0) return;
+    const headers = ['Stg Id', 'Company Name', 'Website', 'Country', 'State', 'City', 'Industry', 'Status'];
+    const lines = [headers.join(',')];
+    editableRows.forEach((r) => {
+      lines.push([
+        `"${r.stg_id || ''}"`,
+        `"${r.comp_name || ''}"`,
+        `"${r.website || ''}"`,
+        `"${r.country || ''}"`,
+        `"${r.state || ''}"`,
+        `"${r.city || ''}"`,
+        `"${r.industry || ''}"`,
+        `"${r.row_status || ''}"`
+      ].join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `company_staging_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (onShowToast) onShowToast('success', `Exported ${editableRows.length} staging rows to CSV.`);
   };
 
   // STEP 2: Download Error Rows CSV (matching Screenshot 3)
@@ -691,15 +765,13 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
             <button
               type="button"
               onClick={onNavigateToCompanies}
+              className="btn-secondary btn-apex-cancel"
               style={{
                 height: '36px',
                 padding: '0 1.25rem',
-                backgroundColor: '#f1f5f9',
-                border: '1px solid #cbd5e1',
                 borderRadius: '4px',
                 fontSize: '0.825rem',
                 fontWeight: 600,
-                color: '#334155',
                 cursor: 'pointer',
               }}
             >
@@ -716,14 +788,14 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  backgroundColor: currentStep === 1 ? '#071531' : '#16a34a',
+                  backgroundColor: currentStep === 1 ? 'var(--primary-blue, #2563eb)' : '#16a34a',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 700,
                   fontSize: '0.85rem',
-                  boxShadow: currentStep === 1 ? '0 0 0 3px rgba(7, 21, 49, 0.15)' : 'none',
+                  boxShadow: currentStep === 1 ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
                 }}
               >
                 {currentStep > 1 ? '✓' : '1'}
@@ -732,7 +804,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                 style={{
                   fontSize: '0.825rem',
                   fontWeight: currentStep === 1 ? 700 : 600,
-                  color: currentStep === 1 ? '#1e293b' : '#64748b',
+                  color: currentStep === 1 ? 'var(--text-main, #f8fafc)' : 'var(--text-muted, #94a3b8)',
                 }}
               >
                 Upload Company
@@ -744,7 +816,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
               style={{
                 width: '60px',
                 height: '2px',
-                backgroundColor: currentStep >= 2 ? '#16a34a' : '#e2e8f0',
+                backgroundColor: currentStep >= 2 ? '#16a34a' : 'var(--border, #334155)',
                 marginTop: '-18px',
               }}
             />
@@ -756,15 +828,15 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  backgroundColor: currentStep === 2 ? '#071531' : currentStep > 2 ? '#16a34a' : '#ffffff',
-                  color: currentStep >= 2 ? '#ffffff' : '#64748b',
-                  border: currentStep < 2 ? '2px solid #cbd5e1' : 'none',
+                  backgroundColor: currentStep === 2 ? 'var(--primary-blue, #2563eb)' : currentStep > 2 ? '#16a34a' : 'var(--bg-muted, #15223c)',
+                  color: currentStep >= 2 ? '#ffffff' : 'var(--text-muted, #94a3b8)',
+                  border: currentStep < 2 ? '1px solid var(--border, #334155)' : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 700,
                   fontSize: '0.85rem',
-                  boxShadow: currentStep === 2 ? '0 0 0 3px rgba(7, 21, 49, 0.15)' : 'none',
+                  boxShadow: currentStep === 2 ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
                 }}
               >
                 {currentStep > 2 ? '✓' : '2'}
@@ -773,7 +845,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                 style={{
                   fontSize: '0.825rem',
                   fontWeight: currentStep === 2 ? 700 : 500,
-                  color: currentStep === 2 ? '#1e293b' : '#64748b',
+                  color: currentStep === 2 ? 'var(--text-main, #f8fafc)' : 'var(--text-muted, #94a3b8)',
                 }}
               >
                 Validate & Preview
@@ -785,7 +857,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
               style={{
                 width: '60px',
                 height: '2px',
-                backgroundColor: currentStep >= 3 ? '#16a34a' : '#e2e8f0',
+                backgroundColor: currentStep >= 3 ? '#16a34a' : 'var(--border, #334155)',
                 marginTop: '-18px',
               }}
             />
@@ -797,15 +869,15 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  backgroundColor: currentStep === 3 ? (importCompleted ? '#16a34a' : '#071531') : '#ffffff',
-                  color: currentStep === 3 ? '#ffffff' : '#64748b',
-                  border: currentStep < 3 ? '2px solid #cbd5e1' : 'none',
+                  backgroundColor: currentStep === 3 ? (importCompleted ? '#16a34a' : 'var(--primary-blue, #2563eb)') : 'var(--bg-muted, #15223c)',
+                  color: currentStep === 3 ? '#ffffff' : 'var(--text-muted, #94a3b8)',
+                  border: currentStep < 3 ? '1px solid var(--border, #334155)' : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 700,
                   fontSize: '0.85rem',
-                  boxShadow: currentStep === 3 ? '0 0 0 3px rgba(7, 21, 49, 0.15)' : 'none',
+                  boxShadow: currentStep === 3 ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
                 }}
               >
                 {importCompleted ? '✓' : '3'}
@@ -814,7 +886,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                 style={{
                   fontSize: '0.825rem',
                   fontWeight: currentStep === 3 ? 700 : 500,
-                  color: currentStep === 3 ? '#1e293b' : '#64748b',
+                  color: currentStep === 3 ? 'var(--text-main, #f8fafc)' : 'var(--text-muted, #94a3b8)',
                 }}
               >
                 Import
@@ -829,18 +901,13 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                 type="button"
                 onClick={handleProceedToValidate}
                 disabled={!selectedFile || !uploadMode || rawRows.length === 0 || validating}
+                className="btn-primary"
                 style={{
                   height: '36px',
                   padding: '0 1.5rem',
-                  backgroundColor:
-                    !selectedFile || !uploadMode || rawRows.length === 0 || validating ? '#94a3b8' : '#071531',
-                  color: '#ffffff',
-                  border: 'none',
                   borderRadius: '6px',
                   fontSize: '0.825rem',
                   fontWeight: 600,
-                  cursor:
-                    !selectedFile || !uploadMode || rawRows.length === 0 || validating ? 'not-allowed' : 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -856,22 +923,16 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                 type="button"
                 onClick={handleProceedToImport}
                 disabled={validationSummary.new + validationSummary.update === 0}
+                className="btn-primary"
                 style={{
                   height: '36px',
                   padding: '0 1.5rem',
-                  backgroundColor:
-                    validationSummary.new + validationSummary.update === 0 ? '#94a3b8' : '#071531',
-                  color: '#ffffff',
-                  border: 'none',
                   borderRadius: '6px',
                   fontSize: '0.825rem',
                   fontWeight: 600,
-                  cursor:
-                    validationSummary.new + validationSummary.update === 0 ? 'not-allowed' : 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                 }}
               >
                 <span>Import Valid Rows</span>
@@ -884,15 +945,13 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                 type="button"
                 onClick={() => setCurrentStep(2)}
                 disabled={importing}
+                className="btn-secondary"
                 style={{
                   height: '36px',
                   padding: '0 1.25rem',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
                   borderRadius: '4px',
                   fontSize: '0.825rem',
                   fontWeight: 600,
-                  color: '#334155',
                   cursor: importing ? 'not-allowed' : 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -912,7 +971,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Upload Mode Section */}
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#1e293b', minWidth: '120px' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main, #f8fafc)', minWidth: '120px' }}>
                 Upload Mode
               </label>
 
@@ -923,12 +982,13 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                   height: '38px',
                   minWidth: '260px',
                   borderRadius: '4px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--border, #38bdf8)',
                   padding: '0 0.75rem',
                   fontSize: '0.85rem',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: 'var(--bg-input, #0b1325)',
                   fontWeight: 500,
-                  color: '#1e293b',
+                  color: 'var(--text-main, #f8fafc)',
+                  cursor: 'pointer',
                 }}
               >
                 <option value="">-- Select Mode --</option>
@@ -939,22 +999,20 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
               <button
                 type="button"
                 onClick={() => setShowValidationRules(true)}
+                className="btn-outline"
                 style={{
                   height: '38px',
                   padding: '0 1.15rem',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
                   borderRadius: '4px',
                   fontSize: '0.825rem',
                   fontWeight: 600,
-                  color: '#2563eb',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
                 }}
               >
-                <span style={{ fontSize: '0.9rem' }}>ⓘ</span>
+                <span style={{ fontSize: '0.9rem', color: '#38bdf8' }}>ⓘ</span>
                 <span>Validation Rules</span>
               </button>
             </div>
@@ -962,27 +1020,27 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
             {/* Mode Explanation Notice */}
             <div
               style={{
-                backgroundColor: '#f8fafc',
-                border: '1px solid #e2e8f0',
+                backgroundColor: 'var(--bg-muted, #15223c)',
+                border: '1px solid var(--border, #334155)',
                 borderRadius: '6px',
                 padding: '0.75rem 1rem',
                 fontSize: '0.8rem',
-                color: '#475569',
+                color: 'var(--text-muted, #cbd5e1)',
               }}
             >
               {uploadMode === 'insert' && (
                 <div>
-                  <strong>Mode: Insert New Records Only</strong> — Adds new company rows into the database. Records that match an existing company name, website, or email will be flagged as duplicate errors.
+                  <strong style={{ color: 'var(--text-main, #ffffff)' }}>Mode: Insert New Records Only</strong> — Adds new company rows into the database. Records that match an existing company name, website, or email will be flagged as duplicate errors.
                 </div>
               )}
               {uploadMode === 'update' && (
                 <div>
-                  <strong>Mode: Update Existing Records</strong> — Matches records by Company ID or existing name and updates master attributes. Rows not found in the database will be flagged as errors.
+                  <strong style={{ color: 'var(--text-main, #ffffff)' }}>Mode: Update Existing Records</strong> — Matches records by Company ID or existing name and updates master attributes. Rows not found in the database will be flagged as errors.
                 </div>
               )}
               {uploadMode === 'merge' && (
                 <div>
-                  <strong>Mode: Insert and Update (Merge)</strong> — If a company already exists in the database, it will be updated; otherwise, a new company record will be inserted.
+                  <strong style={{ color: 'var(--text-main, #ffffff)' }}>Mode: Insert and Update (Merge)</strong> — If a company already exists in the database, it will be updated; otherwise, a new company record will be inserted.
                 </div>
               )}
               {!uploadMode && <div>Please select an upload mode above to specify how incoming records should be handled.</div>}
@@ -990,19 +1048,20 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
 
             {/* Excel / CSV file Dropzone Section */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main, #f8fafc)', marginBottom: '0.5rem' }}>
                 Excel / CSV file
               </label>
 
               <div
                 style={{
-                  border: isDragging ? '2px dashed #2563eb' : '1px dashed #cbd5e1',
-                  backgroundColor: isDragging ? '#eff6ff' : '#f8fafc',
+                  border: isDragging ? '2px dashed #38bdf8' : '1px dashed var(--border, #334155)',
+                  backgroundColor: isDragging ? 'var(--primary-light, rgba(56, 189, 248, 0.12))' : 'var(--bg-surface, #101a2f)',
                   borderRadius: '6px',
                   padding: '2rem 1.5rem',
                   textAlign: 'center',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 }}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -1025,13 +1084,13 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                     <div style={{ color: '#16a34a', display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
                       <IconCheckCircle size={32} />
                     </div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main, #f8fafc)' }}>
                       {selectedFile.name}
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted, #94a3b8)', marginTop: '4px' }}>
                       {(selectedFile.size / 1024).toFixed(1)} KB &bull; {rawRows.length} rows staged &bull; Encoding: UTF-8
                     </div>
-                    <div style={{ color: '#2563eb', fontSize: '0.8rem', fontWeight: 600, marginTop: '8px' }}>
+                    <div style={{ color: '#38bdf8', fontSize: '0.8rem', fontWeight: 600, marginTop: '8px' }}>
                       Click or drag to replace this file
                     </div>
                   </div>
@@ -1041,18 +1100,18 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                       style={{
                         display: 'inline-block',
                         padding: '0.45rem 1.25rem',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
+                        backgroundColor: 'var(--bg-muted, #15223c)',
+                        border: '1px solid var(--border, #38bdf8)',
                         borderRadius: '4px',
                         fontSize: '0.85rem',
                         fontWeight: 600,
-                        color: '#1e293b',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        color: 'var(--text-main, #f8fafc)',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
                       }}
                     >
                       Choose File
                     </span>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.75rem' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted, #94a3b8)', marginTop: '0.75rem' }}>
                       Drag and drop your spreadsheet here or click to browse. Supports <strong>CSV (.csv)</strong> and <strong>Excel (.xlsx, .xls)</strong> up to 10 MB.
                     </div>
                   </div>
@@ -1117,17 +1176,19 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
             {/* CARD 1: SUMMARY (Matching Screenshot 1)                  */}
             {/* -------------------------------------------------------- */}
             <div
+              className="upload-summary-card apex-card"
               style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #cbd5e1',
+                backgroundColor: 'var(--bg-surface, #ffffff)',
+                border: '1px solid var(--border, #cbd5e1)',
                 borderRadius: '6px',
                 overflow: 'hidden',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               }}
             >
               <div
+                className="upload-card-header"
                 style={{
-                  backgroundColor: '#071531',
+                  backgroundColor: 'var(--bg-card-header, #071531)',
                   color: '#ffffff',
                   padding: '0.65rem 1.25rem',
                   fontWeight: 700,
@@ -1138,49 +1199,50 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                 Summary
               </div>
 
-              <div style={{ padding: '1rem', backgroundColor: '#ffffff' }}>
-                <div style={{ maxWidth: '450px', border: '1px solid #e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}>
+              <div className="upload-summary-content" style={{ padding: '1rem', backgroundColor: 'var(--bg-surface, #ffffff)' }}>
+                <div className="upload-summary-box" style={{ maxWidth: '450px', border: '1px solid var(--border, #e2e8f0)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <table className="upload-summary-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}>
                     <thead>
-                      <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                        <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontWeight: 600, color: '#334155' }}>
+                      <tr style={{ backgroundColor: 'var(--bg-table-header, #f8fafc)', borderBottom: '1px solid var(--border, #e2e8f0)' }}>
+                        <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted, #334155)' }}>
                           Total ↑
                         </th>
-                        <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontWeight: 600, color: '#334155' }}>
+                        <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted, #334155)' }}>
                           New
                         </th>
-                        <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontWeight: 600, color: '#334155' }}>
+                        <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted, #334155)' }}>
                           Update
                         </th>
-                        <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontWeight: 600, color: '#334155' }}>
+                        <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted, #334155)' }}>
                           Errors
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr style={{ backgroundColor: '#ffffff' }}>
-                        <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: '#0f172a' }}>
+                      <tr style={{ backgroundColor: 'var(--bg-surface, #ffffff)' }}>
+                        <td className="summary-val-total" style={{ padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-main, #0f172a)' }}>
                           {validationSummary.total}
                         </td>
-                        <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#16a34a' }}>
+                        <td className="summary-val-new" style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--success, #16a34a)' }}>
                           {validationSummary.new || 0}
                         </td>
-                        <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#2563eb' }}>
+                        <td className="summary-val-update" style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--primary, #2563eb)' }}>
                           {validationSummary.update || 0}
                         </td>
-                        <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: validationSummary.errors > 0 ? '#dc2626' : '#64748b' }}>
+                        <td className="summary-val-errors" style={{ padding: '0.75rem 1rem', fontWeight: 700, color: validationSummary.errors > 0 ? 'var(--danger, #dc2626)' : 'var(--text-muted, #64748b)' }}>
                           {validationSummary.errors || 0}
                         </td>
                       </tr>
                     </tbody>
                   </table>
                   <div
+                    className="upload-summary-pagination"
                     style={{
                       padding: '0.45rem 1rem',
-                      borderTop: '1px solid #f1f5f9',
+                      borderTop: '1px solid var(--border, #f1f5f9)',
                       fontSize: '0.75rem',
-                      color: '#64748b',
-                      backgroundColor: '#ffffff',
+                      color: 'var(--text-muted, #64748b)',
+                      backgroundColor: 'var(--bg-surface, #ffffff)',
                     }}
                   >
                     1 - 1
@@ -1194,9 +1256,10 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
             {/* (Matching Screenshot 1 & 2)                              */}
             {/* -------------------------------------------------------- */}
             <div
+              className="upload-preview-card apex-card"
               style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #cbd5e1',
+                backgroundColor: 'var(--bg-surface, #ffffff)',
+                border: '1px solid var(--border, #cbd5e1)',
                 borderRadius: '6px',
                 overflow: 'hidden',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
@@ -1204,8 +1267,9 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
             >
               {/* Card Header with 'Preview - fix any red rows, then Import Source' & '🔄 Re-Check' button */}
               <div
+                className="upload-card-header"
                 style={{
-                  backgroundColor: '#071531',
+                  backgroundColor: 'var(--bg-card-header, #071531)',
                   color: '#ffffff',
                   padding: '0.65rem 1.25rem',
                   display: 'flex',
@@ -1224,10 +1288,11 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                   onClick={handleRecheck}
                   disabled={rechecking}
                   title="Re-validate table rows against CRM database rules"
+                  className="btn-toolbar-recheck"
                   style={{
                     height: '32px',
                     padding: '0 1rem',
-                    backgroundColor: '#071531',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
                     border: '1px solid rgba(255, 255, 255, 0.4)',
                     borderRadius: '4px',
                     color: '#ffffff',
@@ -1239,8 +1304,6 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                     gap: '6px',
                     transition: 'all 0.15s ease',
                   }}
-                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#1e293b')}
-                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#071531')}
                 >
                   <IconRefresh size={14} className={rechecking ? 'spin' : ''} />
                   <span>{rechecking ? 'Re-Checking...' : 'Re-Check'}</span>
@@ -1249,10 +1312,11 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
 
               {/* Interactive Toolbar matching Screenshot 1 & 2 */}
               <div
+                className="upload-preview-toolbar"
                 style={{
                   padding: '0.75rem 1rem',
-                  borderBottom: '1px solid #e2e8f0',
-                  backgroundColor: '#f8fafc',
+                  borderBottom: '1px solid var(--border, #e2e8f0)',
+                  backgroundColor: 'var(--bg-muted, #f8fafc)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -1269,7 +1333,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                         style={{
                           position: 'absolute',
                           left: '8px',
-                          color: '#64748b',
+                          color: 'var(--text-muted, #64748b)',
                           pointerEvents: 'none',
                         }}
                       >
@@ -1277,6 +1341,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                       </span>
                       <input
                         type="text"
+                        className="upload-search-input"
                         placeholder="Search: All Text Columns"
                         value={previewSearchInput}
                         onChange={(e) => setPreviewSearchInput(e.target.value)}
@@ -1289,16 +1354,18 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                         style={{
                           height: '32px',
                           padding: '0 0.5rem 0 28px',
-                          border: '1px solid #cbd5e1',
+                          border: '1px solid var(--border, #cbd5e1)',
                           borderRadius: '4px',
                           fontSize: '0.8rem',
                           width: '210px',
-                          backgroundColor: '#ffffff',
+                          backgroundColor: 'var(--bg-input, #ffffff)',
+                          color: 'var(--text-main, #0f172a)',
                         }}
                       />
                     </div>
                     <button
                       type="button"
+                      className="btn-toolbar-action"
                       onClick={() => {
                         setPreviewSearchQuery(previewSearchInput);
                         setPreviewPage(1);
@@ -1306,12 +1373,12 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                       style={{
                         height: '32px',
                         padding: '0 12px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
+                        backgroundColor: 'var(--bg-surface, #ffffff)',
+                        border: '1px solid var(--border, #cbd5e1)',
                         borderRadius: '4px',
                         fontSize: '0.8rem',
                         fontWeight: 600,
-                        color: '#334155',
+                        color: 'var(--text-main, #334155)',
                         cursor: 'pointer',
                       }}
                     >
@@ -1320,6 +1387,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                     {previewSearchQuery && (
                       <button
                         type="button"
+                        className="btn-toolbar-action"
                         onClick={() => {
                           setPreviewSearchInput('');
                           setPreviewSearchQuery('');
@@ -1329,10 +1397,10 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                         style={{
                           height: '32px',
                           padding: '0 8px',
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #cbd5e1',
+                          backgroundColor: 'var(--bg-surface, #ffffff)',
+                          border: '1px solid var(--border, #cbd5e1)',
                           borderRadius: '4px',
-                          color: '#64748b',
+                          color: 'var(--text-muted, #64748b)',
                           cursor: 'pointer',
                         }}
                       >
@@ -1342,19 +1410,20 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                   </div>
 
                   {/* Actions Dropdown */}
-                  <div style={{ position: 'relative' }}>
+                  <div className="apex-actions-wrapper" style={{ position: 'relative' }}>
                     <button
                       type="button"
+                      className="btn-apex-actions btn-toolbar-action"
                       onClick={() => setShowActionsDropdown(!showActionsDropdown)}
                       style={{
                         height: '32px',
                         padding: '0 12px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
+                        backgroundColor: 'var(--bg-surface, #ffffff)',
+                        border: '1px solid var(--border, #cbd5e1)',
                         borderRadius: '4px',
                         fontSize: '0.8rem',
                         fontWeight: 600,
-                        color: '#334155',
+                        color: 'var(--text-main, #334155)',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -1362,106 +1431,60 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                       }}
                     >
                       <span>Actions</span>
-                      <span style={{ fontSize: '0.7rem' }}>▾</span>
+                      <IconChevronDown size={13} />
                     </button>
 
-                    {showActionsDropdown && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '36px',
-                          left: 0,
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '4px',
-                          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-                          zIndex: 50,
-                          minWidth: '180px',
-                          padding: '4px 0',
-                        }}
-                      >
-                        <div
-                          onClick={() => {
-                            handleSelectAllRows();
-                            setShowActionsDropdown(false);
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: '0.8rem',
-                            color: '#334155',
-                            cursor: 'pointer',
-                          }}
-                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
-                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                        >
-                          {selectedRowIds.size === editableRows.length ? 'Deselect All' : 'Select All Rows'}
-                        </div>
-                        {selectedRowIds.size > 0 && (
-                          <div
-                            onClick={() => {
-                              handleDeleteSelected();
-                              setShowActionsDropdown(false);
-                            }}
-                            style={{
-                              padding: '6px 12px',
-                              fontSize: '0.8rem',
-                              color: '#dc2626',
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                            }}
-                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
-                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                          >
-                            Delete Selected ({selectedRowIds.size})
-                          </div>
-                        )}
-                        <div
-                          onClick={() => {
-                            setIsEditingGrid(!isEditingGrid);
-                            setShowActionsDropdown(false);
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: '0.8rem',
-                            color: '#334155',
-                            cursor: 'pointer',
-                          }}
-                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
-                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                        >
-                          {isEditingGrid ? 'Disable Inline Edit' : 'Enable Inline Edit'}
-                        </div>
-                      </div>
-                    )}
+                    <ApexActionsMenu
+                      isOpen={showActionsDropdown}
+                      onClose={() => setShowActionsDropdown(false)}
+                      isEditableGrid={true}
+                      hasSelection={selectedRowIds.size > 0}
+                      onSelectAll={handleSelectAllRows}
+                      onDeselectAll={handleDeselectAll}
+                      onInvertSelection={handleInvertSelection}
+                      onCopyToClipboard={handleCopyToClipboard}
+                      onRevertEdits={handleRevertEdits}
+                      onDeleteSelected={handleDeleteSelected}
+                      onDownload={handleDownloadStagingCsv}
+                      onOpenHelp={() => setShowHelpModal(true)}
+                      onRefresh={handleRecheck}
+                      onChangeRows={(r) => {
+                        setPreviewRowsPerPage(r === 'all' ? editableRows.length : r);
+                        setPreviewPage(1);
+                      }}
+                      currentRows={previewRowsPerPage}
+                    />
                   </div>
 
                   {/* Edit Button */}
                   <button
                     type="button"
+                    className="btn-toolbar-action"
                     onClick={() => setIsEditingGrid(!isEditingGrid)}
                     style={{
                       height: '32px',
                       padding: '0 12px',
-                      backgroundColor: isEditingGrid ? '#071531' : '#ffffff',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: isEditingGrid ? 'var(--primary, #2563eb)' : 'var(--bg-surface, #ffffff)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
                       fontSize: '0.8rem',
                       fontWeight: 600,
-                      color: isEditingGrid ? '#ffffff' : '#334155',
+                      color: isEditingGrid ? '#ffffff' : 'var(--text-main, #334155)',
                       cursor: 'pointer',
                     }}
                   >
                     Edit
                   </button>
 
-                  {/* Save Button (Dark button #1e293b) */}
+                  {/* Save Button */}
                   <button
                     type="button"
                     onClick={handleSaveEdits}
+                    className="btn-primary"
                     style={{
                       height: '32px',
                       padding: '0 14px',
-                      backgroundColor: '#1e293b',
+                      backgroundColor: 'var(--primary, #2563eb)',
                       border: 'none',
                       borderRadius: '4px',
                       fontSize: '0.8rem',
@@ -1476,16 +1499,17 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                   {/* Add Row Button */}
                   <button
                     type="button"
+                    className="btn-toolbar-action"
                     onClick={handleAddRow}
                     style={{
                       height: '32px',
                       padding: '0 12px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: 'var(--bg-surface, #ffffff)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
                       fontSize: '0.8rem',
                       fontWeight: 600,
-                      color: '#334155',
+                      color: 'var(--text-main, #334155)',
                       cursor: 'pointer',
                     }}
                   >
@@ -1497,17 +1521,18 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                 <div>
                   <button
                     type="button"
+                    className="btn-toolbar-action"
                     onClick={handleResetPreview}
                     title="Reset rows to original file values"
                     style={{
                       height: '32px',
                       padding: '0 12px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: 'var(--bg-surface, #ffffff)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
                       fontSize: '0.8rem',
                       fontWeight: 600,
-                      color: '#334155',
+                      color: 'var(--text-main, #334155)',
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -1521,81 +1546,91 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
               </div>
 
               {/* Table Container with Horizontal Scroll */}
-              <div style={{ overflowX: 'auto', maxHeight: '520px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
+              <div className="upload-preview-table-wrapper dense-table-wrapper" style={{ overflowX: 'auto', maxHeight: '520px', backgroundColor: 'var(--bg-surface, #ffffff)' }}>
+                <table className="upload-preview-table dense-table apex-report-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#ffffff', borderBottom: '2px solid #cbd5e1', textAlign: 'left', position: 'sticky', top: 0, zIndex: 10 }}>
+                    <tr style={{ backgroundColor: 'var(--bg-table-header, #ffffff)', borderBottom: '2px solid var(--border, #cbd5e1)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 10 }}>
                       {/* Checkbox Column */}
-                      <th style={{ width: '36px', padding: '0.6rem 0.5rem', textAlign: 'center', backgroundColor: '#ffffff' }}>
+                      <th style={{ width: '36px', padding: '0.6rem 0.5rem', textAlign: 'center', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         <input
                           type="checkbox"
-                          checked={editableRows.length > 0 && selectedRowIds.size === editableRows.length}
+                          checked={editableRows.length > 0 && selectedRowIds.size >= editableRows.length}
+                          ref={(el) => {
+                            if (el) {
+                              el.indeterminate = selectedRowIds.size > 0 && selectedRowIds.size < editableRows.length;
+                            }
+                          }}
                           onChange={handleSelectAllRows}
                           style={{ cursor: 'pointer' }}
+                          title={
+                            selectedRowIds.size >= editableRows.length && editableRows.length > 0
+                              ? `All ${editableRows.length} rows selected`
+                              : `Select all ${editableRows.length} rows throughout report`
+                          }
                         />
                       </th>
                       {/* Row Action/Menu Handle */}
-                      <th style={{ width: '32px', padding: '0.6rem 0.25rem', textAlign: 'center', backgroundColor: '#ffffff' }}>
-                        <IconMenu size={14} style={{ color: '#94a3b8' }} />
+                      <th style={{ width: '32px', padding: '0.6rem 0.25rem', textAlign: 'center', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
+                        <IconMenu size={14} style={{ color: 'var(--text-muted, #94a3b8)' }} />
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '95px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '95px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Excel Row No
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '85px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '85px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Row Status
                       </th>
-                      <th style={{ padding: '0.6rem 0.75rem', minWidth: '280px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.75rem', minWidth: '280px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Error Msg
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '85px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '85px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Comp Id
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '180px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '180px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Comp Name
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '130px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '130px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Technology
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '150px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '150px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Industry
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Company Type
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '130px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '130px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Company Categories
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         City
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Country
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Company Phone
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '160px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '160px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Website
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '120px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '120px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Registration Status
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '120px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '120px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Employee Size
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '160px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '160px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Email
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '90px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '90px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         DA
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '140px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '140px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Remark
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '120px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '120px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Salesperson
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Source
                       </th>
                     </tr>
@@ -1603,7 +1638,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                   <tbody>
                     {pagedPreviewRows.length === 0 ? (
                       <tr>
-                        <td colSpan={22} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                        <td colSpan={22} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted, #94a3b8)' }}>
                           No records match your filter criteria.
                         </td>
                       </tr>
@@ -1616,14 +1651,10 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                         return (
                           <tr
                             key={row.stg_id}
+                            className={`upload-table-row ${isSelected ? 'selected' : isError ? 'error-row' : ''}`}
                             style={{
-                              borderBottom: '1px solid #e2e8f0',
-                              backgroundColor: isSelected
-                                ? '#eff6ff'
-                                : isError
-                                ? '#fef2f2'
-                                : '#ffffff',
-                              borderLeft: isError ? '3px solid #dc2626' : '3px solid transparent',
+                              borderBottom: '1px solid var(--border, #e2e8f0)',
+                              borderLeft: isError ? '3px solid var(--danger, #dc2626)' : '3px solid transparent',
                               transition: 'background-color 0.1s ease',
                             }}
                           >
@@ -1638,57 +1669,27 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                             </td>
 
                             {/* Row Menu Handle */}
-                            <td style={{ textAlign: 'center', padding: '0.45rem 0.25rem', color: '#94a3b8' }}>
+                            <td style={{ textAlign: 'center', padding: '0.45rem 0.25rem', color: 'var(--text-muted, #94a3b8)' }}>
                               <span style={{ cursor: 'grab' }}>≡</span>
                             </td>
 
                             {/* Excel Row No */}
-                            <td style={{ padding: '0.45rem 0.5rem', fontWeight: 600, color: '#334155' }}>
+                            <td style={{ padding: '0.45rem 0.5rem', fontWeight: 600, color: 'var(--text-main, #334155)' }}>
                               {row.excel_row_no}
                             </td>
 
                             {/* Row Status Badge */}
                             <td style={{ padding: '0.45rem 0.5rem' }}>
                               {isError ? (
-                                <span
-                                  style={{
-                                    display: 'inline-block',
-                                    padding: '2px 7px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.7rem',
-                                    fontWeight: 700,
-                                    backgroundColor: '#fee2e2',
-                                    color: '#b91c1c',
-                                  }}
-                                >
+                                <span className="status-badge error">
                                   ERROR
                                 </span>
                               ) : row.row_status === 'UPDATE' ? (
-                                <span
-                                  style={{
-                                    display: 'inline-block',
-                                    padding: '2px 7px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.7rem',
-                                    fontWeight: 700,
-                                    backgroundColor: '#e0e7ff',
-                                    color: '#3730a3',
-                                  }}
-                                >
+                                <span className="status-badge update">
                                   UPDATE
                                 </span>
                               ) : (
-                                <span
-                                  style={{
-                                    display: 'inline-block',
-                                    padding: '2px 7px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.7rem',
-                                    fontWeight: 700,
-                                    backgroundColor: '#dcfce7',
-                                    color: '#15803d',
-                                  }}
-                                >
+                                <span className="status-badge new">
                                   NEW
                                 </span>
                               )}
@@ -1698,7 +1699,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                             <td
                               style={{
                                 padding: '0.45rem 0.75rem',
-                                color: isError ? '#dc2626' : '#15803d',
+                                color: isError ? 'var(--danger, #f87171)' : 'var(--success, #34d399)',
                                 fontWeight: isError ? 600 : 400,
                                 wordBreak: 'break-word',
                               }}
@@ -2072,19 +2073,20 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
 
               {/* Table Footer with Selection Count and Row Count */}
               <div
+                className="upload-preview-footer"
                 style={{
                   padding: '0.65rem 1rem',
-                  borderTop: '1px solid #e2e8f0',
-                  backgroundColor: '#ffffff',
+                  borderTop: '1px solid var(--border, #e2e8f0)',
+                  backgroundColor: 'var(--bg-surface, #ffffff)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   fontSize: '0.75rem',
-                  color: '#64748b',
+                  color: 'var(--text-muted, #64748b)',
                 }}
               >
                 <div>
-                  <strong>{selectedRowIds.size}</strong> rows selected
+                  <strong style={{ color: 'var(--text-main, #0f172a)' }}>{selectedRowIds.size}</strong> rows selected
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -2097,13 +2099,14 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                       type="button"
                       disabled={previewPage <= 1}
                       onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
+                      className="btn-toolbar-action"
                       style={{
                         padding: '2px 6px',
-                        border: '1px solid #cbd5e1',
+                        border: '1px solid var(--border, #cbd5e1)',
                         borderRadius: '3px',
-                        backgroundColor: previewPage <= 1 ? '#f8fafc' : '#ffffff',
+                        backgroundColor: previewPage <= 1 ? 'var(--bg-muted, #f8fafc)' : 'var(--bg-surface, #ffffff)',
                         cursor: previewPage <= 1 ? 'not-allowed' : 'pointer',
-                        color: previewPage <= 1 ? '#94a3b8' : '#334155',
+                        color: previewPage <= 1 ? 'var(--text-disabled, #94a3b8)' : 'var(--text-main, #334155)',
                       }}
                     >
                       &lt;
@@ -2112,13 +2115,14 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                       type="button"
                       disabled={previewEnd >= previewTotal}
                       onClick={() => setPreviewPage((p) => p + 1)}
+                      className="btn-toolbar-action"
                       style={{
                         padding: '2px 6px',
-                        border: '1px solid #cbd5e1',
+                        border: '1px solid var(--border, #cbd5e1)',
                         borderRadius: '3px',
-                        backgroundColor: previewEnd >= previewTotal ? '#f8fafc' : '#ffffff',
+                        backgroundColor: previewEnd >= previewTotal ? 'var(--bg-muted, #f8fafc)' : 'var(--bg-surface, #ffffff)',
                         cursor: previewEnd >= previewTotal ? 'not-allowed' : 'pointer',
-                        color: previewEnd >= previewTotal ? '#94a3b8' : '#334155',
+                        color: previewEnd >= previewTotal ? 'var(--text-disabled, #94a3b8)' : 'var(--text-main, #334155)',
                       }}
                     >
                       &gt;
@@ -2134,9 +2138,10 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
             {/* CARD 3: ERROR ROWS (DOWNLOAD TO FIX) (Matching Screen 3) */}
             {/* -------------------------------------------------------- */}
             <div
+              className="upload-error-card apex-card"
               style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #cbd5e1',
+                backgroundColor: 'var(--bg-surface, #ffffff)',
+                border: '1px solid var(--border, #cbd5e1)',
                 borderRadius: '6px',
                 overflow: 'hidden',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
@@ -2144,8 +2149,9 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
             >
               {/* Header */}
               <div
+                className="upload-card-header"
                 style={{
-                  backgroundColor: '#071531',
+                  backgroundColor: 'var(--bg-card-header, #071531)',
                   color: '#ffffff',
                   padding: '0.65rem 1.25rem',
                   fontWeight: 700,
@@ -2158,10 +2164,11 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
 
               {/* Toolbar */}
               <div
+                className="upload-preview-toolbar"
                 style={{
                   padding: '0.75rem 1rem',
-                  borderBottom: '1px solid #e2e8f0',
-                  backgroundColor: '#f8fafc',
+                  borderBottom: '1px solid var(--border, #e2e8f0)',
+                  backgroundColor: 'var(--bg-muted, #f8fafc)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -2176,7 +2183,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                       style={{
                         position: 'absolute',
                         left: '8px',
-                        color: '#64748b',
+                        color: 'var(--text-muted, #64748b)',
                         pointerEvents: 'none',
                       }}
                     >
@@ -2193,19 +2200,22 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                           setErrorPage(1);
                         }
                       }}
+                      className="upload-search-input"
                       style={{
                         height: '32px',
                         padding: '0 0.5rem 0 28px',
-                        border: '1px solid #cbd5e1',
+                        border: '1px solid var(--border, #cbd5e1)',
                         borderRadius: '4px',
                         fontSize: '0.8rem',
                         width: '180px',
-                        backgroundColor: '#ffffff',
+                        backgroundColor: 'var(--bg-input, #ffffff)',
+                        color: 'var(--text-main, #0f172a)',
                       }}
                     />
                   </div>
                   <button
                     type="button"
+                    className="btn-toolbar-action"
                     onClick={() => {
                       setErrorSearchQuery(errorSearchInput);
                       setErrorPage(1);
@@ -2213,12 +2223,12 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                     style={{
                       height: '32px',
                       padding: '0 12px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: 'var(--bg-surface, #ffffff)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
                       fontSize: '0.8rem',
                       fontWeight: 600,
-                      color: '#334155',
+                      color: 'var(--text-main, #334155)',
                       cursor: 'pointer',
                     }}
                   >
@@ -2227,6 +2237,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                   {errorSearchQuery && (
                     <button
                       type="button"
+                      className="btn-toolbar-action"
                       onClick={() => {
                         setErrorSearchInput('');
                         setErrorSearchQuery('');
@@ -2236,10 +2247,10 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                       style={{
                         height: '32px',
                         padding: '0 8px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
+                        backgroundColor: 'var(--bg-surface, #ffffff)',
+                        border: '1px solid var(--border, #cbd5e1)',
                         borderRadius: '4px',
-                        color: '#64748b',
+                        color: 'var(--text-muted, #64748b)',
                         cursor: 'pointer',
                       }}
                     >
@@ -2254,15 +2265,16 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                     type="button"
                     onClick={handleDownloadErrorRows}
                     disabled={errorRowsList.length === 0}
+                    className="btn-toolbar-action"
                     style={{
                       height: '32px',
                       padding: '0 12px',
-                      backgroundColor: errorRowsList.length === 0 ? '#f1f5f9' : '#ffffff',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: errorRowsList.length === 0 ? 'var(--bg-muted, #f1f5f9)' : 'var(--bg-surface, #ffffff)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
                       fontSize: '0.8rem',
                       fontWeight: 600,
-                      color: errorRowsList.length === 0 ? '#94a3b8' : '#b91c1c',
+                      color: errorRowsList.length === 0 ? 'var(--text-disabled, #94a3b8)' : 'var(--danger, #b91c1c)',
                       cursor: errorRowsList.length === 0 ? 'not-allowed' : 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -2276,50 +2288,50 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
               </div>
 
               {/* Error Rows Table */}
-              <div style={{ overflowX: 'auto', maxHeight: '420px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
+              <div className="upload-preview-table-wrapper dense-table-wrapper" style={{ overflowX: 'auto', maxHeight: '420px', backgroundColor: 'var(--bg-surface, #ffffff)' }}>
+                <table className="upload-preview-table dense-table apex-report-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#ffffff', borderBottom: '2px solid #cbd5e1', textAlign: 'left', position: 'sticky', top: 0, zIndex: 10 }}>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '80px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                    <tr style={{ backgroundColor: 'var(--bg-table-header, #ffffff)', borderBottom: '2px solid var(--border, #cbd5e1)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 10 }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '80px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Stg Id
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '80px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '80px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Batch Id
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '95px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '95px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Excel Row No
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '80px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '80px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Src Id
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '80px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '80px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Comp Id
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '180px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '180px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Comp Name
                       </th>
-                      <th style={{ padding: '0.6rem 0.75rem', minWidth: '260px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.75rem', minWidth: '260px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Error Msg
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '120px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '120px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Technology
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '140px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '140px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Industry
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Company Type
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Country
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '110px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         City
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '150px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '150px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Website
                       </th>
-                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '150px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff' }}>
+                      <th style={{ padding: '0.6rem 0.5rem', minWidth: '150px', fontWeight: 600, color: 'var(--text-muted, #334155)', backgroundColor: 'var(--bg-table-header, #ffffff)' }}>
                         Company Email
                       </th>
                     </tr>
@@ -2327,7 +2339,7 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                   <tbody>
                     {pagedErrorRows.length === 0 ? (
                       <tr>
-                        <td colSpan={14} style={{ textAlign: 'center', padding: '2rem', color: '#15803d', fontWeight: 500 }}>
+                        <td colSpan={14} style={{ textAlign: 'center', padding: '2rem', color: 'var(--success, #15803d)', fontWeight: 500 }}>
                           ✓ No error rows found. All rows are valid and ready for import!
                         </td>
                       </tr>
@@ -2335,31 +2347,31 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                       pagedErrorRows.map((row) => (
                         <tr
                           key={row.stg_id}
+                          className="upload-table-row error-row"
                           style={{
-                            borderBottom: '1px solid #e2e8f0',
-                            backgroundColor: '#ffffff',
+                            borderBottom: '1px solid var(--border, #e2e8f0)',
                           }}
                         >
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#64748b' }}>{row.stg_id}</td>
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#64748b' }}>{row.batch_id}</td>
-                          <td style={{ padding: '0.45rem 0.5rem', fontWeight: 600, color: '#334155' }}>
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #64748b)' }}>{row.stg_id}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #64748b)' }}>{row.batch_id}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', fontWeight: 600, color: 'var(--text-main, #334155)' }}>
                             {row.excel_row_no}
                           </td>
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#64748b' }}>{row.comp_id || '-'}</td>
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#64748b' }}>{row.comp_id || '-'}</td>
-                          <td style={{ padding: '0.45rem 0.5rem', fontWeight: 600, color: '#0f172a' }}>
-                            {row.comp_name || <span style={{ color: '#ef4444' }}>[Missing]</span>}
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #64748b)' }}>{row.comp_id || '-'}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #64748b)' }}>{row.comp_id || '-'}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', fontWeight: 600, color: 'var(--text-main, #0f172a)' }}>
+                            {row.comp_name || <span style={{ color: 'var(--danger, #ef4444)' }}>[Missing]</span>}
                           </td>
-                          <td style={{ padding: '0.45rem 0.75rem', color: '#dc2626', fontWeight: 600, wordBreak: 'break-word' }}>
+                          <td style={{ padding: '0.45rem 0.75rem', color: 'var(--danger, #f87171)', fontWeight: 600, wordBreak: 'break-word' }}>
                             {row.error_msg || 'Validation failed'}
                           </td>
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#475569' }}>{row.technology || '-'}</td>
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#475569' }}>{row.industry || '-'}</td>
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#475569' }}>{row.company_type || '-'}</td>
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#475569' }}>{row.country || '-'}</td>
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#475569' }}>{row.city || '-'}</td>
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#475569' }}>{row.website || '-'}</td>
-                          <td style={{ padding: '0.45rem 0.5rem', color: '#475569' }}>{row.com_email || '-'}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #475569)' }}>{row.technology || '-'}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #475569)' }}>{row.industry || '-'}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #475569)' }}>{row.company_type || '-'}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #475569)' }}>{row.country || '-'}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #475569)' }}>{row.city || '-'}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #475569)' }}>{row.website || '-'}</td>
+                          <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted, #475569)' }}>{row.com_email || '-'}</td>
                         </tr>
                       ))
                     )}
@@ -2369,16 +2381,17 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
 
               {/* Error Table Footer */}
               <div
+                className="upload-preview-footer"
                 style={{
                   padding: '0.65rem 1rem',
-                  borderTop: '1px solid #e2e8f0',
-                  backgroundColor: '#ffffff',
+                  borderTop: '1px solid var(--border, #e2e8f0)',
+                  backgroundColor: 'var(--bg-surface, #ffffff)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'flex-end',
                   gap: '1rem',
                   fontSize: '0.75rem',
-                  color: '#64748b',
+                  color: 'var(--text-muted, #64748b)',
                 }}
               >
                 <span>
@@ -2390,13 +2403,14 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                     type="button"
                     disabled={errorPage <= 1}
                     onClick={() => setErrorPage((p) => Math.max(1, p - 1))}
+                    className="btn-toolbar-action"
                     style={{
                       padding: '2px 6px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '3px',
-                      backgroundColor: errorPage <= 1 ? '#f8fafc' : '#ffffff',
+                      backgroundColor: errorPage <= 1 ? 'var(--bg-muted, #f8fafc)' : 'var(--bg-surface, #ffffff)',
                       cursor: errorPage <= 1 ? 'not-allowed' : 'pointer',
-                      color: errorPage <= 1 ? '#94a3b8' : '#334155',
+                      color: errorPage <= 1 ? 'var(--text-disabled, #94a3b8)' : 'var(--text-main, #334155)',
                     }}
                   >
                     &lt;
@@ -2405,13 +2419,14 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
                     type="button"
                     disabled={errorEnd >= errorTotal}
                     onClick={() => setErrorPage((p) => p + 1)}
+                    className="btn-toolbar-action"
                     style={{
                       padding: '2px 6px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '3px',
-                      backgroundColor: errorEnd >= errorTotal ? '#f8fafc' : '#ffffff',
+                      backgroundColor: errorEnd >= errorTotal ? 'var(--bg-muted, #f8fafc)' : 'var(--bg-surface, #ffffff)',
                       cursor: errorEnd >= errorTotal ? 'not-allowed' : 'pointer',
-                      color: errorEnd >= errorTotal ? '#94a3b8' : '#334155',
+                      color: errorEnd >= errorTotal ? 'var(--text-disabled, #94a3b8)' : 'var(--text-main, #334155)',
                     }}
                   >
                     &gt;
@@ -2710,6 +2725,13 @@ export default function CompanyUploadPage({ onShowToast, onNavigateToCompanies, 
         isOpen={showValidationRules}
         onClose={() => setShowValidationRules(false)}
         type="company"
+      />
+
+      {/* Standard Actions Help Modal */}
+      <ApexHelpModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        isEditableGrid={true}
       />
     </div>
   );

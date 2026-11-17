@@ -10,6 +10,8 @@ import ActiveAggregationsBar from '../../components/ActiveAggregationsBar';
 import { computeAggregationValue } from '../../utils/aggregationUtils';
 import ApexColumnHeaderMenu from '../../components/ApexColumnHeaderMenu';
 import ApexActiveFilterBanner from '../../components/ApexActiveFilterBanner';
+import ApexReportToolbar from '../../components/ApexReportToolbar';
+import ApexInteractiveReport from '../../components/ApexInteractiveReport';
 import { useApexColumnMenu } from '../../utils/useApexColumnMenu';
 import {
   IconSearch,
@@ -81,6 +83,17 @@ export const DESIGNATION_POSITION_MASTER_COLUMNS = [
 
 const DEFAULT_MASTER_KEYS = DESIGNATION_POSITION_MASTER_COLUMNS.map((c) => c.key);
 export const DESIGNATION_POSITION_COLUMNS = DESIGNATION_POSITION_MASTER_COLUMNS;
+
+export const CHILD_DESIGNATION_CONTACT_COLUMNS = [
+  { key: 'id', label: 'ID', width: '80px', getValue: (r) => r.id },
+  { key: 'contact_name', label: 'Contact Name', minWidth: '160px', getValue: (r) => r.contact_name || '' },
+  { key: 'comp_name', label: 'Company', minWidth: '180px', getValue: (r) => r.comp_name || '' },
+  { key: 'designation', label: 'Designation', minWidth: '150px', getValue: (r) => r.designation || '' },
+  { key: 'pos_type', label: 'Position Type', minWidth: '150px', getValue: (r) => r.pos_type || '' },
+  { key: 'comp_email', label: 'Email', minWidth: '180px', getValue: (r) => r.comp_email || '' },
+  { key: 'contact_phone', label: 'Phone', minWidth: '130px', getValue: (r) => r.contact_phone || '' },
+  { key: 'country', label: 'Country', minWidth: '120px', getValue: (r) => r.country || '' },
+];
 
 export default function DesignationPositionMaster({ onShowToast, onNavigateToContactForm, onNavigateToCompanyForm }) {
   // Mode: 'report' or 'form' with localStorage persistence across browser refresh
@@ -297,12 +310,15 @@ export default function DesignationPositionMaster({ onShowToast, onNavigateToCon
   };
 
   // Selection Checkboxes
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = new Set(masterList.map((m) => m.id));
-      setSelectedIds(allIds);
-    } else {
+  const handleSelectAll = () => {
+    const isAllSelected = processedMasterList.length > 0 && selectedIds.size >= processedMasterList.length;
+    if (isAllSelected) {
       setSelectedIds(new Set());
+      if (onShowToast) onShowToast('info', 'Deselected all records.');
+    } else {
+      const allIds = new Set(processedMasterList.map((m) => m.id));
+      setSelectedIds(allIds);
+      if (onShowToast) onShowToast('info', `Selected all ${processedMasterList.length} records throughout report.`);
     }
   };
 
@@ -379,6 +395,26 @@ export default function DesignationPositionMaster({ onShowToast, onNavigateToCon
   const [childRows, setChildRows] = useState(50);
   const [childPage, setChildPage] = useState(1);
   const [childTotal, setChildTotal] = useState(0);
+  const [showChildActions, setShowChildActions] = useState(false);
+
+  const handleDownloadChildCsv = () => {
+    if (!childContacts || childContacts.length === 0) {
+      if (onShowToast) onShowToast('warning', 'No contacts to export.');
+      return;
+    }
+    const header = 'Contact ID,Contact Name,Company ID,Company Name,Position Type,Designation,Email,Country';
+    const rows = childContacts.map((c) =>
+      `"${c.id}","${(c.contact_name || '').replace(/"/g, '""')}","${c.company_id || ''}","${(c.company_name || c.comp_name || '').replace(/"/g, '""')}","${(c.position_type || c.pos_type || '').replace(/"/g, '""')}","${(c.designation || '').replace(/"/g, '""')}","${(c.comp_email || '').replace(/"/g, '""')}","${(c.country || '').replace(/"/g, '""')}"`
+    );
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Contacts_Designation_${(formData.designation || 'designation').replace(/\s+/g, '_')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (onShowToast) onShowToast('success', 'Contacts CSV exported.');
+  };
 
   // Edit single contact modal
   const [editingContact, setEditingContact] = useState(null);
@@ -978,11 +1014,22 @@ export default function DesignationPositionMaster({ onShowToast, onNavigateToCon
                   <ApexActionsMenu
                     isOpen={showMasterActions}
                     onClose={() => setShowMasterActions(false)}
+                  isEditableGrid={true}
+                  hasSelection={selectedIds.size > 0}
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={() => setSelectedIds(new Set())}
                     onOpenColumns={() => setShowMasterColumnsModal(true)}
                     onOpenFilter={() => setShowMasterFilterModal(true)}
                     onOpenAggregate={() => setShowAggregateModal(true)}
                     onOpenChart={() => setShowMasterChartModal(true)}
-                    onOpenGroupBy={() => setShowMasterChartModal(true)}
+                    columns={DESIGNATION_POSITION_MASTER_COLUMNS}
+                    data={masterList}
+                    reportId="designation_position_master"
+                    onApplySort={(rules) => {
+                      if (rules && rules[0] && rules[0].key) {
+                        handleMenuSort(rules[0].key, rules[0].dir || 'asc');
+                      }
+                    }}
                     onDownload={handleDownloadReport}
                     onRefresh={loadMasterData}
                     onResetReport={() => {
@@ -1169,11 +1216,21 @@ export default function DesignationPositionMaster({ onShowToast, onNavigateToCon
                       <th style={{ width: '80px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                           <input
-                            type="checkbox"
-                            checked={processedMasterList.length > 0 && selectedIds.size === processedMasterList.length}
-                            onChange={handleSelectAll}
-                            style={{ cursor: 'pointer' }}
-                          />
+                          type="checkbox"
+                          checked={processedMasterList.length > 0 && selectedIds.size >= processedMasterList.length}
+                          ref={(el) => {
+                            if (el) {
+                              el.indeterminate = selectedIds.size > 0 && selectedIds.size < processedMasterList.length;
+                            }
+                          }}
+                          onChange={handleSelectAll}
+                          style={{ cursor: 'pointer' }}
+                          title={
+                            selectedIds.size >= processedMasterList.length && processedMasterList.length > 0
+                              ? `All ${processedMasterList.length} records selected`
+                              : `Select all ${processedMasterList.length} records throughout report`
+                          }
+                        />
                         </div>
                       </th>
 
@@ -1648,128 +1705,118 @@ export default function DesignationPositionMaster({ onShowToast, onNavigateToCon
               </div>
             </div>
 
-            {/* ROW 3: 4 columns audit fields matching Screenshot 1 */}
-            <div className="apex-form-grid-4">
-              {/* Created By */}
-              <div className="apex-form-field">
-                <label>
-                  Created By
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  disabled
-                  className="apex-form-input"
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    borderRadius: '6px',
-                    border: '1px solid #e2e8f0',
-                    padding: '0 0.75rem',
-                    fontSize: '0.825rem',
-                    backgroundColor: '#ffffff',
-                    color: '#1e293b',
-                    cursor: 'default',
-                  }}
-                  value={formData.created_by}
-                />
-              </div>
+            {/* ROW 3: 4 columns audit fields (Only visible when editing an existing record) */}
+            {selectedRecord && !selectedRecord?.isCreate && (
+              <div className="apex-form-grid-4">
+                {/* Created By */}
+                <div className="apex-form-field">
+                  <label>
+                    Created By
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    className="apex-form-input"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
+                      padding: '0 0.75rem',
+                      fontSize: '0.825rem',
+                      backgroundColor: '#ffffff',
+                      color: '#1e293b',
+                      cursor: 'default',
+                    }}
+                    value={formData.created_by}
+                  />
+                </div>
 
-              {/* Created Date */}
-              <div className="apex-form-field">
-                <label>
-                  Created Date
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  disabled
-                  className="apex-form-input"
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    borderRadius: '6px',
-                    border: '1px solid #e2e8f0',
-                    padding: '0 0.75rem',
-                    fontSize: '0.825rem',
-                    backgroundColor: '#ffffff',
-                    color: '#1e293b',
-                    cursor: 'default',
-                  }}
-                  value={formatAppDate(formData.created_date)}
-                />
-              </div>
+                {/* Created Date */}
+                <div className="apex-form-field">
+                  <label>
+                    Created Date
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    className="apex-form-input"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
+                      padding: '0 0.75rem',
+                      fontSize: '0.825rem',
+                      backgroundColor: '#ffffff',
+                      color: '#1e293b',
+                      cursor: 'default',
+                    }}
+                    value={formatAppDate(formData.created_date)}
+                  />
+                </div>
 
-              {/* Modified By */}
-              <div className="apex-form-field">
-                <label>
-                  Modified By
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  disabled
-                  className="apex-form-input"
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    borderRadius: '6px',
-                    border: '1px solid #e2e8f0',
-                    padding: '0 0.75rem',
-                    fontSize: '0.825rem',
-                    backgroundColor: '#ffffff',
-                    color: '#1e293b',
-                    cursor: 'default',
-                  }}
-                  value={formData.modified_by}
-                />
-              </div>
+                {/* Modified By */}
+                <div className="apex-form-field">
+                  <label>
+                    Modified By
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    className="apex-form-input"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
+                      padding: '0 0.75rem',
+                      fontSize: '0.825rem',
+                      backgroundColor: '#ffffff',
+                      color: '#1e293b',
+                      cursor: 'default',
+                    }}
+                    value={formData.modified_by}
+                  />
+                </div>
 
-              {/* Modified Date */}
-              <div className="apex-form-field">
-                <label>
-                  Modified Date
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  disabled
-                  className="apex-form-input"
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    borderRadius: '6px',
-                    border: '1px solid #e2e8f0',
-                    padding: '0 0.75rem',
-                    fontSize: '0.825rem',
-                    backgroundColor: '#ffffff',
-                    color: '#1e293b',
-                    cursor: 'default',
-                  }}
-                  value={formatAppDate(formData.modified_date)}
-                />
+                {/* Modified Date */}
+                <div className="apex-form-field">
+                  <label>
+                    Modified Date
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    className="apex-form-input"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
+                      padding: '0 0.75rem',
+                      fontSize: '0.825rem',
+                      backgroundColor: '#ffffff',
+                      color: '#1e293b',
+                      cursor: 'default',
+                    }}
+                    value={formatAppDate(formData.modified_date)}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* FORM ACTION BUTTONS strictly matching Screenshot 1 */}
             <div className="apex-form-actions-row">
               {/* Left: Cancel Button */}
               <button
                 type="button"
+                className="btn-apex-cancel"
                 onClick={handleCancelForm}
-                style={{
-                  height: '36px',
-                  padding: '0 1.25rem',
-                  backgroundColor: '#f1f5f9',
-                  color: '#334155',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  fontSize: '0.825rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e2e8f0')}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
               >
                 Cancel
               </button>
@@ -1807,22 +1854,9 @@ export default function DesignationPositionMaster({ onShowToast, onNavigateToCon
                 <button
                   type="button"
                   onClick={handleFormSubmit}
-                  style={{
-                    height: '36px',
-                    padding: '0 1.35rem',
-                    backgroundColor: '#102a43',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '0.825rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-                  }}
-                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#0b1d30')}
-                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#102a43')}
+                  className="btn-apex-create"
                 >
-                  Apply Changes
+                  {selectedRecord?.isCreate ? 'Create' : 'Apply Changes'}
                 </button>
 
                 <button
@@ -1860,231 +1894,50 @@ export default function DesignationPositionMaster({ onShowToast, onNavigateToCon
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
             }}
           >
-            {/* Child Report Toolbar matching Screenshot 1 */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '0.75rem',
-                marginBottom: '1rem',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    setChildActiveSearch(childSearch.trim());
-                    setChildPage(1);
-                  }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                >
-                  <div style={{ position: 'relative', width: '220px' }}>
-                    <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                      <IconSearch size={15} />
-                    </span>
-                    <input
-                      type="text"
-                      className="apex-form-input"
-                      placeholder="Search"
-                      value={childSearch}
-                      onChange={(e) => setChildSearch(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: '34px',
-                        paddingLeft: '32px',
-                        paddingRight: '10px',
-                        borderRadius: '4px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.825rem',
-                      }}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    style={{
-                      height: '34px',
-                      padding: '0 12px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '4px',
-                      fontSize: '0.825rem',
-                      fontWeight: 600,
-                      color: '#1e293b',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Go
-                  </button>
-                </form>
-
-                {/* Rows Selector */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.25rem' }}>
-                  <span style={{ fontSize: '0.825rem', color: '#475569', fontWeight: 500 }}>Rows</span>
-                  <div style={{ position: 'relative' }}>
-                    <select
-                      className="apex-form-input"
-                      value={childRows}
-                      onChange={(e) => {
-                        setChildRows(Number(e.target.value));
-                        setChildPage(1);
-                      }}
-                      style={{
-                        height: '34px',
-                        padding: '0 24px 0 8px',
-                        borderRadius: '4px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.825rem',
-                        fontWeight: 600,
-                        backgroundColor: '#ffffff',
-                        cursor: 'pointer',
-                        appearance: 'none',
-                      }}
-                    >
-                      <option value={10}>10</option>
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                    </select>
-                    <span style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#64748b' }}>
-                      <IconChevronDown size={13} />
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions button */}
+            <ApexInteractiveReport
+              reportTitle={`Contacts for ${formData.master_designation || formData.contact_designation || 'Designation'}`}
+              badge={childTotal}
+              columns={CHILD_DESIGNATION_CONTACT_COLUMNS}
+              data={childContacts}
+              total={childTotal}
+              page={childPage}
+              onPageChange={setChildPage}
+              rowsPerPage={childRows}
+              onRowsPerPageChange={(nr) => { setChildRows(nr); setChildPage(1); }}
+              search={childSearch}
+              onSearchChange={setChildSearch}
+              onSearchSubmit={() => { setChildActiveSearch(childSearch.trim()); setChildPage(1); }}
+              isServerSide={true}
+              isLoading={childLoading}
+              renderLeadingCell={(c) => (
                 <button
                   type="button"
-                  style={{
-                    height: '34px',
-                    padding: '0 12px',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '4px',
-                    fontSize: '0.825rem',
-                    fontWeight: 600,
-                    color: '#1e293b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    cursor: 'pointer',
-                  }}
+                  className="apex-edit-icon-btn"
                   onClick={() => {
-                    if (onShowToast) onShowToast('info', 'Actions menu for linked contacts.');
+                    if (onNavigateToContactForm) {
+                      onNavigateToContactForm(c.id);
+                    } else {
+                      try {
+                        localStorage.setItem('apex_open_contact_id', String(c.id));
+                      } catch (e) { }
+                      window.location.hash = `#/contacts?id=${c.id}`;
+                    }
                   }}
+                  title={`Edit Contact #${c.id} Form`}
                 >
-                  Actions <IconChevronDown size={13} />
+                  <IconFilePenLine size={14} />
                 </button>
-              </div>
-
-              {/* Pagination info matching Screenshot 1: "1 - 50 of 6,028 >" */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '0.825rem',
-                  color: '#475569',
-                }}
-              >
-                <span>
-                  {childTotal === 0 ? '0 of 0' : `${childStartRow.toLocaleString()} - ${childEndRow.toLocaleString()} of ${childTotal.toLocaleString()}`}
-                </span>
-                <div style={{ display: 'flex', gap: '2px' }}>
-                  <button
-                    type="button"
-                    disabled={childPage <= 1}
-                    onClick={() => setChildPage((p) => Math.max(1, p - 1))}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: childPage <= 1 ? 'not-allowed' : 'pointer',
-                      color: childPage <= 1 ? '#cbd5e1' : '#475569',
-                      padding: '2px 4px',
-                    }}
-                  >
-                    <IconChevronLeft size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={childPage >= childTotalPages}
-                    onClick={() => setChildPage((p) => Math.min(childTotalPages, p + 1))}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: childPage >= childTotalPages ? 'not-allowed' : 'pointer',
-                      color: childPage >= childTotalPages ? '#cbd5e1' : '#475569',
-                      padding: '2px 4px',
-                    }}
-                  >
-                    <IconChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Child Contacts Table */}
-            <div style={{ overflowX: 'auto' }}>
-              {childLoading ? (
-                <div style={{ padding: '2.5rem', textAlign: 'center', color: '#64748b' }}>
-                  Loading linked contacts...
-                </div>
-              ) : childContacts.length === 0 ? (
-                <div style={{ padding: '2.5rem', textAlign: 'center', color: '#64748b' }}>
-                  No contacts found with designation "{formData.master_designation}".
-                </div>
-              ) : (
-                <table className="apex-master-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '40px', textAlign: 'center' }}></th>
-                      <th style={{ width: '80px' }}>ID</th>
-                      <th style={{ minWidth: '160px' }}>Contact Name</th>
-                      <th style={{ minWidth: '180px' }}>Company</th>
-                      <th style={{ minWidth: '150px' }}>Designation</th>
-                      <th style={{ minWidth: '150px' }}>Position Type</th>
-                      <th style={{ minWidth: '180px' }}>Email</th>
-                      <th style={{ minWidth: '130px' }}>Phone</th>
-                      <th style={{ minWidth: '120px' }}>Country</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {childContacts.map((c) => (
-                      <tr key={c.id}>
-                        <td className="col-center">
-                          <button
-                            type="button"
-                            className="apex-edit-icon-btn"
-                            onClick={() => {
-                              if (onNavigateToContactForm) {
-                                onNavigateToContactForm(c.id);
-                              } else {
-                                try {
-                                  localStorage.setItem('apex_open_contact_id', String(c.id));
-                                } catch (e) { }
-                                window.location.hash = `#/contacts?id=${c.id}`;
-                              }
-                            }}
-                            title={`Edit Contact #${c.id} Form`}
-                          >
-                            <IconFilePenLine size={14} />
-                          </button>
-                        </td>
-                        <td style={{ color: '#64748b', fontSize: '0.8rem' }}>{c.id}</td>
-                        <td style={{ fontWeight: 600, color: '#1e293b' }}>{c.contact_name}</td>
-                        <td style={{ color: '#334155' }}>{c.comp_name || '-'}</td>
-                        <td style={{ color: '#334155' }}>{c.designation || '-'}</td>
-                        <td style={{ color: '#334155' }}>{c.pos_type || '-'}</td>
-                        <td style={{ color: '#64748b' }}>{c.comp_email || '-'}</td>
-                        <td style={{ color: '#64748b' }}>{c.contact_phone || '-'}</td>
-                        <td style={{ color: '#334155' }}>{c.country || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               )}
-            </div>
+              onRefresh={loadChildContacts}
+              onReset={() => {
+                setChildSearch('');
+                setChildActiveSearch('');
+                setChildPage(1);
+                setChildRows(50);
+              }}
+              onDownload={handleDownloadChildCsv}
+              onShowToast={onShowToast}
+            />
           </div>
         </div>
       )}

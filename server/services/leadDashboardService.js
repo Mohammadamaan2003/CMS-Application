@@ -196,6 +196,8 @@ async function getLeadOverview(filters = {}) {
 
   const [
     kpiRes,
+    leadsBySourceRes,
+    wonLeadsBySourceRes,
     statusDonutRes,
     lostReasonRes,
     monthlyYearRes,
@@ -234,6 +236,30 @@ async function getLeadOverview(filters = {}) {
         )::float as avg_time_to_close_days
       FROM leads l
       ${whereClause}
+    `, params),
+
+    // Total Leads by Source (matching Screenshot 1)
+    db.query(`
+      SELECT 
+        COALESCE(NULLIF(TRIM(l.source), ''), 'Unspecified') as label,
+        COUNT(DISTINCT l.lead_id)::int as count
+      FROM leads l
+      ${whereClause}
+      GROUP BY 1
+      ORDER BY count DESC
+      LIMIT 12
+    `, params),
+
+    // Won Leads by Source (matching Screenshot 1)
+    db.query(`
+      SELECT 
+        COALESCE(NULLIF(TRIM(l.source), ''), 'Unspecified') as label,
+        COUNT(DISTINCT l.lead_id)::int as count
+      FROM leads l
+      ${whereClause ? `${whereClause} AND UPPER(TRIM(COALESCE(l.lost_won, ''))) = 'WON'` : "WHERE UPPER(TRIM(COALESCE(l.lost_won, ''))) = 'WON'"}
+      GROUP BY 1
+      ORDER BY count DESC
+      LIMIT 12
     `, params),
 
     // Status Donut
@@ -367,6 +393,8 @@ async function getLeadOverview(filters = {}) {
       avgTimeToCloseDays: kpis.avg_time_to_close_days,
     },
     charts: {
+      totalLeadsBySource: leadsBySourceRes.rows,
+      wonLeadsBySource: wonLeadsBySourceRes.rows,
       statusDonut: statusDonutRes.rows,
       lostByReason: lostReasonRes.rows,
       monthlyLeadsByYear: monthlyYearRes.rows,

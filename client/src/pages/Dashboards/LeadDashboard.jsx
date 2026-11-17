@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../../api/client';
 import ChartCard from '../../components/ChartCard';
 import MultiSelectDropdown from '../../components/MultiSelectDropdown';
+import ApexReportToolbar from '../../components/ApexReportToolbar';
+import ApexInteractiveReport from '../../components/ApexInteractiveReport';
 import {
   IconLightbulb,
   IconTarget,
@@ -21,15 +23,67 @@ import {
   IconX,
   IconSearch,
   IconArrowUpDown,
+  IconFilePenLine,
 } from '../../components/Icons';
 
-const IconClock = ({ size = 16, className = '' }) => (
+const IconHourglass = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 22h14" />
+    <path d="M5 2h14" />
+    <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
+    <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
+  </svg>
+);
+
+const IconPauseCircle = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="10" y1="15" x2="10" y2="9" />
+    <line x1="14" y1="15" x2="14" y2="9" />
+  </svg>
+);
+
+const IconXCircle = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="15" y1="9" x2="9" y2="15" />
+    <line x1="9" y1="9" x2="15" y2="15" />
+  </svg>
+);
+
+const IconCheckCircle = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="9 12 11 14 15 10" />
+  </svg>
+);
+
+const IconTrophy = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+    <path d="M4 22h16" />
+    <path d="M10 14.66V17c0 .55-.45 1-1 1H7" />
+    <path d="M14 14.66V17c0 .55.45 1 1 1h2" />
+    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+  </svg>
+);
+
+const IconBanknote = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="20" height="12" x="2" y="6" rx="2" />
+    <circle cx="12" cy="12" r="2" />
+    <path d="M6 12h.01M18 12h.01" />
+  </svg>
+);
+
+const IconClock = ({ size = 16, color = 'currentColor', className = '' }) => (
   <svg
     width={size}
     height={size}
     viewBox="0 0 24 24"
     fill="none"
-    stroke="currentColor"
+    stroke={color}
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
@@ -40,23 +94,298 @@ const IconClock = ({ size = 16, className = '' }) => (
   </svg>
 );
 
-// APEX Page 77 Sections
+// APEX Page 77 Column Bar Chart (Total Leads by Source & Won Leads by Source)
+function ApexColumnChart({
+  title,
+  data = [],
+  step = 50,
+  maxVal = 450,
+  barColor = '#0284c7',
+  onBarClick,
+}) {
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+
+  const computedMax = useMemo(() => {
+    const highest = Math.max(...data.map((d) => d.count || 0), 0);
+    return Math.max(maxVal, Math.ceil(highest / step) * step);
+  }, [data, maxVal, step]);
+
+  const ticks = useMemo(() => {
+    const arr = [];
+    for (let v = 0; v <= computedMax; v += step) {
+      arr.push(v);
+    }
+    return arr;
+  }, [computedMax, step]);
+
+  const chartHeight = 220;
+  const chartWidth = 560;
+  const paddingLeft = 45;
+  const paddingRight = 20;
+  const paddingTop = 20;
+  const paddingBottom = 45;
+  const innerWidth = chartWidth - paddingLeft - paddingRight;
+  const innerHeight = chartHeight - paddingTop - paddingBottom;
+
+  const barSlotWidth = data.length > 0 ? innerWidth / Math.max(data.length, 10) : 40;
+  const barWidth = Math.min(Math.max(barSlotWidth * 0.45, 10), 28);
+
+
+  // Standardized Drilldown Report Columns
+  const drilldownLeadColumns = useMemo(() => [
+    { key: 'lead_id', label: 'Lead ID', width: '90px', getValue: (r) => r.lead_id },
+    { key: 'company_name', label: 'Company', minWidth: '160px', getValue: (r) => r.company_name || '' },
+    { key: 'name_of_coordinator', label: 'Coordinator', minWidth: '130px', getValue: (r) => r.name_of_coordinator || '' },
+    { key: 'account_manager', label: 'Account Mgr', minWidth: '130px', getValue: (r) => r.account_manager || '' },
+    { key: 'technology', label: 'Technology', minWidth: '120px', getValue: (r) => r.technology || '' },
+    { key: 'lead_date', label: 'Lead Date', minWidth: '110px', getValue: (r) => r.lead_date || '' },
+    { key: 'country', label: 'Country', minWidth: '110px', getValue: (r) => r.country || '' },
+    {
+      key: 'lost_won',
+      label: 'Status / Outcome',
+      minWidth: '120px',
+      getValue: (r) => r.lost_won || 'Open',
+      render: (r) => (
+        <span
+          className={`apex-kpi-badge ${
+            r.lost_won === 'WON' || r.lost_won === 'Won'
+              ? 'badge-green'
+              : r.lost_won === 'Lost'
+              ? 'badge-blue'
+              : 'badge-amber'
+          }`}
+        >
+          {r.lost_won || 'Open'}
+        </span>
+      ),
+    },
+    {
+      key: 'amount_in_inr',
+      label: 'Amount (INR)',
+      minWidth: '120px',
+      align: 'right',
+      getValue: (r) => r.amount_in_inr ? `₹ ${Number(r.amount_in_inr).toLocaleString()}` : '-',
+    },
+  ], []);
+
+  const drilldownLineColumns = useMemo(() => [
+    { key: 'lead_line_id', label: 'Line ID', width: '85px', getValue: (r) => r.lead_line_id },
+    { key: 'lead_id', label: 'Lead ID', width: '85px', getValue: (r) => r.lead_id },
+    { key: 'company_name', label: 'Company', minWidth: '150px', getValue: (r) => r.company_name || '' },
+    { key: 'technology', label: 'Technology', minWidth: '120px', getValue: (r) => r.technology || '' },
+    { key: 'model', label: 'Model', minWidth: '110px', getValue: (r) => r.model || '' },
+    { key: 'experience', label: 'Experience', minWidth: '100px', getValue: (r) => r.experience || '' },
+    { key: 'rate', label: 'Rate', minWidth: '90px', align: 'right', getValue: (r) => r.rate || '' },
+    { key: 'no_of_resources', label: 'Resources', minWidth: '90px', align: 'right', getValue: (r) => r.no_of_resources || '' },
+    {
+      key: 'amount_in_inr',
+      label: 'Amount (INR)',
+      minWidth: '120px',
+      align: 'right',
+      getValue: (r) => r.amount_in_inr ? `₹ ${Number(r.amount_in_inr).toLocaleString()}` : '-',
+    },
+    { key: 'cv_sent', label: 'CV Sent', minWidth: '90px', getValue: (r) => r.cv_sent || 'No' },
+  ], []);
+
+  const drilldownProposalColumns = useMemo(() => [
+    { key: 'proposal_id', label: 'Proposal ID', width: '90px', getValue: (r) => r.proposal_id },
+    { key: 'lead_id', label: 'Lead ID', width: '85px', getValue: (r) => r.lead_id },
+    { key: 'company_name', label: 'Company', minWidth: '160px', getValue: (r) => r.company_name || '' },
+    { key: 'proposal_number', label: 'Proposal Number', minWidth: '130px', getValue: (r) => r.proposal_number || '' },
+    { key: 'date_sent', label: 'Date Sent', minWidth: '110px', getValue: (r) => r.date_sent || '' },
+    { key: 'proposal_description', label: 'Description', minWidth: '180px', getValue: (r) => r.proposal_description || '' },
+    { key: 'file_name', label: 'File', minWidth: '120px', getValue: (r) => r.file_name || 'Document' },
+  ], []);
+
+  const drilldownResourceColumns = useMemo(() => [
+    { key: 'resource_id', label: 'Resource ID', width: '90px', getValue: (r) => r.resource_id },
+    { key: 'lead_id', label: 'Lead ID', width: '85px', getValue: (r) => r.lead_id },
+    { key: 'resource_name', label: 'Resource Name', minWidth: '150px', getValue: (r) => r.resource_name || '' },
+    { key: 'designation', label: 'Designation', minWidth: '130px', getValue: (r) => r.designation || '' },
+    { key: 'technology', label: 'Technology', minWidth: '120px', getValue: (r) => r.technology || '' },
+    { key: 'status', label: 'Status', minWidth: '100px', getValue: (r) => r.status || '' },
+  ], []);
+
+  return (
+    <div
+      style={{
+        background: '#ffffff',
+        borderRadius: '8px',
+        border: '1px solid #cbd5e1',
+        overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Dark Navy Header matching screenshot */}
+      <div
+        style={{
+          background: '#071531',
+          color: '#ffffff',
+          padding: '12px 18px',
+          fontWeight: 700,
+          fontSize: '15px',
+          letterSpacing: '0.01em',
+        }}
+      >
+        {title}
+      </div>
+
+      {/* SVG Chart Canvas */}
+      <div style={{ padding: '16px 12px 10px', position: 'relative' }}>
+        <svg
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          style={{ width: '100%', height: '260px', overflow: 'visible' }}
+        >
+          {/* Horizontal Grid lines and Y-axis tick values */}
+          {ticks.map((tickVal) => {
+            const y = paddingTop + innerHeight - (tickVal / computedMax) * innerHeight;
+            return (
+              <g key={tickVal}>
+                <line
+                  x1={paddingLeft}
+                  y1={y}
+                  x2={chartWidth - paddingRight}
+                  y2={y}
+                  stroke="#e2e8f0"
+                  strokeWidth="1"
+                />
+                <text
+                  x={paddingLeft - 8}
+                  y={y + 3.5}
+                  textAnchor="end"
+                  fontSize="11"
+                  fill="#64748b"
+                  fontFamily="system-ui, -apple-system, sans-serif"
+                >
+                  {tickVal}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Vertical Grid lines across column slots */}
+          {Array.from({ length: Math.max(data.length, 10) + 1 }).map((_, i) => {
+            const x = paddingLeft + i * barSlotWidth;
+            if (x > chartWidth - paddingRight + 1) return null;
+            return (
+              <line
+                key={i}
+                x1={x}
+                y1={paddingTop}
+                x2={x}
+                y2={paddingTop + innerHeight}
+                stroke="#f1f5f9"
+                strokeWidth="1"
+              />
+            );
+          })}
+
+          {/* Bottom baseline */}
+          <line
+            x1={paddingLeft}
+            y1={paddingTop + innerHeight}
+            x2={chartWidth - paddingRight}
+            y2={paddingTop + innerHeight}
+            stroke="#cbd5e1"
+            strokeWidth="1.5"
+          />
+
+          {/* Vertical Column Bars */}
+          {data.map((item, idx) => {
+            const slotCenterX = paddingLeft + idx * barSlotWidth + barSlotWidth / 2;
+            const barX = slotCenterX - barWidth / 2;
+            const h = computedMax > 0 ? (item.count / computedMax) * innerHeight : 0;
+            const barY = paddingTop + innerHeight - h;
+            const isHovered = hoveredIndex === idx;
+
+            return (
+              <g
+                key={idx}
+                style={{ cursor: onBarClick ? 'pointer' : 'default' }}
+                onMouseEnter={() => setHoveredIndex(idx)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                onClick={() => onBarClick && onBarClick(item.label)}
+              >
+                {/* Bar */}
+                <rect
+                  x={barX}
+                  y={barY}
+                  width={barWidth}
+                  height={Math.max(h, 2)}
+                  fill={isHovered ? '#0284c7' : barColor}
+                  rx="1"
+                  style={{ transition: 'fill 0.15s ease' }}
+                />
+
+                {/* X-axis indicator dot */}
+                <circle
+                  cx={slotCenterX}
+                  cy={paddingTop + innerHeight + 6}
+                  r={isHovered ? 3 : 2}
+                  fill={isHovered ? '#0284c7' : '#94a3b8'}
+                />
+
+                {/* Truncated source label below */}
+                <text
+                  x={slotCenterX}
+                  y={paddingTop + innerHeight + 20}
+                  textAnchor="middle"
+                  fontSize="9.5"
+                  fill={isHovered ? '#0f172a' : '#64748b'}
+                  style={{ pointerEvents: 'none' }}
+                >
+                  {item.label.length > 7 ? `${item.label.slice(0, 6)}…` : item.label}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Hover Tooltip Overlay */}
+        {hoveredIndex !== null && data[hoveredIndex] && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '20px',
+              background: '#071531',
+              color: '#ffffff',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.15)',
+              pointerEvents: 'none',
+              zIndex: 10,
+            }}
+          >
+            <strong>{data[hoveredIndex].label}</strong>: {data[hoveredIndex].count.toLocaleString()} leads
+            {onBarClick && <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8' }}>Click to view in Leads report</span>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// APEX Page 77 Sections (ordered exactly matching screenshot media_1794764844899_349111d9.png)
 const SECTIONS = [
-  { id: 'overview', label: 'Overview', icon: IconBarChart },
-  { id: 'sales_performance', label: 'Sales Performance', icon: IconUsers },
-  { id: 'technology', label: 'Technology', icon: IconMonitor },
-  { id: 'lead_details', label: 'Lead Details', icon: IconTable },
-  { id: 'lead_lines_details', label: 'Lead Lines Details', icon: IconColumns },
-  { id: 'lead_proposals', label: 'Lead Proposals', icon: IconShare2 },
-  { id: 'lead_resources', label: 'Lead Resources', icon: IconBuilding },
+  { id: 'overview', label: 'Lead Dashboard - Overview' },
+  { id: 'sales_performance', label: 'Sales Performance' },
+  { id: 'technology', label: 'Technology' },
+  { id: 'lead_details', label: 'Lead Details' },
+  { id: 'lead_lines_details', label: 'Lead Lines Details' },
+  { id: 'lead_resources', label: 'Lead Resources' },
+  { id: 'lead_proposals', label: 'Lead Proposals' },
 ];
 
 export default function LeadDashboard({ onNavigate, onShowToast }) {
   // Active Section Tab
   const [activeSection, setActiveSection] = useState('overview');
 
-  // Filter Drawer / Toolbar open state
-  const [showFilters, setShowFilters] = useState(true);
+  // Filter Drawer / Toolbar open state (collapsed by default matching APEX screenshot)
+  const [showFilters, setShowFilters] = useState(false);
 
   // Available Filter Options from Server
   const [filterOptions, setFilterOptions] = useState({
@@ -125,6 +454,70 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
   const [proposals, setProposals] = useState({ data: [], total: 0, page: 1, pageSize: 25, search: '' });
   const [resources, setResources] = useState({ data: [], total: 0, page: 1, pageSize: 25, search: '' });
   const [isReportLoading, setIsReportLoading] = useState(false);
+  const [showLeadDetailsActions, setShowLeadDetailsActions] = useState(false);
+  const [showLeadLinesActions, setShowLeadLinesActions] = useState(false);
+  const [showProposalsActions, setShowProposalsActions] = useState(false);
+  const [showResourcesActions, setShowResourcesActions] = useState(false);
+
+  const handleExportLeadDetailsCsv = () => {
+    if (!leadDetails.data || leadDetails.data.length === 0) return;
+    const header = 'Lead ID,Company,Coordinator,Account Mgr,Technology,Lead Date,Country,Status,Amount';
+    const rows = leadDetails.data.map((r) =>
+      `"${r.lead_id}","${(r.company_name || '').replace(/"/g, '""')}","${(r.name_of_coordinator || '').replace(/"/g, '""')}","${(r.account_manager || '').replace(/"/g, '""')}","${(r.technology || '').replace(/"/g, '""')}","${r.lead_date || ''}","${(r.country || '').replace(/"/g, '""')}","${r.lost_won || 'Open'}","${r.amount_in_inr || 0}"`
+    );
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Lead_Details_Report_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportLeadLinesCsv = () => {
+    if (!leadLines.data || leadLines.data.length === 0) return;
+    const header = 'Line ID,Lead ID,Company,Technology,Model,Experience,Rate,Resources,Amount,CV Sent';
+    const rows = leadLines.data.map((r) =>
+      `"${r.line_id}","${r.lead_id}","${(r.company_name || '').replace(/"/g, '""')}","${(r.technology || '').replace(/"/g, '""')}","${(r.model || '').replace(/"/g, '""')}","${(r.experience || '').replace(/"/g, '""')}","${r.rate || 0}","${r.resources || 0}","${r.amount_in_inr || 0}","${r.cv_sent || ''}"`
+    );
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Lead_Lines_Details_Report_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportProposalsCsv = () => {
+    if (!proposals.data || proposals.data.length === 0) return;
+    const header = 'Proposal ID,Lead ID,Company,Proposal Number,Date Sent,Description,File';
+    const rows = proposals.data.map((r) =>
+      `"${r.proposal_id}","${r.lead_id}","${(r.company_name || '').replace(/"/g, '""')}","${(r.proposal_number || '').replace(/"/g, '""')}","${r.date_sent || ''}","${(r.proposal_description || '').replace(/"/g, '""')}","${(r.file_name || '').replace(/"/g, '""')}"`
+    );
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Lead_Proposals_Report_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportResourcesCsv = () => {
+    if (!resources.data || resources.data.length === 0) return;
+    const header = 'Resource ID,Lead ID,Company,Resource Name,Designation,Technology,Status';
+    const rows = resources.data.map((r) =>
+      `"${r.resource_id}","${r.lead_id}","${(r.company_name || '').replace(/"/g, '""')}","${(r.resource_name || '').replace(/"/g, '""')}","${(r.designation || '').replace(/"/g, '""')}","${(r.technology || '').replace(/"/g, '""')}","${(r.status || '').replace(/"/g, '""')}"`
+    );
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Lead_Resources_Report_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Load Filter Options on Mount
   useEffect(() => {
@@ -418,75 +811,94 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
   return (
     <div className="lead-dashboard-apex-page" style={{ padding: '20px 24px', background: '#f8fafc', minHeight: '100vh' }}>
       {/* ========================================================
-          1. HEADER BANNER & REFRESH ACTION
+          1. TOP APEX TAB BAR & SHOW FILTERS ACTION (EXACT APEX SCREENSHOT)
           ======================================================== */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748b', marginBottom: '4px' }}>
-            <span>Dashboards</span>
-            <IconChevronRight size={13} />
-            <span style={{ color: '#0f172a', fontWeight: 600 }}>Lead Dashboard (APEX Page 77)</span>
-          </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-            Lead Dashboard
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>
-            Oracle APEX Application 136, Page 77 Model &bull; Real-time Sales, Technology & Opportunity Intelligence
-          </p>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: '1px solid #e2e8f0',
+          paddingBottom: '0px',
+          marginBottom: '16px',
+          gap: '16px',
+        }}
+      >
+        {/* Left: 7 Sections Tabs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', overflowX: 'auto' }}>
+          {SECTIONS.map((sec) => {
+            const isActive = activeSection === sec.id;
+            return (
+              <button
+                key={sec.id}
+                type="button"
+                onClick={() => setActiveSection(sec.id)}
+                style={{
+                  position: 'relative',
+                  padding: '6px 2px 14px 2px',
+                  background: 'none',
+                  border: 'none',
+                  color: isActive ? '#0f172a' : '#475569',
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'color 0.15s ease',
+                }}
+              >
+                <span>{sec.label}</span>
+                {isActive && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: '3px',
+                      background: '#166534',
+                      borderRadius: '2px 2px 0 0',
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
 
+        {/* Right: Show Filters Navy Button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {refreshedAt && (
-            <span style={{ fontSize: '12px', color: '#64748b' }}>
-              Refreshed at: {new Date(refreshedAt).toLocaleTimeString()}
-            </span>
-          )}
           <button
             type="button"
             onClick={() => setShowFilters(!showFilters)}
+            className="btn-outline btn-toggle-filters"
             style={{
+              borderRadius: '8px',
+              padding: '8px 20px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '7px 14px',
-              background: showFilters ? '#e0f2fe' : '#ffffff',
-              border: showFilters ? '1px solid #38bdf8' : '1px solid #cbd5e1',
-              borderRadius: '6px',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: showFilters ? '#0369a1' : '#334155',
-              cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              flexShrink: 0,
+              transition: 'all 0.15s ease',
             }}
           >
-            <IconFilter size={14} />
-            <span>Filters</span>
+            <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
             {activeFilterCount > 0 && (
-              <span style={{ background: '#0284c7', color: '#ffffff', borderRadius: '10px', padding: '0 6px', fontSize: '11px' }}>
+              <span
+                style={{
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  borderRadius: '10px',
+                  padding: '0 6px',
+                  fontSize: '11px',
+                  marginLeft: '4px',
+                }}
+              >
                 {activeFilterCount}
               </span>
             )}
-          </button>
-          <button
-            type="button"
-            onClick={() => loadSectionData(activeSection, appliedFilters)}
-            title="Refresh dashboard data"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '7px 14px',
-              background: '#ffffff',
-              border: '1px solid #cbd5e1',
-              borderRadius: '6px',
-              fontSize: '13px',
-              color: '#334155',
-              cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-            }}
-          >
-            <IconRefreshCw size={14} className={isLoading || isReportLoading ? 'spin' : ''} />
-            <span>Refresh</span>
           </button>
         </div>
       </div>
@@ -496,10 +908,7 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
           ======================================================== */}
       {showFilters && (
         <div
-          style={{
-            background: '#ffffff',
-            borderRadius: '10px',
-            border: '1px solid #e2e8f0',
+          className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0',
             padding: '18px 20px',
             marginBottom: '20px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
@@ -771,15 +1180,14 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
             <button
               type="button"
               onClick={handleResetFilters}
+              className="btn-secondary"
               style={{
                 padding: '7px 18px',
                 borderRadius: '6px',
                 fontSize: '13px',
                 fontWeight: 600,
-                background: '#f1f5f9',
-                border: '1px solid #cbd5e1',
-                color: '#475569',
                 cursor: 'pointer',
+                transition: 'all 0.15s ease',
               }}
             >
               Reset Filters
@@ -787,19 +1195,17 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
             <button
               type="button"
               onClick={handleApplyFilters}
+              className="btn-primary"
               style={{
                 padding: '7px 22px',
                 borderRadius: '6px',
                 fontSize: '13px',
                 fontWeight: 600,
-                background: '#0f172a',
-                border: 'none',
-                color: '#ffffff',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: '0 2px 4px rgba(15, 23, 42, 0.15)',
+                transition: 'all 0.15s ease',
               }}
             >
               <IconCheck size={14} />
@@ -860,40 +1266,6 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
         </div>
       )}
 
-      {/* ========================================================
-          3. APEX PAGE 77 SUB-NAVIGATION TABS (7 SECTIONS)
-          ======================================================== */}
-      <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0', marginBottom: '22px', gap: '6px', overflowX: 'auto' }}>
-        {SECTIONS.map((sec) => {
-          const Icon = sec.icon;
-          const isActive = activeSection === sec.id;
-          return (
-            <button
-              key={sec.id}
-              type="button"
-              onClick={() => setActiveSection(sec.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '11px 18px',
-                background: 'none',
-                border: 'none',
-                borderBottom: isActive ? '3px solid #0284c7' : '3px solid transparent',
-                color: isActive ? '#0284c7' : '#64748b',
-                fontWeight: isActive ? 700 : 500,
-                fontSize: '13px',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <Icon size={15} />
-              <span>{sec.label}</span>
-            </button>
-          );
-        })}
-      </div>
 
       {/* ERROR STATE */}
       {error && (
@@ -921,157 +1293,296 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
           ======================================================== */}
       {!isLoading && activeSection === 'overview' && overviewData && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* 8 APEX Overview KPIs */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-            {/* Total Leads */}
+          {/* ========================================================
+              DECORATIVE BANNER WITH 8 KPI CARDS MATCHING SCREENSHOT
+              ======================================================== */}
+          <div
+            style={{
+              position: 'relative',
+              borderRadius: '10px',
+              padding: '16px 14px',
+              background: 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 25%, #dcfce7 50%, #bfdbfe 80%, #f1f5f9 100%)',
+              border: '1px solid rgba(226, 232, 240, 0.9)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+            }}
+          >
             <div
-              className="apex-kpi-card kpi-blue interactive"
-              onClick={() => navigateToReport('leads')}
-              title="Click to view all Leads in report"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                gap: '12px',
+              }}
             >
-              <div className="apex-kpi-content">
-                <div className="apex-kpi-label-row">
-                  <span className="apex-kpi-label">Total Leads</span>
-                  <span className="apex-kpi-badge badge-blue">All Leads</span>
+              {/* Card 1: Total Leads */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  borderTop: '3px solid #3b82f6',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '100px',
+                  cursor: 'pointer',
+                }}
+                onClick={() => navigateToReport('leads')}
+                title="Click to view all Leads in report"
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <IconUsers size={20} color="#3b82f6" />
                 </div>
-                <div className="apex-kpi-value">{overviewData.kpis.totalLeads.toLocaleString()}</div>
-                <div className="apex-kpi-subtext"><span>Recorded in database &bull; Click &rarr;</span></div>
+                <div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', lineHeight: 1.15 }}>
+                    {overviewData.kpis.totalLeads.toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                    Total Leads
+                  </div>
+                </div>
               </div>
-              <div className="apex-kpi-icon-wrap icon-blue"><IconLightbulb size={24} /></div>
-            </div>
 
-            {/* Won Leads */}
-            <div
-              className="apex-kpi-card kpi-green interactive"
-              onClick={() => navigateToReport('leads', { lost_won: 'Won' })}
-              title="Click to view Won Leads"
-            >
-              <div className="apex-kpi-content">
-                <div className="apex-kpi-label-row">
-                  <span className="apex-kpi-label">Won Leads</span>
-                  <span className="apex-kpi-badge badge-green">Won</span>
+              {/* Card 2: Won Leads */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  borderTop: '3px solid #22c55e',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '100px',
+                  cursor: 'pointer',
+                }}
+                onClick={() => navigateToReport('leads', { lost_won: 'Won' })}
+                title="Click to view Won Leads"
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <IconCheckCircle size={20} color="#22c55e" />
                 </div>
-                <div className="apex-kpi-value" style={{ color: '#15803d' }}>
-                  {overviewData.kpis.wonLeads.toLocaleString()}
+                <div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', lineHeight: 1.15 }}>
+                    {overviewData.kpis.wonLeads.toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                    Won Leads
+                  </div>
                 </div>
-                <div className="apex-kpi-subtext"><span>Successfully converted deals</span></div>
               </div>
-              <div className="apex-kpi-icon-wrap icon-green"><IconCheck size={24} /></div>
-            </div>
 
-            {/* Open Leads */}
-            <div
-              className="apex-kpi-card interactive"
-              onClick={() => navigateToReport('leads', { lost_won: 'Open' })}
-              style={{ borderLeft: '4px solid #0284c7' }}
-              title="Click to view Open Leads"
-            >
-              <div className="apex-kpi-content">
-                <div className="apex-kpi-label-row">
-                  <span className="apex-kpi-label">Open Leads</span>
-                  <span className="apex-kpi-badge badge-blue">Active</span>
+              {/* Card 3: Open Leads */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  borderTop: '3px solid #eab308',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '100px',
+                  cursor: 'pointer',
+                }}
+                onClick={() => navigateToReport('leads', { lost_won: 'Open' })}
+                title="Click to view Open Leads"
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <IconHourglass size={20} color="#eab308" />
                 </div>
-                <div className="apex-kpi-value" style={{ color: '#0369a1' }}>
-                  {overviewData.kpis.openLeads.toLocaleString()}
+                <div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', lineHeight: 1.15 }}>
+                    {overviewData.kpis.openLeads.toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                    Open Leads
+                  </div>
                 </div>
-                <div className="apex-kpi-subtext"><span>Active pitches & evaluations</span></div>
               </div>
-              <div className="apex-kpi-icon-wrap icon-blue"><IconTarget size={24} /></div>
-            </div>
 
-            {/* On Hold */}
-            <div
-              className="apex-kpi-card kpi-amber interactive"
-              onClick={() => navigateToReport('leads', { lost_won: 'On Hold' })}
-              title="Click to view On Hold Leads"
-            >
-              <div className="apex-kpi-content">
-                <div className="apex-kpi-label-row">
-                  <span className="apex-kpi-label">On Hold</span>
-                  <span className="apex-kpi-badge badge-amber">Paused</span>
+              {/* Card 4: On Hold */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  borderTop: '3px solid #f97316',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '100px',
+                  cursor: 'pointer',
+                }}
+                onClick={() => navigateToReport('leads', { lost_won: 'On Hold' })}
+                title="Click to view On Hold Leads"
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <IconPauseCircle size={20} color="#f97316" />
                 </div>
-                <div className="apex-kpi-value" style={{ color: '#b45309' }}>
-                  {overviewData.kpis.onHoldLeads.toLocaleString()}
+                <div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', lineHeight: 1.15 }}>
+                    {overviewData.kpis.onHoldLeads.toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                    On Hold
+                  </div>
                 </div>
-                <div className="apex-kpi-subtext"><span>Awaiting budget or deferred</span></div>
               </div>
-              <div className="apex-kpi-icon-wrap icon-amber"><IconClock size={24} /></div>
-            </div>
 
-            {/* Lost Leads */}
-            <div
-              className="apex-kpi-card interactive"
-              onClick={() => navigateToReport('leads', { lost_won: 'Lost' })}
-              style={{ borderLeft: '4px solid #ef4444' }}
-              title="Click to view Lost Leads"
-            >
-              <div className="apex-kpi-content">
-                <div className="apex-kpi-label-row">
-                  <span className="apex-kpi-label">Lost Leads</span>
-                  <span style={{ background: '#fef2f2', color: '#991b1b', borderRadius: '10px', padding: '1px 6px', fontSize: '11px', fontWeight: 600 }}>
-                    Closed Lost
-                  </span>
+              {/* Card 5: Lost Leads */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  borderTop: '3px solid #ef4444',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '100px',
+                  cursor: 'pointer',
+                }}
+                onClick={() => navigateToReport('leads', { lost_won: 'Lost' })}
+                title="Click to view Lost Leads"
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <IconXCircle size={20} color="#ef4444" />
                 </div>
-                <div className="apex-kpi-value" style={{ color: '#b91c1c' }}>
-                  {overviewData.kpis.lostLeads.toLocaleString()}
+                <div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', lineHeight: 1.15 }}>
+                    {overviewData.kpis.lostLeads.toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                    Lost Leads
+                  </div>
                 </div>
-                <div className="apex-kpi-subtext"><span>Non-converting prospects</span></div>
               </div>
-              <div className="apex-kpi-icon-wrap" style={{ background: '#fef2f2', color: '#dc2626' }}><IconX size={24} /></div>
-            </div>
 
-            {/* Win Rate */}
-            <div className="apex-kpi-card" style={{ borderLeft: '4px solid #10b981' }}>
-              <div className="apex-kpi-content">
-                <div className="apex-kpi-label-row">
-                  <span className="apex-kpi-label">Win Rate</span>
-                  <span className="apex-kpi-badge badge-green">Won / Total</span>
+              {/* Card 6: Win Rate */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  borderTop: '3px solid #a855f7',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '100px',
+                }}
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <IconTrophy size={20} color="#a855f7" />
                 </div>
-                <div className="apex-kpi-value" style={{ color: '#047857' }}>
-                  {overviewData.kpis.winRate}%
+                <div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', lineHeight: 1.15 }}>
+                    {overviewData.kpis.winRate}%
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                    Win Rate
+                  </div>
                 </div>
-                <div className="apex-kpi-subtext"><span>Won leads &divide; filtered total</span></div>
               </div>
-              <div className="apex-kpi-icon-wrap icon-green"><IconBarChart size={24} /></div>
-            </div>
 
-            {/* Contract Value (INR) */}
-            <div className="apex-kpi-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
-              <div className="apex-kpi-content">
-                <div className="apex-kpi-label-row">
-                  <span className="apex-kpi-label">Contract Value (INR)</span>
-                  <span style={{ background: '#f3e8ff', color: '#7e22ce', borderRadius: '10px', padding: '1px 6px', fontSize: '11px', fontWeight: 600 }}>
-                    ₹{(overviewData.kpis.contractValueInr / 10000000).toFixed(2)} Cr
-                  </span>
+              {/* Card 7: Contract Value (INR) */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  borderTop: '3px solid #06b6d4',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '100px',
+                }}
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <IconBanknote size={20} color="#06b6d4" />
                 </div>
-                <div className="apex-kpi-value" style={{ color: '#7c3aed' }}>
-                  ₹{(overviewData.kpis.contractValueInr / 100000).toFixed(1)}L
+                <div>
+                  <div
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: 800,
+                      color: '#0f172a',
+                      lineHeight: 1.15,
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    {Math.round(overviewData.kpis.contractValueInr).toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                    Contract Value (INR)
+                  </div>
                 </div>
-                <div className="apex-kpi-subtext"><span>Total sum of <code>amount_in_inr</code></span></div>
               </div>
-              <div className="apex-kpi-icon-wrap" style={{ background: '#f5f3ff', color: '#7c3aed' }}><IconTarget size={24} /></div>
-            </div>
 
-            {/* Avg. Time to Close (days) */}
-            <div className="apex-kpi-card" style={{ borderLeft: '4px solid #f59e0b' }}>
-              <div className="apex-kpi-content">
-                <div className="apex-kpi-label-row">
-                  <span className="apex-kpi-label">Avg. Time to Close</span>
-                  <span className="apex-kpi-badge badge-amber">Days</span>
+              {/* Card 8: Avg. Time to Close (days) */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  borderTop: '3px solid #64748b',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '100px',
+                }}
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <IconClock size={20} color="#64748b" />
                 </div>
-                <div className="apex-kpi-value" style={{ color: '#d97706' }}>
-                  {overviewData.kpis.avgTimeToCloseDays} <span style={{ fontSize: '15px' }}>days</span>
+                <div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', lineHeight: 1.15 }}>
+                    {Math.round(overviewData.kpis.avgTimeToCloseDays)}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                    Avg. Time to Close (days)
+                  </div>
                 </div>
-                <div className="apex-kpi-subtext"><span>AVG(UPDATED_DATE - LEAD_DATE)</span></div>
               </div>
-              <div className="apex-kpi-icon-wrap icon-amber"><IconClock size={24} /></div>
             </div>
+          </div>
+
+          {/* Range Indicator: 1 - 8 */}
+          <div style={{ textAlign: 'right', fontSize: '12px', color: '#64748b', marginTop: '-10px', marginRight: '4px' }}>
+            1 - 8
+          </div>
+
+          {/* Side-by-side Dark Navy Header Charts matching Screenshot 1 */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '20px' }}>
+            <ApexColumnChart
+              title="Total Leads by Source"
+              data={overviewData.charts.totalLeadsBySource || []}
+              step={50}
+              maxVal={450}
+              barColor="#0284c7"
+              onBarClick={(source) => navigateToReport('leads', { source })}
+            />
+            <ApexColumnChart
+              title="Won Leads by Source"
+              data={overviewData.charts.wonLeadsBySource || []}
+              step={5}
+              maxVal={30}
+              barColor="#336a86"
+              onBarClick={(source) => navigateToReport('leads', { source, lost_won: 'Won' })}
+            />
           </div>
 
           {/* Overview Charts Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
             {/* 1. Lead Status Donut Chart */}
-            <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <div className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <h4 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
                 Lead Status Distribution
               </h4>
@@ -1160,7 +1671,7 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
             />
 
             {/* 4. Monthly Leads Trend Summary */}
-            <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <div className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <h4 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
                 Monthly Leads by Year (Multi-Year Trajectory)
               </h4>
@@ -1191,7 +1702,7 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
           </div>
 
           {/* 5. Lead Decomposition Tree (APEX Page 77 Specification) */}
-          <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <h4 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
               Lead Decomposition Tree
             </h4>
@@ -1256,7 +1767,7 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
             />
 
             {/* Leads by Contact Report */}
-            <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <div className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <h4 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
                 Leads by Contact Report
               </h4>
@@ -1289,7 +1800,7 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
           </div>
 
           {/* Sales Team Performance Comprehensive Table */}
-          <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <h4 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
               Sales Team Performance Matrix
             </h4>
@@ -1347,7 +1858,7 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
             />
 
             {/* Countries by Total Leads (Grouped by Country and Technology) */}
-            <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <div className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <h4 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
                 Countries by Total Leads (Country &bull; Technology)
               </h4>
@@ -1385,112 +1896,51 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
           7. SECTION 4: LEAD DETAILS REPORT
           ======================================================== */}
       {activeSection === 'lead_details' && (
-        <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-            <div>
-              <h4 style={{ margin: '0 0 2px', fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
-                Lead Details Report
-              </h4>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>
-                Showing {leadDetails.data.length} of {leadDetails.total} records matching active filters
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="text"
-                placeholder="Search leads..."
-                value={leadDetails.search}
-                onChange={(e) => setLeadDetails((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
-                style={{ height: '32px', padding: '0 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', width: '200px' }}
-              />
-              <button
-                type="button"
-                onClick={() => loadSectionData('lead_details', appliedFilters)}
-                style={{ height: '32px', padding: '0 12px', background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-              >
-                Search
-              </button>
-            </div>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Lead ID</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Company</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Coordinator</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Account Mgr</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Technology</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Lead Date</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Country</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Status / Outcome</th>
-                  <th style={{ padding: '8px 10px', color: '#475569', textAlign: 'right' }}>Amount (INR)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leadDetails.data.map((row) => (
-                  <tr
-                    key={row.lead_id}
-                    style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
-                    onClick={() => navigateToReport('leads', { lead_id: row.lead_id })}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <td style={{ padding: '8px 10px', fontWeight: 700, color: '#0284c7' }}>#{row.lead_id}</td>
-                    <td style={{ padding: '8px 10px', fontWeight: 600, color: '#0f172a' }}>{row.company_name}</td>
-                    <td style={{ padding: '8px 10px', color: '#334155' }}>{row.name_of_coordinator}</td>
-                    <td style={{ padding: '8px 10px', color: '#334155' }}>{row.account_manager}</td>
-                    <td style={{ padding: '8px 10px', color: '#64748b' }}>{row.technology}</td>
-                    <td style={{ padding: '8px 10px', color: '#64748b' }}>{row.lead_date}</td>
-                    <td style={{ padding: '8px 10px', color: '#334155' }}>{row.country}</td>
-                    <td style={{ padding: '8px 10px' }}>
-                      <span
-                        className={`apex-kpi-badge ${
-                          row.lost_won === 'WON' || row.lost_won === 'Won'
-                            ? 'badge-green'
-                            : row.lost_won === 'Lost'
-                            ? 'badge-blue'
-                            : 'badge-amber'
-                        }`}
-                      >
-                        {row.lost_won || 'Open'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#7c3aed' }}>
-                      ₹{parseFloat(row.amount_in_inr || 0).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+        <div className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ marginBottom: '14px' }}>
+            <h4 style={{ margin: '0 0 2px', fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+              Lead Details Report
+            </h4>
             <span style={{ fontSize: '12px', color: '#64748b' }}>
-              Page {leadDetails.page} of {leadDetails.totalPages || 1}
+              Showing {leadDetails.data.length} of {leadDetails.total} records matching active filters
             </span>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button
-                type="button"
-                disabled={leadDetails.page <= 1}
-                onClick={() => setLeadDetails((prev) => ({ ...prev, page: prev.page - 1 }))}
-                style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '4px', border: '1px solid #cbd5e1', cursor: leadDetails.page <= 1 ? 'default' : 'pointer' }}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                disabled={leadDetails.page >= (leadDetails.totalPages || 1)}
-                onClick={() => setLeadDetails((prev) => ({ ...prev, page: prev.page + 1 }))}
-                style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '4px', border: '1px solid #cbd5e1', cursor: leadDetails.page >= (leadDetails.totalPages || 1) ? 'default' : 'pointer' }}
-              >
-                Next
-              </button>
-            </div>
           </div>
+
+          <ApexInteractiveReport
+            reportId="lead_dashboard_lead_details"
+            columns={drilldownLeadColumns}
+            data={leadDetails.data}
+            total={leadDetails.total}
+            page={leadDetails.page}
+            onPageChange={(newPage) => setLeadDetails((prev) => ({ ...prev, page: newPage }))}
+            rowsPerPage={leadDetails.pageSize}
+            onRowsPerPageChange={(newRows) => {
+              setLeadDetails((prev) => ({ ...prev, pageSize: newRows, page: 1 }));
+            }}
+            search={leadDetails.search}
+            onSearchChange={(val) => setLeadDetails((prev) => ({ ...prev, search: val }))}
+            onSearchSubmit={() => {
+              setLeadDetails((prev) => ({ ...prev, page: 1 }));
+              loadSectionData('lead_details', appliedFilters);
+            }}
+            isServerSide={true}
+            renderLeadingCell={(row) => (
+              <button
+                type="button"
+                className="apex-edit-icon-btn"
+                title={`Open Lead #${row.lead_id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToReport('leads', { lead_id: row.lead_id });
+                }}
+              >
+                <IconFilePenLine size={14} color="#0284c7" />
+              </button>
+            )}
+            onRowClick={(row) => navigateToReport('leads', { lead_id: row.lead_id })}
+            onDownload={handleExportLeadDetailsCsv}
+            onRefresh={() => loadSectionData('lead_details', appliedFilters)}
+          />
         </div>
       )}
 
@@ -1498,58 +1948,50 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
           8. SECTION 5: LEAD LINES DETAILS REPORT
           ======================================================== */}
       {activeSection === 'lead_lines_details' && (
-        <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div>
-              <h4 style={{ margin: '0 0 2px', fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
-                Lead Lines Details Report
-              </h4>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>
-                Showing {leadLines.data.length} of {leadLines.total} lead line requirements
-              </span>
-            </div>
+        <div className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ marginBottom: '14px' }}>
+            <h4 style={{ margin: '0 0 2px', fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+              Lead Lines Details Report
+            </h4>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>
+              Showing {leadLines.data.length} of {leadLines.total} lead line requirements
+            </span>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Line ID</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Lead ID</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Company</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Technology</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Model</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Experience</th>
-                  <th style={{ padding: '8px 10px', color: '#475569', textAlign: 'right' }}>Rate</th>
-                  <th style={{ padding: '8px 10px', color: '#475569', textAlign: 'right' }}>Resources</th>
-                  <th style={{ padding: '8px 10px', color: '#475569', textAlign: 'right' }}>Amount (INR)</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>CV Sent</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leadLines.data.map((row) => (
-                  <tr key={row.lead_line_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '8px 10px', fontWeight: 700, color: '#0284c7' }}>#{row.lead_line_id}</td>
-                    <td style={{ padding: '8px 10px', color: '#64748b' }}>#{row.lead_id}</td>
-                    <td style={{ padding: '8px 10px', fontWeight: 600, color: '#0f172a' }}>{row.company_name}</td>
-                    <td style={{ padding: '8px 10px', color: '#334155' }}>{row.technology_name}</td>
-                    <td style={{ padding: '8px 10px', color: '#334155' }}>{row.model}</td>
-                    <td style={{ padding: '8px 10px', color: '#64748b' }}>{row.experience}</td>
-                    <td style={{ padding: '8px 10px', textAlign: 'right' }}>{row.currency_code} {row.rate}</td>
-                    <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600 }}>{row.no_of_resources}</td>
-                    <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#7c3aed' }}>
-                      ₹{parseFloat(row.amount_in_inr || 0).toLocaleString()}
-                    </td>
-                    <td style={{ padding: '8px 10px' }}>
-                      <span className={`apex-kpi-badge ${row.cv_sent === 'Yes' ? 'badge-green' : 'badge-blue'}`}>
-                        {row.cv_sent}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ApexInteractiveReport
+            reportId="lead_dashboard_line_details"
+            columns={drilldownLineColumns}
+            data={leadLines.data}
+            total={leadLines.total}
+            page={leadLines.page}
+            onPageChange={(newPage) => setLeadLines((prev) => ({ ...prev, page: newPage }))}
+            rowsPerPage={leadLines.pageSize}
+            onRowsPerPageChange={(newRows) => {
+              setLeadLines((prev) => ({ ...prev, pageSize: newRows, page: 1 }));
+            }}
+            search={leadLines.search}
+            onSearchChange={(val) => setLeadLines((prev) => ({ ...prev, search: val }))}
+            onSearchSubmit={() => {
+              setLeadLines((prev) => ({ ...prev, page: 1 }));
+              loadSectionData('lead_lines_details', appliedFilters);
+            }}
+            isServerSide={true}
+            renderLeadingCell={(row) => (
+              <button
+                type="button"
+                className="apex-edit-icon-btn"
+                title={`Open Lead #${row.lead_id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToReport('leads', { lead_id: row.lead_id });
+                }}
+              >
+                <IconFilePenLine size={14} color="#0284c7" />
+              </button>
+            )}
+            onDownload={handleExportLeadLinesCsv}
+            onRefresh={() => loadSectionData('lead_lines_details', appliedFilters)}
+          />
         </div>
       )}
 
@@ -1557,44 +1999,37 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
           9. SECTION 6: LEAD PROPOSALS REPORT
           ======================================================== */}
       {activeSection === 'lead_proposals' && (
-        <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <div style={{ marginBottom: '14px' }}>
             <h4 style={{ margin: '0 0 2px', fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
               Lead Proposals Report
             </h4>
             <span style={{ fontSize: '12px', color: '#64748b' }}>
-              Showing {proposals.data.length} of {proposals.total} sent proposals
+              Showing {proposals.data.length} of {proposals.total} sent proposals matching active filters
             </span>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Proposal ID</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Lead ID</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Company</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Proposal Number</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Date Sent</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>Description</th>
-                  <th style={{ padding: '8px 10px', color: '#475569' }}>File</th>
-                </tr>
-              </thead>
-              <tbody>
-                {proposals.data.map((row) => (
-                  <tr key={row.proposal_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '8px 10px', fontWeight: 700, color: '#0284c7' }}>#{row.proposal_id}</td>
-                    <td style={{ padding: '8px 10px', color: '#64748b' }}>#{row.lead_id}</td>
-                    <td style={{ padding: '8px 10px', fontWeight: 600, color: '#0f172a' }}>{row.company_name}</td>
-                    <td style={{ padding: '8px 10px', fontWeight: 600, color: '#334155' }}>{row.proposal_number}</td>
-                    <td style={{ padding: '8px 10px', color: '#64748b' }}>{row.date_sent}</td>
-                    <td style={{ padding: '8px 10px', color: '#475569' }}>{row.proposal_description}</td>
-                    <td style={{ padding: '8px 10px', color: '#0284c7' }}>{row.file_name || 'Document'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ApexInteractiveReport
+            reportId="lead_dashboard_proposals"
+            columns={drilldownProposalColumns}
+            data={proposals.data}
+            total={proposals.total}
+            page={proposals.page}
+            onPageChange={(newPage) => setProposals((prev) => ({ ...prev, page: newPage }))}
+            rowsPerPage={proposals.pageSize}
+            onRowsPerPageChange={(newRows) => {
+              setProposals((prev) => ({ ...prev, pageSize: newRows, page: 1 }));
+            }}
+            search={proposals.search}
+            onSearchChange={(val) => setProposals((prev) => ({ ...prev, search: val }))}
+            onSearchSubmit={() => {
+              setProposals((prev) => ({ ...prev, page: 1 }));
+              loadSectionData('lead_proposals', appliedFilters);
+            }}
+            isServerSide={true}
+            onDownload={handleExportProposalsCsv}
+            onRefresh={() => loadSectionData('lead_proposals', appliedFilters)}
+          />
         </div>
       )}
 
@@ -1602,48 +2037,38 @@ export default function LeadDashboard({ onNavigate, onShowToast }) {
           10. SECTION 7: LEAD RESOURCES REPORT
           ======================================================== */}
       {activeSection === 'lead_resources' && (
-        <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div className="apex-table-card" style={{ borderRadius: '10px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <div style={{ marginBottom: '14px' }}>
             <h4 style={{ margin: '0 0 2px', fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
               Lead Resources Report
             </h4>
             <span style={{ fontSize: '12px', color: '#64748b' }}>
-              Dedicated candidate and technical resource allocations for qualified leads
+              Showing {resources.data.length} of {resources.total} candidate and technical resource allocations
             </span>
           </div>
 
-          {resources.data.length === 0 ? (
-            <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
-              No resource allocations recorded in <code>lead_resources</code> for the selected filter set.
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                    <th style={{ padding: '8px 10px', color: '#475569' }}>Resource ID</th>
-                    <th style={{ padding: '8px 10px', color: '#475569' }}>Lead ID</th>
-                    <th style={{ padding: '8px 10px', color: '#475569' }}>Resource Name</th>
-                    <th style={{ padding: '8px 10px', color: '#475569' }}>Designation</th>
-                    <th style={{ padding: '8px 10px', color: '#475569' }}>Technology</th>
-                    <th style={{ padding: '8px 10px', color: '#475569' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {resources.data.map((row) => (
-                    <tr key={row.resource_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '8px 10px', fontWeight: 700, color: '#0284c7' }}>#{row.resource_id}</td>
-                      <td style={{ padding: '8px 10px', color: '#64748b' }}>#{row.lead_id}</td>
-                      <td style={{ padding: '8px 10px', fontWeight: 600, color: '#0f172a' }}>{row.resource_name}</td>
-                      <td style={{ padding: '8px 10px', color: '#334155' }}>{row.designation}</td>
-                      <td style={{ padding: '8px 10px', color: '#334155' }}>{row.technology}</td>
-                      <td style={{ padding: '8px 10px' }}>{row.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <ApexInteractiveReport
+            reportId="lead_dashboard_resources"
+            columns={drilldownResourceColumns}
+            data={resources.data}
+            total={resources.total}
+            page={resources.page}
+            onPageChange={(newPage) => setResources((prev) => ({ ...prev, page: newPage }))}
+            rowsPerPage={resources.pageSize}
+            onRowsPerPageChange={(newRows) => {
+              setResources((prev) => ({ ...prev, pageSize: newRows, page: 1 }));
+            }}
+            search={resources.search}
+            onSearchChange={(val) => setResources((prev) => ({ ...prev, search: val }))}
+            onSearchSubmit={() => {
+              setResources((prev) => ({ ...prev, page: 1 }));
+              loadSectionData('lead_resources', appliedFilters);
+            }}
+            isServerSide={true}
+            emptyMessage="No resource allocations recorded in lead_resources for the selected filter set."
+            onDownload={handleExportResourcesCsv}
+            onRefresh={() => loadSectionData('lead_resources', appliedFilters)}
+          />
         </div>
       )}
 

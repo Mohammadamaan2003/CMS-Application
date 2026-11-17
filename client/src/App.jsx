@@ -1,4 +1,70 @@
 import React, { useState, useEffect, useCallback } from 'react';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary caught error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '2rem', maxWidth: '600px', margin: '2rem auto', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #fee2e2', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <span style={{ fontSize: '1.5rem', color: '#dc2626' }}>⚠️</span>
+            <h3 style={{ margin: 0, color: '#991b1b', fontSize: '1.1rem', fontWeight: 600 }}>Page Error</h3>
+          </div>
+          <p style={{ color: '#4b5563', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+            {this.state.error?.message || 'An error occurred while displaying this page.'}
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button
+              type="button"
+              onClick={() => this.setState({ hasError: false, error: null })}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#071531',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Try Again
+            </button>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#f1f5f9',
+                color: '#334155',
+                border: '1px solid #cbd5e1',
+                borderRadius: '4px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import ApexHeader from './components/ApexHeader';
 import ApexSidebar from './components/ApexSidebar';
 import Toast from './components/Toast';
@@ -25,6 +91,10 @@ import ContactUploadPage from './pages/CRMUpload/ContactUploadPage';
 import ContactIncorrectDataPage from './pages/CRMUpload/ContactIncorrectDataPage';
 import MergeCompaniesPage from './pages/DuplicateMerger/MergeCompaniesPage';
 import MergeContactsPage from './pages/DuplicateMerger/MergeContactsPage';
+import MergeCompaniesSuggestedPage from './pages/DuplicateMerger/MergeCompaniesSuggestedPage';
+import MergeContactsSuggestedPage from './pages/DuplicateMerger/MergeContactsSuggestedPage';
+import DuplicateCompanyReportPage from './pages/DuplicateMerger/DuplicateCompanyReportPage';
+import DuplicateContactReportPage from './pages/DuplicateMerger/DuplicateContactReportPage';
 import CompanyDashboard from './pages/Dashboards/CompanyDashboard';
 import LeadDashboard from './pages/Dashboards/LeadDashboard';
 import LuminaGlassDashboard from './pages/Dashboards/LuminaGlassDashboard';
@@ -61,8 +131,12 @@ const TAB_TO_HASH = {
   company_invalid_data: '#/crm-upload/company-invalid-data',
   upload_contacts: '#/upload/contacts',
   contact_incorrect_data: '#/crm-upload/contact-incorrect-data',
+  duplicate_company_report: '#/duplicate-merger/company-report',
   merge_companies: '#/duplicate-merger/companies',
+  duplicate_contact_report: '#/duplicate-merger/contact-report',
   merge_contacts: '#/duplicate-merger/contacts',
+  merge_companies_suggested: '#/duplicate-merger-suggested/companies',
+  merge_contacts_suggested: '#/duplicate-merger-suggested/contacts',
   dashboards: '#/dashboards',
   crm_analytics: '#/dashboards/company',
   sales_performance: '#/dashboards/lead',
@@ -140,6 +214,42 @@ export default function App() {
   });
   const [dashboardStats, setDashboardStats] = useState(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+
+  // Application Theme (Default 'dark', with 'blue' and 'light' available; user preference remembered in localStorage)
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem('apex_theme');
+      if (saved === 'dark' || saved === 'blue' || saved === 'light') return saved;
+    } catch (e) {}
+    return 'dark'; // Default is new dark theme (#171717)
+  });
+
+  const handleToggleTheme = useCallback((newTheme) => {
+    setTheme((prev) => {
+      let next;
+      if (newTheme === 'dark' || newTheme === 'blue' || newTheme === 'light') {
+        next = newTheme;
+      } else {
+        // Cycle: dark -> blue -> light -> dark
+        if (prev === 'dark') next = 'blue';
+        else if (prev === 'blue') next = 'light';
+        else next = 'dark';
+      }
+      try {
+        localStorage.setItem('apex_theme', next);
+      } catch (e) {}
+      document.documentElement.setAttribute('data-theme', next);
+      document.body.classList.remove('apex-theme-dark', 'apex-theme-blue', 'apex-theme-light');
+      document.body.classList.add(`apex-theme-${next}`);
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.classList.remove('apex-theme-dark', 'apex-theme-blue', 'apex-theme-light');
+    document.body.classList.add(`apex-theme-${theme}`);
+  }, [theme]);
 
   // Current user state (Simulated authentication session without login page)
   const [currentUser, setCurrentUser] = useState(() => {
@@ -402,7 +512,10 @@ export default function App() {
   }, [activeTab, setActiveTab, showToast]);
 
   return (
-    <div className="apex-app-root">
+    <div
+      className={`apex-app-root apex-theme-${theme}`}
+      data-theme={theme}
+    >
       {/* Toast Alert System */}
       <Toast toasts={toasts} onDismiss={dismissToast} />
 
@@ -414,6 +527,8 @@ export default function App() {
         currentUser={currentUser}
         onSwitchUser={handleSwitchUser}
         availableUsers={availableUsers}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       <div className="apex-layout-body">
@@ -443,6 +558,7 @@ export default function App() {
             className="apex-main-inner"
             style={activeTab === 'glass_dashboard' || activeTab === 'lumina' ? { padding: 0 } : undefined}
           >
+            <ErrorBoundary key={activeTab}>
             {(activeTab === 'dashboard' || activeTab === 'home') && (
               <Dashboard
                 stats={dashboardStats}
@@ -497,12 +613,34 @@ export default function App() {
               />
             )}
 
+            {activeTab === 'duplicate_company_report' && (
+              <DuplicateCompanyReportPage
+                onNavigate={setActiveTab}
+                onShowToast={showToast}
+              />
+            )}
+
             {activeTab === 'merge_companies' && (
               <MergeCompaniesPage onShowToast={showToast} />
             )}
 
+            {activeTab === 'merge_companies_suggested' && (
+              <MergeCompaniesSuggestedPage onShowToast={showToast} />
+            )}
+
+            {activeTab === 'duplicate_contact_report' && (
+              <DuplicateContactReportPage
+                onNavigate={setActiveTab}
+                onShowToast={showToast}
+              />
+            )}
+
             {activeTab === 'merge_contacts' && (
               <MergeContactsPage onShowToast={showToast} />
+            )}
+
+            {activeTab === 'merge_contacts_suggested' && (
+              <MergeContactsSuggestedPage onShowToast={showToast} />
             )}
 
             {(activeTab === 'lead_dashboard' || activeTab === 'sales_performance') && (
@@ -697,6 +835,7 @@ export default function App() {
                   onShowToast={showToast}
                 />
               )}
+            </ErrorBoundary>
           </main>
         </div>
       </div>

@@ -8,6 +8,7 @@ import ApexChartModal from '../../components/ApexChartModal';
 import ApexAggregateModal from '../../components/ApexAggregateModal';
 import ActiveAggregationsBar from '../../components/ActiveAggregationsBar';
 import ApexColumnHeaderMenu from '../../components/ApexColumnHeaderMenu';
+import ApexInteractiveReport from '../../components/ApexInteractiveReport';
 import { computeAggregationValue } from '../../utils/aggregationUtils';
 import {
   IconSearch,
@@ -142,6 +143,97 @@ export default function LeadReport({
   // Support either prop naming pattern seamlessly
   const goToCompany = onNavigateToCompany || onNavigateToCompanyForm;
   const goToContact = onNavigateToContact || onNavigateToContactForm;
+  // Standardized child report column definitions
+  const leadLineReportColumns = useMemo(() => [
+    { key: 'technology', label: 'Technology', minWidth: '140px', getValue: (r) => r.technology || r.technology_required || '' },
+    { key: 'model', label: 'Model', minWidth: '110px', getValue: (r) => r.model || '' },
+    { key: 'no_of_resources', label: 'No of Resources', minWidth: '120px', getValue: (r) => r.no_of_resources || '' },
+    { key: 'rate', label: 'Rate', minWidth: '100px', getValue: (r) => r.rate ? (r.currency_code ? r.currency_code + ' ' + r.rate : '$ ' + r.rate) : '' },
+    { key: 'amount', label: 'Amount', minWidth: '110px', getValue: (r) => r.amount ? (r.currency_code ? r.currency_code + ' ' + r.amount : '$ ' + r.amount) : '' },
+    { key: 'amount_in_inr', label: 'Amount in INR', minWidth: '120px', getValue: (r) => r.amount_in_inr ? '₹ ' + r.amount_in_inr : '' },
+    { key: 'required_service', label: 'Service', minWidth: '120px', getValue: (r) => r.required_service || '' },
+    { key: 'cv_sent', label: 'CV Sent', minWidth: '90px', getValue: (r) => r.cv_sent || 'No' },
+  ], []);
+
+  const leadResourceReportColumns = useMemo(() => [
+    { key: 'resource_name', label: 'Resource Name', minWidth: '140px', getValue: (r) => r.resource_name || '' },
+    { key: 'resource_type', label: 'Type', minWidth: '110px', getValue: (r) => r.resource_type || '' },
+    { key: 'designation', label: 'Designation', minWidth: '120px', getValue: (r) => r.designation || '' },
+    { key: 'status', label: 'Status', minWidth: '100px', getValue: (r) => r.status || 'Allocated' },
+    { key: 'created_date', label: 'Created Date', minWidth: '120px', getValue: (r) => r.created_date || '' },
+  ], []);
+
+  const leadContactReportColumns = useMemo(() => [
+    {
+      key: 'client_full_name',
+      label: 'Client Full Name',
+      minWidth: '160px',
+      getValue: (r) => r.client_full_name || '',
+      render: (ct) => (
+        ct.contact_id && goToContact ? (
+          <a
+            href={'#/contacts?id=' + ct.contact_id}
+            onClick={(e) => {
+              e.preventDefault();
+              try {
+                localStorage.setItem('apex_return_tab', 'leads');
+                localStorage.setItem('apex_return_hash', '#/leads');
+              } catch (err) { }
+              goToContact(ct.contact_id, 'leads', '#/leads');
+            }}
+            style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}
+            onMouseEnter={(e) => (e.target.style.textDecoration = 'underline')}
+            onMouseLeave={(e) => (e.target.style.textDecoration = 'none')}
+          >
+            {ct.client_full_name}
+          </a>
+        ) : (
+          <span style={{ fontWeight: 600 }}>{ct.client_full_name}</span>
+        )
+      ),
+    },
+    { key: 'designation', label: 'Designation', minWidth: '130px', getValue: (r) => r.designation || '' },
+    { key: 'email', label: 'Email', minWidth: '160px', getValue: (r) => r.email || '' },
+    { key: 'mobile_number', label: 'Mobile Number', minWidth: '130px', getValue: (r) => r.mobile_number || '' },
+    { key: 'interview_status', label: 'Interview Status', minWidth: '120px', getValue: (r) => r.interview_status || '' },
+    { key: 'proposal', label: 'Proposal', minWidth: '100px', getValue: (r) => r.proposal || '' },
+    { key: 'connection_sent', label: 'Connection Sent', minWidth: '120px', getValue: (r) => r.connection_sent || '' },
+    { key: 'linkedin_url', label: 'Linkedin Url', minWidth: '140px', getValue: (r) => r.linkedin_url || '' },
+    { key: 'department', label: 'Department', minWidth: '110px', getValue: (r) => r.department || '' },
+    { key: 'role', label: 'Role', minWidth: '100px', getValue: (r) => r.role || '' },
+    { key: 'created_by', label: 'Created By', minWidth: '100px', getValue: (r) => r.created_by || '' },
+    { key: 'created_date', label: 'Created Date', minWidth: '120px', getValue: (r) => r.created_date || '' },
+    { key: 'modified_by', label: 'Modified By', minWidth: '100px', getValue: (r) => r.modified_by || '' },
+  ], [goToContact]);
+
+  const leadNaukriReportColumns = useMemo(() => [
+    { key: 'title', label: 'Job Title', minWidth: '160px', getValue: (r) => r.title || '' },
+    { key: 'job_location', label: 'Location', minWidth: '120px', getValue: (r) => r.job_location || '' },
+    {
+      key: 'experience',
+      label: 'Experience',
+      minWidth: '120px',
+      getValue: (r) => (r.min_experience || 0) + ' - ' + (r.max_experience || 0) + ' yrs',
+    },
+    { key: 'vacancies', label: 'Vacancies', minWidth: '90px', getValue: (r) => r.vacancies || '' },
+    { key: 'status', label: 'Status', minWidth: '100px', getValue: (r) => r.status || '' },
+    { key: 'created_date', label: 'Created Date', minWidth: '120px', getValue: (r) => formatAppDate(r.created_date) },
+  ], []);
+
+  const leadProposalReportColumns = useMemo(() => [
+    { key: 'proposal_number', label: 'Proposal Number', minWidth: '140px', getValue: (r) => r.proposal_number || '' },
+    { key: 'proposal_title', label: 'Title', minWidth: '160px', getValue: (r) => r.proposal_title || '' },
+    { key: 'client_name', label: 'Client', minWidth: '130px', getValue: (r) => r.client_name || '' },
+    {
+      key: 'proposal_value',
+      label: 'Value',
+      minWidth: '110px',
+      getValue: (r) => r.proposal_value ? (r.currency_code ? r.currency_code + ' ' + r.proposal_value : '$ ' + r.proposal_value) : '',
+    },
+    { key: 'status', label: 'Status', minWidth: '100px', getValue: (r) => r.status || '' },
+    { key: 'created_date', label: 'Created Date', minWidth: '120px', getValue: (r) => formatAppDate(r.created_date) },
+  ], []);
+
 
   // Mode: 'report' or 'form' with localStorage persistence
   const [viewMode, setViewMode] = useState(() => {
@@ -534,6 +626,24 @@ export default function LeadReport({
       return;
     }
 
+    if (formData.amount !== undefined && formData.amount !== null && String(formData.amount).trim() !== '') {
+      const numAmt = Number(formData.amount);
+      if (isNaN(numAmt) || numAmt < 0) {
+        setErrors((prev) => ({ ...prev, amount: 'Amount must be a non-negative number' }));
+        if (onShowToast) onShowToast('error', 'Amount must be a non-negative number.');
+        return;
+      }
+    }
+
+    if (formData.amount_in_inr !== undefined && formData.amount_in_inr !== null && String(formData.amount_in_inr).trim() !== '') {
+      const numInr = Number(formData.amount_in_inr);
+      if (isNaN(numInr) || numInr < 0) {
+        setErrors((prev) => ({ ...prev, amount_in_inr: 'Amount (INR) must be a non-negative number' }));
+        if (onShowToast) onShowToast('error', 'Amount (INR) must be a non-negative number.');
+        return;
+      }
+    }
+
     try {
       setFormSubmitting(true);
       if (selectedLead && selectedLead.lead_id) {
@@ -621,11 +731,28 @@ export default function LeadReport({
     });
   };
 
-  const toggleSelectAll = () => {
-    if (selectedLeadIds.size === leads.length) {
+  const toggleSelectAll = async () => {
+    const isAllSelected = totalLeads > 0 && selectedLeadIds.size >= totalLeads;
+    if (isAllSelected) {
       setSelectedLeadIds(new Set());
+      if (onShowToast) onShowToast('info', 'Deselected all leads.');
     } else {
-      setSelectedLeadIds(new Set(leads.map((l) => l.lead_id)));
+      try {
+        const params = {
+          search: appliedSearch,
+          ...filters,
+        };
+        const res = await api.getLeadIds(params);
+        if (res && res.success && Array.isArray(res.ids) && res.ids.length > 0) {
+          setSelectedLeadIds(new Set(res.ids));
+          if (onShowToast) onShowToast('info', `Selected all ${res.ids.length} leads throughout report.`);
+        } else {
+          setSelectedLeadIds(new Set(leads.map((l) => l.lead_id)));
+        }
+      } catch (err) {
+        console.warn('Failed to select all lead records:', err.message);
+        setSelectedLeadIds(new Set(leads.map((l) => l.lead_id)));
+      }
     }
   };
 
@@ -748,7 +875,7 @@ export default function LeadReport({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {/* Top Page Header: Title + Show Filters button matching Screenshot 5 */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
+            <h1 className="apex-page-heading" style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
               Lead
             </h1>
 
@@ -779,10 +906,9 @@ export default function LeadReport({
           {/* Collapsible Filter Bar Drawer */}
           {showFilters && (
             <div
+              className="company-filters-card apex-filter-panel"
               style={{
-                backgroundColor: '#ffffff',
                 borderRadius: '8px',
-                border: '1px solid #e2e8f0',
                 padding: '1rem',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               }}
@@ -946,15 +1072,13 @@ export default function LeadReport({
                       });
                       setPage(1);
                     }}
+                    className="btn-apex-cancel"
                     style={{
                       height: '34px',
                       padding: '0 14px',
-                      backgroundColor: '#f1f5f9',
-                      border: '1px solid #cbd5e1',
                       borderRadius: '4px',
                       fontSize: '0.825rem',
                       fontWeight: 600,
-                      color: '#475569',
                       cursor: 'pointer',
                       width: '100%',
                     }}
@@ -968,11 +1092,9 @@ export default function LeadReport({
 
           {/* Master Toolbar & Table Card */}
           <div
+            className="apex-table-card dense-table-wrapper"
             style={{
-              backgroundColor: '#ffffff',
               borderRadius: '8px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               padding: '0.75rem 1rem',
             }}
           >
@@ -1020,15 +1142,13 @@ export default function LeadReport({
                   </div>
                   <button
                     type="submit"
+                    className="btn-apex-go"
                     style={{
                       height: '34px',
                       padding: '0 14px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #cbd5e1',
                       borderRadius: '4px',
                       fontSize: '0.825rem',
                       fontWeight: 600,
-                      color: '#1e293b',
                       cursor: 'pointer',
                     }}
                   >
@@ -1038,10 +1158,10 @@ export default function LeadReport({
 
                 {/* Rows Selector: 10, 25, 50, 100, All */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.25rem' }}>
-                  <span style={{ fontSize: '0.825rem', color: '#475569', fontWeight: 500 }}>Rows</span>
+                  <span style={{ fontSize: '0.825rem', color: 'var(--text-muted, #94a3b8)', fontWeight: 500 }}>Rows</span>
                   <div style={{ position: 'relative' }}>
                     <select
-                      className="apex-form-input"
+                      className="apex-form-input apex-rows-select"
                       value={rowsPerPage}
                       onChange={(e) => {
                         const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
@@ -1052,10 +1172,8 @@ export default function LeadReport({
                         height: '34px',
                         padding: '0 24px 0 8px',
                         borderRadius: '4px',
-                        border: '1px solid #cbd5e1',
                         fontSize: '0.825rem',
                         fontWeight: 600,
-                        backgroundColor: '#ffffff',
                         cursor: 'pointer',
                         appearance: 'none',
                       }}
@@ -1076,16 +1194,14 @@ export default function LeadReport({
                 <div style={{ position: 'relative' }}>
                   <button
                     type="button"
+                    className="btn-apex-actions"
                     onClick={() => setShowActionsMenu(!showActionsMenu)}
                     style={{
                       height: '34px',
                       padding: '0 12px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #cbd5e1',
                       borderRadius: '4px',
                       fontSize: '0.825rem',
                       fontWeight: 600,
-                      color: '#1e293b',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
@@ -1102,7 +1218,16 @@ export default function LeadReport({
                     onOpenFilter={() => setShowFilterModal(true)}
                     onOpenAggregate={() => setShowAggregateModal(true)}
                     onOpenChart={() => setShowChartModal(true)}
-                    onOpenGroupBy={() => setShowChartModal(true)}
+                    columns={LEAD_MASTER_COLUMNS}
+                    data={leads}
+                    reportId="lead_master_report"
+                    onApplySort={(rules) => {
+                      if (rules && rules[0] && rules[0].key) {
+                        setSortBy(rules[0].key);
+                        setSortOrder((rules[0].dir || 'asc').toUpperCase());
+                        if (onShowToast) onShowToast('info', `Sorted by ${rules[0].key} (${(rules[0].dir || 'asc').toUpperCase()})`);
+                      }
+                    }}
                     onDownload={handleDownloadReport}
                     onRefresh={fetchLeads}
                     onResetReport={() => {
@@ -1129,6 +1254,10 @@ export default function LeadReport({
                       setPage(1);
                     }}
                     currentRows={rowsPerPage}
+                    isEditableGrid={true}
+                    hasSelection={selectedLeadIds.size > 0}
+                    onSelectAll={toggleSelectAll}
+                    onDeselectAll={() => setSelectedLeadIds(new Set())}
                   />
                 </div>
               </div>
@@ -1348,13 +1477,22 @@ export default function LeadReport({
             <div style={{ overflowX: 'auto' }}>
               <table className="apex-master-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
+                  <tr className="apex-report-header-row" style={{ textAlign: 'left' }}>
                     <th style={{ width: '36px', padding: '0.65rem 0.5rem', textAlign: 'center' }}>
                       <input
                         type="checkbox"
-                        checked={leads.length > 0 && selectedLeadIds.size === leads.length}
+                        checked={totalLeads > 0 && selectedLeadIds.size >= totalLeads}
+                        ref={(el) => {
+                          if (el) {
+                            el.indeterminate = selectedLeadIds.size > 0 && selectedLeadIds.size < totalLeads;
+                          }
+                        }}
                         onChange={toggleSelectAll}
-                        title="Select all on this page"
+                        title={
+                          selectedLeadIds.size >= totalLeads && totalLeads > 0
+                            ? `All ${totalLeads} leads selected`
+                            : `Select all ${totalLeads} leads throughout report`
+                        }
                       />
                     </th>
                     <th style={{ width: '36px', padding: '0.65rem 0.5rem', textAlign: 'center' }}></th>
@@ -1412,7 +1550,7 @@ export default function LeadReport({
                         key={row.lead_id}
                         style={{
                           borderBottom: '1px solid #f1f5f9',
-                          backgroundColor: selectedLeadIds.has(row.lead_id) ? '#f0f9ff' : 'transparent',
+                          backgroundColor: selectedLeadIds.has(row.lead_id) ? 'var(--primary-light, #f0f9ff)' : undefined,
                           transition: 'background-color 0.12s',
                         }}
                         onMouseEnter={(e) => {
@@ -1514,6 +1652,7 @@ export default function LeadReport({
                             return (
                               <td key={col.key} style={{ padding: '0.65rem 0.75rem' }}>
                                 <span
+                                  className="prob-badge"
                                   style={{
                                     display: 'inline-block',
                                     padding: '2px 8px',
@@ -1613,9 +1752,7 @@ export default function LeadReport({
           {activeSubTab === 'lead' && (
             <div
               style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                borderRadius: '8px', border: '1px solid var(--border, #e2e8f0)',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                 overflow: 'hidden',
               }}
@@ -1889,49 +2026,53 @@ export default function LeadReport({
                       />
                     </div>
 
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
-                        Created By
-                      </label>
-                      <input
-                        type="text"
-                        name="created_by"
-                        value={formData.created_by || 'ADMIN'}
-                        readOnly
-                        style={{
-                          width: '100%',
-                          height: '36px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          backgroundColor: '#f8fafc',
-                          color: '#64748b',
-                          padding: '0 0.5rem',
-                          fontSize: '0.825rem',
-                        }}
-                      />
-                    </div>
+                    {selectedLead && selectedLead.lead_id && (
+                      <>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
+                            Created By
+                          </label>
+                          <input
+                            type="text"
+                            name="created_by"
+                            value={formData.created_by || 'ADMIN'}
+                            readOnly
+                            style={{
+                              width: '100%',
+                              height: '36px',
+                              borderRadius: '4px',
+                              border: '1px solid #cbd5e1',
+                              backgroundColor: '#f8fafc',
+                              color: '#64748b',
+                              padding: '0 0.5rem',
+                              fontSize: '0.825rem',
+                            }}
+                          />
+                        </div>
 
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
-                        Modified Date
-                      </label>
-                      <input
-                        type="text"
-                        name="modified_date"
-                        value={formData.modified_date || ''}
-                        readOnly
-                        style={{
-                          width: '100%',
-                          height: '36px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          backgroundColor: '#f8fafc',
-                          color: '#64748b',
-                          padding: '0 0.5rem',
-                          fontSize: '0.825rem',
-                        }}
-                      />
-                    </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
+                            Modified Date
+                          </label>
+                          <input
+                            type="text"
+                            name="modified_date"
+                            value={formData.modified_date || ''}
+                            readOnly
+                            style={{
+                              width: '100%',
+                              height: '36px',
+                              borderRadius: '4px',
+                              border: '1px solid #cbd5e1',
+                              backgroundColor: '#f8fafc',
+                              color: '#64748b',
+                              padding: '0 0.5rem',
+                              fontSize: '0.825rem',
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Column 2 */}
@@ -2437,18 +2578,8 @@ export default function LeadReport({
                 >
                   <button
                     type="button"
+                    className="btn-apex-cancel"
                     onClick={closeFormView}
-                    style={{
-                      height: '36px',
-                      padding: '0 1.25rem',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '4px',
-                      fontSize: '0.825rem',
-                      fontWeight: 600,
-                      color: '#475569',
-                      cursor: 'pointer',
-                    }}
                   >
                     Cancel
                   </button>
@@ -2459,17 +2590,8 @@ export default function LeadReport({
                         type="button"
                         onClick={handleDeleteLead}
                         disabled={formSubmitting}
-                        style={{
-                          height: '36px',
-                          padding: '0 1.25rem',
-                          backgroundColor: '#fee2e2',
-                          border: '1px solid #fca5a5',
-                          borderRadius: '4px',
-                          fontSize: '0.825rem',
-                          fontWeight: 600,
-                          color: '#991b1b',
-                          cursor: 'pointer',
-                        }}
+                        className="btn btn-secondary"
+                        style={{ minWidth: '100px', height: '38px', color: '#dc2626' }}
                       >
                         Delete
                       </button>
@@ -2478,17 +2600,7 @@ export default function LeadReport({
                     <button
                       type="submit"
                       disabled={formSubmitting}
-                      style={{
-                        height: '36px',
-                        padding: '0 1.5rem',
-                        backgroundColor: '#071531',
-                        border: 'none',
-                        borderRadius: '4px',
-                        fontSize: '0.825rem',
-                        fontWeight: 600,
-                        color: '#ffffff',
-                        cursor: 'pointer',
-                      }}
+                      className="btn-apex-top"
                     >
                       {selectedLead && selectedLead.lead_id ? 'Apply Changes' : 'Create'}
                     </button>
@@ -2505,9 +2617,7 @@ export default function LeadReport({
                 /* Edit/Create Lead Line Form (Screenshot 8) */
                 <div
                   style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px', border: '1px solid var(--border, #e2e8f0)',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                     overflow: 'hidden',
                   }}
@@ -2709,29 +2819,33 @@ export default function LeadReport({
                           />
                         </div>
 
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
-                            Created By
-                          </label>
-                          <input
-                            type="text"
-                            value={editingLine.created_by || 'ADMIN'}
-                            readOnly
-                            style={{ width: '100%', height: '36px', borderRadius: '4px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b', padding: '0 0.5rem', fontSize: '0.825rem' }}
-                          />
-                        </div>
+                        {editingLine && editingLine.lead_line_id && (
+                          <>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
+                                Created By
+                              </label>
+                              <input
+                                type="text"
+                                value={editingLine.created_by || 'ADMIN'}
+                                readOnly
+                                style={{ width: '100%', height: '36px', borderRadius: '4px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b', padding: '0 0.5rem', fontSize: '0.825rem' }}
+                              />
+                            </div>
 
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
-                            Modified Date
-                          </label>
-                          <input
-                            type="text"
-                            value={editingLine.modified_date || ''}
-                            readOnly
-                            style={{ width: '100%', height: '36px', borderRadius: '4px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b', padding: '0 0.5rem', fontSize: '0.825rem' }}
-                          />
-                        </div>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
+                                Modified Date
+                              </label>
+                              <input
+                                type="text"
+                                value={editingLine.modified_date || ''}
+                                readOnly
+                                style={{ width: '100%', height: '36px', borderRadius: '4px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b', padding: '0 0.5rem', fontSize: '0.825rem' }}
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       {/* Col 3 */}
@@ -2832,35 +2946,15 @@ export default function LeadReport({
                     >
                       <button
                         type="button"
+                        className="btn-apex-cancel"
                         onClick={() => setEditingLine(null)}
-                        style={{
-                          height: '36px',
-                          padding: '0 1.25rem',
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '4px',
-                          fontSize: '0.825rem',
-                          fontWeight: 600,
-                          color: '#475569',
-                          cursor: 'pointer',
-                        }}
                       >
                         Cancel
                       </button>
 
                       <button
                         type="submit"
-                        style={{
-                          height: '36px',
-                          padding: '0 1.5rem',
-                          backgroundColor: '#071531',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: '0.825rem',
-                          fontWeight: 600,
-                          color: '#ffffff',
-                          cursor: 'pointer',
-                        }}
+                        className="btn-apex-top"
                       >
                         {editingLine.lead_line_id ? 'Apply Changes' : 'Create'}
                       </button>
@@ -2955,60 +3049,34 @@ export default function LeadReport({
                         </button>
                       </div>
 
-                      <div style={{ overflowX: 'auto' }}>
-                        <table className="apex-master-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
-                          <thead>
-                            <tr style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                              <th style={{ padding: '0.55rem 0.75rem' }}>Resource Name</th>
-                              <th style={{ padding: '0.55rem 0.75rem' }}>Type</th>
-                              <th style={{ padding: '0.55rem 0.75rem' }}>Designation</th>
-                              <th style={{ padding: '0.55rem 0.75rem' }}>Status</th>
-                              <th style={{ padding: '0.55rem 0.75rem' }}>Created Date</th>
-                              <th style={{ padding: '0.55rem 0.75rem', width: '40px', textAlign: 'center' }}></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {leadResources.length === 0 ? (
-                              <tr>
-                                <td colSpan={6} style={{ textAlign: 'center', padding: '1.5rem', color: '#94a3b8' }}>
-                                  No resources allocated.
-                                </td>
-                              </tr>
-                            ) : (
-                              leadResources.map((res) => (
-                                <tr key={res.resource_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                  <td style={{ padding: '0.55rem 0.75rem', fontWeight: 600, color: '#1e293b' }}>{res.resource_name}</td>
-                                  <td style={{ padding: '0.55rem 0.75rem', color: '#475569' }}>{res.resource_type}</td>
-                                  <td style={{ padding: '0.55rem 0.75rem', color: '#475569' }}>{res.designation || '-'}</td>
-                                  <td style={{ padding: '0.55rem 0.75rem', color: '#475569' }}>{res.status || 'Allocated'}</td>
-                                  <td style={{ padding: '0.55rem 0.75rem', color: '#475569' }}>{res.created_date || '-'}</td>
-                                  <td style={{ padding: '0.55rem 0.75rem', textAlign: 'center' }}>
-                                    <button
-                                      type="button"
-                                      onClick={async () => {
-                                        if (window.confirm(`Remove resource ${res.resource_name}?`)) {
-                                          await api.deleteLeadResource(res.resource_id);
-                                          loadChildData(selectedLead.lead_id);
-                                        }
-                                      }}
-                                      style={{
-                                        border: 'none',
-                                        background: 'transparent',
-                                        color: '#ef4444',
-                                        cursor: 'pointer',
-                                        padding: '4px',
-                                      }}
-                                      title="Delete resource"
-                                    >
-                                      <IconTrash size={14} />
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
+                      <ApexInteractiveReport
+                        columns={leadResourceReportColumns}
+                        data={leadResources}
+                        rowsPerPage={10}
+                        renderTrailingCell={(res) => (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (window.confirm(`Remove resource ${res.resource_name}?`)) {
+                                await api.deleteLeadResource(res.resource_id);
+                                loadChildData(selectedLead.lead_id);
+                              }
+                            }}
+                            style={{
+                              border: "none",
+                              background: "transparent",
+                              color: "#ef4444",
+                              cursor: "pointer",
+                              padding: "4px",
+                            }}
+                            title="Delete resource"
+                          >
+                            <IconTrash size={14} />
+                          </button>
+                        )}
+                        onRefresh={() => loadChildData(selectedLead.lead_id)}
+                        onShowToast={onShowToast}
+                      />
                     </div>
                   </div>
                 </div>
@@ -3016,9 +3084,7 @@ export default function LeadReport({
                 /* Lead Lines Table View (Screenshot 7) */
                 <div
                   style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px', border: '1px solid var(--border, #e2e8f0)',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                     overflow: 'hidden',
                   }}
@@ -3036,177 +3102,91 @@ export default function LeadReport({
                     Lead Lines
                   </div>
 
-                  <div
-                    style={{
-                      padding: '0.75rem 1rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      flexWrap: 'wrap',
-                      gap: '0.75rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div style={{ position: 'relative', width: '200px' }}>
-                        <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                          <IconSearch size={14} />
-                        </span>
-                        <input
-                          type="text"
-                          placeholder="Search lines..."
-                          style={{
-                            width: '100%',
-                            height: '32px',
-                            paddingLeft: '30px',
-                            borderRadius: '4px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '0.825rem',
-                          }}
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        style={{
-                          height: '32px',
-                          padding: '0 12px',
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '4px',
-                          fontSize: '0.825rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Go
-                      </button>
-                    </div>
-
+                <ApexInteractiveReport
+                  columns={leadLineReportColumns}
+                  data={leadLines}
+                  rowsPerPage={10}
+                  toolbarButtons={
                     <button
                       type="button"
                       onClick={() =>
                         setEditingLine({
-                          technology: '',
-                          technology_required: '',
-                          experience: '',
-                          model: 'Project Based',
+                          technology: "",
+                          technology_required: "",
+                          experience: "",
+                          model: "Project Based",
                           currency_id: 1,
-                          currency_code: 'USD',
-                          rate: '',
-                          no_of_resources: '1',
-                          duration: '',
-                          amount: '',
-                          exchange_rate_value: '',
-                          amount_in_inr: '',
-                          required_service: 'Project-based',
-                          requirement_description: '',
-                          cv_made_by: 'Not Applicable',
-                          cv_sent: 'No',
-                          created_by: 'ADMIN',
-                          created_date: '20-JUL-2026',
+                          currency_code: "USD",
+                          rate: "",
+                          no_of_resources: "1",
+                          duration: "",
+                          amount: "",
+                          exchange_rate_value: "",
+                          amount_in_inr: "",
+                          required_service: "Project-based",
+                          requirement_description: "",
+                          cv_made_by: "Not Applicable",
+                          cv_sent: "No",
+                          created_by: "ADMIN",
+                          created_date: "20-JUL-2026",
                         })
                       }
                       style={{
-                        height: '34px',
-                        padding: '0 18px',
-                        backgroundColor: '#071531',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '0.825rem',
+                        height: "34px",
+                        padding: "0 18px",
+                        backgroundColor: "#071531",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontSize: "0.825rem",
                         fontWeight: 600,
-                        cursor: 'pointer',
+                        cursor: "pointer",
                       }}
                     >
                       Create Lines
                     </button>
-                  </div>
-
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="apex-master-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                          <th style={{ width: '36px', padding: '0.65rem 0.5rem', textAlign: 'center' }}></th>
-                          <th style={{ padding: '0.65rem 0.75rem' }}>Technology</th>
-                          <th style={{ padding: '0.65rem 0.75rem' }}>Model</th>
-                          <th style={{ padding: '0.65rem 0.75rem' }}>No of Resources</th>
-                          <th style={{ padding: '0.65rem 0.75rem' }}>Rate</th>
-                          <th style={{ padding: '0.65rem 0.75rem' }}>Amount</th>
-                          <th style={{ padding: '0.65rem 0.75rem' }}>Amount in INR</th>
-                          <th style={{ padding: '0.65rem 0.75rem' }}>Service</th>
-                          <th style={{ padding: '0.65rem 0.75rem' }}>CV Sent</th>
-                          <th style={{ width: '40px', padding: '0.65rem 0.5rem', textAlign: 'center' }}></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {leadLines.length === 0 ? (
-                          <tr>
-                            <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                              No lead lines found. Click "Create Lines" to add one.
-                            </td>
-                          </tr>
-                        ) : (
-                          leadLines.map((ln) => (
-                            <tr key={ln.lead_line_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                              <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                                <button
-                                  type="button"
-                                  className="apex-edit-icon-btn"
-                                  onClick={() => setEditingLine(ln)}
-                                  title="Edit line"
-                                  style={{
-                                    border: 'none',
-                                    background: 'transparent',
-                                    padding: '4px',
-                                    cursor: 'pointer',
-                                    color: '#0284c7',
-                                  }}
-                                >
-                                  <IconFilePenLine size={14} color="#0284c7" />
-                                </button>
-                              </td>
-                              <td style={{ padding: '0.65rem 0.75rem', fontWeight: 600, color: '#1e293b' }}>
-                                {ln.technology || ln.technology_required || '-'}
-                              </td>
-                              <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ln.model || '-'}</td>
-                              <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ln.no_of_resources || '-'}</td>
-                              <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>
-                                {ln.rate ? `${ln.currency_code || '$'} ${ln.rate}` : '-'}
-                              </td>
-                              <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>
-                                {ln.amount ? `${ln.currency_code || '$'} ${ln.amount}` : '-'}
-                              </td>
-                              <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>
-                                {ln.amount_in_inr ? `₹ ${ln.amount_in_inr}` : '-'}
-                              </td>
-                              <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ln.required_service || '-'}</td>
-                              <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ln.cv_sent || 'No'}</td>
-                              <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                                <button
-                                  type="button"
-                                  onClick={async () => {
-                                    if (window.confirm('Delete this line item?')) {
-                                      await api.deleteLeadLine(ln.lead_line_id);
-                                      loadChildData(selectedLead.lead_id);
-                                    }
-                                  }}
-                                  style={{
-                                    border: 'none',
-                                    background: 'transparent',
-                                    color: '#ef4444',
-                                    cursor: 'pointer',
-                                    padding: '4px',
-                                  }}
-                                  title="Delete line"
-                                >
-                                  <IconTrash size={14} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                  }
+                  renderLeadingCell={(ln) => (
+                    <button
+                      type="button"
+                      className="apex-edit-icon-btn"
+                      onClick={() => setEditingLine(ln)}
+                      title="Edit line"
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        padding: "4px",
+                        cursor: "pointer",
+                        color: "#0284c7",
+                      }}
+                    >
+                      <IconFilePenLine size={14} color="#0284c7" />
+                    </button>
+                  )}
+                  renderTrailingCell={(ln) => (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (window.confirm("Delete this line item?")) {
+                          await api.deleteLeadLine(ln.lead_line_id);
+                          loadChildData(selectedLead.lead_id);
+                        }
+                      }}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#ef4444",
+                        cursor: "pointer",
+                        padding: "4px",
+                      }}
+                      title="Delete line"
+                    >
+                      <IconTrash size={14} />
+                    </button>
+                  )}
+                  onRefresh={() => loadChildData(selectedLead.lead_id)}
+                  onShowToast={onShowToast}
+                />
                 </div>
               )}
             </div>
@@ -3217,9 +3197,7 @@ export default function LeadReport({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div
                 style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px', border: '1px solid var(--border, #e2e8f0)',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   overflow: 'hidden',
                 }}
@@ -3237,198 +3215,87 @@ export default function LeadReport({
                   Lead Contacts
                 </div>
 
-                <div
-                  style={{
-                    padding: '0.75rem 1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '0.75rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ position: 'relative', width: '200px' }}>
-                      <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                        <IconSearch size={14} />
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="Search contacts..."
-                        style={{
-                          width: '100%',
-                          height: '32px',
-                          paddingLeft: '30px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.825rem',
-                        }}
-                      />
-                    </div>
+                <ApexInteractiveReport
+                  columns={leadContactReportColumns}
+                  data={leadContacts}
+                  rowsPerPage={10}
+                  toolbarButtons={
                     <button
                       type="button"
+                      onClick={() =>
+                        setEditingContact({
+                          client_full_name: "",
+                          designation: "",
+                          email: "",
+                          mobile_number: "",
+                          interview_status: "Scheduled",
+                          proposal: "No",
+                          connection_sent: "Yes",
+                          linkedin_url: "",
+                          department: "IT",
+                          role: "Decision maker",
+                          created_by: "ADMIN",
+                          created_date: "07/09/2026",
+                          modified_by: "ADMIN",
+                          modified_date: "11/09/2026",
+                        })
+                      }
                       style={{
-                        height: '32px',
-                        padding: '0 12px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '4px',
-                        fontSize: '0.825rem',
+                        height: "34px",
+                        padding: "0 18px",
+                        backgroundColor: "#071531",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontSize: "0.825rem",
                         fontWeight: 600,
-                        cursor: 'pointer',
+                        cursor: "pointer",
                       }}
                     >
-                      Go
+                      Add Contact
                     </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditingContact({
-                        client_full_name: '',
-                        designation: '',
-                        email: '',
-                        mobile_number: '',
-                        interview_status: 'Scheduled',
-                        proposal: 'No',
-                        connection_sent: 'Yes',
-                        linkedin_url: '',
-                        department: 'IT',
-                        role: 'Decision maker',
-                        created_by: 'ADMIN',
-                        created_date: '07/09/2026',
-                        modified_by: 'ADMIN',
-                        modified_date: '11/09/2026',
-                      })
-                    }
-                    style={{
-                      height: '34px',
-                      padding: '0 18px',
-                      backgroundColor: '#071531',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.825rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Add Contact
-                  </button>
-                </div>
-
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="apex-master-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                        <th style={{ width: '36px', padding: '0.65rem 0.5rem', textAlign: 'center' }}></th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Client Full Name</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Designation</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Email</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Mobile Number</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Interview Status</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Proposal</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Connection Sent</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Linkedin Url</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Department</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Role</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Created By</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Created Date</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Modified By</th>
-                        <th style={{ width: '40px', padding: '0.65rem 0.5rem', textAlign: 'center' }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leadContacts.length === 0 ? (
-                        <tr>
-                          <td colSpan={15} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                            No lead contacts found. Click "Add Contact" to add one.
-                          </td>
-                        </tr>
-                      ) : (
-                        leadContacts.map((ct) => (
-                          <tr key={ct.lead_contact_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                className="apex-edit-icon-btn"
-                                onClick={() => setEditingContact(ct)}
-                                title="Edit contact"
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  padding: '4px',
-                                  cursor: 'pointer',
-                                  color: '#0284c7',
-                                }}
-                              >
-                                <IconFilePenLine size={14} color="#0284c7" />
-                              </button>
-                            </td>
-                            <td style={{ padding: '0.65rem 0.75rem', fontWeight: 600, color: '#0284c7' }}>
-                              {ct.contact_id && goToContact ? (
-                                <a
-                                  href={`#/contacts?id=${ct.contact_id}`}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    try {
-                                      localStorage.setItem('apex_return_tab', 'leads');
-                                      localStorage.setItem('apex_return_hash', '#/leads');
-                                    } catch (err) {}
-                                    goToContact(ct.contact_id, 'leads', '#/leads');
-                                  }}
-                                  style={{ color: '#0284c7', textDecoration: 'none' }}
-                                  onMouseEnter={(e) => (e.target.style.textDecoration = 'underline')}
-                                  onMouseLeave={(e) => (e.target.style.textDecoration = 'none')}
-                                >
-                                  {ct.client_full_name}
-                                </a>
-                              ) : (
-                                <span>{ct.client_full_name}</span>
-                              )}
-                            </td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ct.designation || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ct.email || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ct.mobile_number || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ct.interview_status || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ct.proposal || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ct.connection_sent || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {ct.linkedin_url || '-'}
-                            </td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ct.department || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ct.role || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ct.created_by || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{formatAppDate(ct.created_date)}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ct.modified_by || '-'}</td>
-                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  if (window.confirm(`Delete contact ${ct.client_full_name}?`)) {
-                                    await api.deleteLeadContact(ct.lead_contact_id);
-                                    loadChildData(selectedLead.lead_id);
-                                  }
-                                }}
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  color: '#ef4444',
-                                  cursor: 'pointer',
-                                  padding: '4px',
-                                }}
-                                title="Delete contact"
-                              >
-                                <IconTrash size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                  }
+                  renderLeadingCell={(ct) => (
+                    <button
+                      type="button"
+                      className="apex-edit-icon-btn"
+                      onClick={() => setEditingContact(ct)}
+                      title="Edit contact"
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        padding: "4px",
+                        cursor: "pointer",
+                        color: "#0284c7",
+                      }}
+                    >
+                      <IconFilePenLine size={14} color="#0284c7" />
+                    </button>
+                  )}
+                  renderTrailingCell={(ct) => (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (window.confirm(`Delete contact ${ct.client_full_name}?`)) {
+                          await api.deleteLeadContact(ct.lead_contact_id);
+                          loadChildData(selectedLead.lead_id);
+                        }
+                      }}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#ef4444",
+                        cursor: "pointer",
+                        padding: "4px",
+                      }}
+                      title="Delete contact"
+                    >
+                      <IconTrash size={14} />
+                    </button>
+                  )}
+                  onRefresh={() => loadChildData(selectedLead.lead_id)}
+                  onShowToast={onShowToast}
+                />
               </div>
             </div>
           )}
@@ -3438,9 +3305,7 @@ export default function LeadReport({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div
                 style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px', border: '1px solid var(--border, #e2e8f0)',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   overflow: 'hidden',
                 }}
@@ -3458,156 +3323,80 @@ export default function LeadReport({
                   Naukri Advertisement
                 </div>
 
-                <div
-                  style={{
-                    padding: '0.75rem 1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '0.75rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ position: 'relative', width: '200px' }}>
-                      <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                        <IconSearch size={14} />
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="Search ads..."
-                        style={{
-                          width: '100%',
-                          height: '32px',
-                          paddingLeft: '30px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.825rem',
-                        }}
-                      />
-                    </div>
+                <ApexInteractiveReport
+                  columns={leadNaukriReportColumns}
+                  data={naukriAds}
+                  rowsPerPage={10}
+                  toolbarButtons={
                     <button
                       type="button"
+                      onClick={() =>
+                        setEditingNaukri({
+                          title: "",
+                          job_location: "Dubai",
+                          min_experience: 3,
+                          max_experience: 6,
+                          vacancies: 1,
+                          job_description: "",
+                          status: "Active",
+                        })
+                      }
                       style={{
-                        height: '32px',
-                        padding: '0 12px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '4px',
-                        fontSize: '0.825rem',
+                        height: "34px",
+                        padding: "0 18px",
+                        backgroundColor: "#071531",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontSize: "0.825rem",
                         fontWeight: 600,
-                        cursor: 'pointer',
+                        cursor: "pointer",
                       }}
                     >
-                      Go
+                      Add Advertisement
                     </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditingNaukri({
-                        title: '',
-                        job_location: 'Dubai',
-                        min_experience: 3,
-                        max_experience: 6,
-                        vacancies: 1,
-                        job_description: '',
-                        status: 'Active',
-                      })
-                    }
-                    style={{
-                      height: '34px',
-                      padding: '0 18px',
-                      backgroundColor: '#071531',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.825rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Add Advertisement
-                  </button>
-                </div>
-
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="apex-master-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                        <th style={{ width: '36px', padding: '0.65rem 0.5rem', textAlign: 'center' }}></th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Job Title</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Location</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Experience</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Vacancies</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Status</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Created Date</th>
-                        <th style={{ width: '40px', padding: '0.65rem 0.5rem', textAlign: 'center' }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {naukriAds.length === 0 ? (
-                        <tr>
-                          <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                            No Naukri advertisements found. Click "Add Advertisement" to create one.
-                          </td>
-                        </tr>
-                      ) : (
-                        naukriAds.map((ad) => (
-                          <tr key={ad.ad_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                className="apex-edit-icon-btn"
-                                onClick={() => setEditingNaukri(ad)}
-                                title="Edit ad"
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  padding: '4px',
-                                  cursor: 'pointer',
-                                  color: '#0284c7',
-                                }}
-                              >
-                                <IconFilePenLine size={14} color="#0284c7" />
-                              </button>
-                            </td>
-                            <td style={{ padding: '0.65rem 0.75rem', fontWeight: 600, color: '#1e293b' }}>{ad.title}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ad.job_location || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>
-                              {ad.min_experience} - {ad.max_experience} yrs
-                            </td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ad.vacancies}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{ad.status}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{formatAppDate(ad.created_date)}</td>
-                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  if (window.confirm(`Delete advertisement ${ad.title}?`)) {
-                                    await api.deleteLeadNaukriAd(ad.ad_id);
-                                    loadChildData(selectedLead.lead_id);
-                                  }
-                                }}
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  color: '#ef4444',
-                                  cursor: 'pointer',
-                                  padding: '4px',
-                                }}
-                                title="Delete ad"
-                              >
-                                <IconTrash size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                  }
+                  renderLeadingCell={(ad) => (
+                    <button
+                      type="button"
+                      className="apex-edit-icon-btn"
+                      onClick={() => setEditingNaukri(ad)}
+                      title="Edit ad"
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        padding: "4px",
+                        cursor: "pointer",
+                        color: "#0284c7",
+                      }}
+                    >
+                      <IconFilePenLine size={14} color="#0284c7" />
+                    </button>
+                  )}
+                  renderTrailingCell={(ad) => (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (window.confirm(`Delete advertisement ${ad.title}?`)) {
+                          await api.deleteLeadNaukriAd(ad.ad_id);
+                          loadChildData(selectedLead.lead_id);
+                        }
+                      }}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#ef4444",
+                        cursor: "pointer",
+                        padding: "4px",
+                      }}
+                      title="Delete ad"
+                    >
+                      <IconTrash size={14} />
+                    </button>
+                  )}
+                  onRefresh={() => loadChildData(selectedLead.lead_id)}
+                  onShowToast={onShowToast}
+                />
               </div>
             </div>
           )}
@@ -3617,9 +3406,7 @@ export default function LeadReport({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div
                 style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px', border: '1px solid var(--border, #e2e8f0)',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   overflow: 'hidden',
                 }}
@@ -3637,155 +3424,79 @@ export default function LeadReport({
                   Proposals
                 </div>
 
-                <div
-                  style={{
-                    padding: '0.75rem 1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '0.75rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ position: 'relative', width: '200px' }}>
-                      <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                        <IconSearch size={14} />
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="Search proposals..."
-                        style={{
-                          width: '100%',
-                          height: '32px',
-                          paddingLeft: '30px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.825rem',
-                        }}
-                      />
-                    </div>
+                <ApexInteractiveReport
+                  columns={leadProposalReportColumns}
+                  data={proposals}
+                  rowsPerPage={10}
+                  toolbarButtons={
                     <button
                       type="button"
+                      onClick={() =>
+                        setEditingProposal({
+                          proposal_number: `PROP-${Date.now().toString().slice(-4)}`,
+                          proposal_title: `${formData.company_name || "Client"} Implementation Proposal`,
+                          client_name: formData.company_name || "",
+                          status: "Draft",
+                          proposal_value: 10000,
+                          currency_id: 1,
+                        })
+                      }
                       style={{
-                        height: '32px',
-                        padding: '0 12px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '4px',
-                        fontSize: '0.825rem',
+                        height: "34px",
+                        padding: "0 18px",
+                        backgroundColor: "#071531",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontSize: "0.825rem",
                         fontWeight: 600,
-                        cursor: 'pointer',
+                        cursor: "pointer",
                       }}
                     >
-                      Go
+                      Add Proposal
                     </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditingProposal({
-                        proposal_number: `PROP-${Date.now().toString().slice(-4)}`,
-                        proposal_title: `${formData.company_name || 'Client'} Implementation Proposal`,
-                        client_name: formData.company_name || '',
-                        status: 'Draft',
-                        proposal_value: 10000,
-                        currency_id: 1,
-                      })
-                    }
-                    style={{
-                      height: '34px',
-                      padding: '0 18px',
-                      backgroundColor: '#071531',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.825rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Add Proposal
-                  </button>
-                </div>
-
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="apex-master-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                        <th style={{ width: '36px', padding: '0.65rem 0.5rem', textAlign: 'center' }}></th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Proposal Number</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Title</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Client</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Value</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Status</th>
-                        <th style={{ padding: '0.65rem 0.75rem' }}>Created Date</th>
-                        <th style={{ width: '40px', padding: '0.65rem 0.5rem', textAlign: 'center' }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {proposals.length === 0 ? (
-                        <tr>
-                          <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                            No proposals recorded. Click "Add Proposal" to create one.
-                          </td>
-                        </tr>
-                      ) : (
-                        proposals.map((pr) => (
-                          <tr key={pr.proposal_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                className="apex-edit-icon-btn"
-                                onClick={() => setEditingProposal(pr)}
-                                title="Edit proposal"
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  padding: '4px',
-                                  cursor: 'pointer',
-                                  color: '#0284c7',
-                                }}
-                              >
-                                <IconFilePenLine size={14} color="#0284c7" />
-                              </button>
-                            </td>
-                            <td style={{ padding: '0.65rem 0.75rem', fontWeight: 600, color: '#1e293b' }}>{pr.proposal_number}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{pr.proposal_title}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{pr.client_name || '-'}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>
-                              {pr.proposal_value ? `${pr.currency_code || '$'} ${pr.proposal_value}` : '-'}
-                            </td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{pr.status}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', color: '#475569' }}>{formatAppDate(pr.created_date)}</td>
-                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  if (window.confirm(`Delete proposal ${pr.proposal_number}?`)) {
-                                    await api.deleteLeadProposal(pr.proposal_id);
-                                    loadChildData(selectedLead.lead_id);
-                                  }
-                                }}
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  color: '#ef4444',
-                                  cursor: 'pointer',
-                                  padding: '4px',
-                                }}
-                                title="Delete proposal"
-                              >
-                                <IconTrash size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                  }
+                  renderLeadingCell={(pr) => (
+                    <button
+                      type="button"
+                      className="apex-edit-icon-btn"
+                      onClick={() => setEditingProposal(pr)}
+                      title="Edit proposal"
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        padding: "4px",
+                        cursor: "pointer",
+                        color: "#0284c7",
+                      }}
+                    >
+                      <IconFilePenLine size={14} color="#0284c7" />
+                    </button>
+                  )}
+                  renderTrailingCell={(pr) => (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (window.confirm(`Delete proposal ${pr.proposal_number}?`)) {
+                          await api.deleteLeadProposal(pr.proposal_id);
+                          loadChildData(selectedLead.lead_id);
+                        }
+                      }}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#ef4444",
+                        cursor: "pointer",
+                        padding: "4px",
+                      }}
+                      title="Delete proposal"
+                    >
+                      <IconTrash size={14} />
+                    </button>
+                  )}
+                  onRefresh={() => loadChildData(selectedLead.lead_id)}
+                  onShowToast={onShowToast}
+                />
               </div>
             </div>
           )}

@@ -6,6 +6,11 @@
   --primary-light: #eff6ff;
   --primary-border: #bfdbfe;
 
+  --accent-violet: #8b5cf6;
+  --accent-blue: #38bdf8;
+  --accent-teal: #14b8a6;
+  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #3b82f6 50%, #14b8a6 100%);
+
   --success: #16a34a;
   --success-bg: #f0fdf4;
   --success-border: #bbf7d0;
@@ -22,6 +27,10 @@
   --bg-surface: #ffffff;
   --bg-muted: #f1f5f9;
   --bg-table-header: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --bg-modal: #ffffff;
+  --bg-dropdown: #ffffff;
 
   --text-main: #0f172a;
   --text-muted: #64748b;
@@ -41,13 +50,251 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
 
+  /* Theme-Aware Button System - Light Mode Tokens */
+  --btn-primary-bg: #2563eb;
+  --btn-primary-text: #ffffff;
+  --btn-primary-border: #2563eb;
+  --btn-primary-hover-bg: #1d4ed8;
+  --btn-primary-hover-border: #1d4ed8;
+  --btn-primary-hover-text: #ffffff;
+  --btn-primary-active-bg: #1e40af;
+  --btn-primary-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-text: #0f172a;
+  --btn-secondary-border: #cbd5e1;
+  --btn-secondary-hover-bg: #f8fafc;
+  --btn-secondary-hover-border: #94a3b8;
+  --btn-secondary-hover-text: #0f172a;
+  --btn-secondary-active-bg: #f1f5f9;
+  --btn-secondary-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+
+  --btn-outline-bg: #ffffff;
+  --btn-outline-text: #1e293b;
+  --btn-outline-border: #cbd5e1;
+  --btn-outline-hover-bg: #f1f5f9;
+  --btn-outline-hover-border: #94a3b8;
+  --btn-outline-hover-text: #0f172a;
+  --btn-outline-active-bg: #e2e8f0;
+  --btn-outline-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+
+  --btn-disabled-bg: #f1f5f9;
+  --btn-disabled-text: #64748b;
+  --btn-disabled-border: #cbd5e1;
+
   --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root[data-theme="dark"],
+[data-theme="dark"],
+.apex-theme-dark {
+  /* Specification Design Tokens */
+  --bg-app: #171717;
+  --bg-page: #171717;
+  --bg-sidebar: #111111;
+  --bg-card: #1C1C1C;
+  --bg-panel: #1C1C1C;
+  --bg-surface: #1C1C1C;
+  --bg-muted: #1C1C1C;
+  --bg-table-header: #1C1C1C;
+  --bg-modal: #222222;
+  --bg-dropdown: #222222;
+  --surface-raised: #222222;
+
+  --bg-input: #161616;
+  --bg-dropzone: #161616;
+
+  --border: #2C2C2C;
+  --border-divider: #2C2C2C;
+  --border-subtle: #2C2C2C;
+  --border-focus: #3B82F6;
+
+  --text-main: #F5F5F5;
+  --text-primary: #F5F5F5;
+  --text-secondary: #A3A3A3;
+  --text-muted: #A3A3A3;
+  --text-light: #737373;
+  --text-disabled: #737373;
+
+  --primary-accent: #3B82F6;
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --primary-blue: #2563EB;
+  --primary-blue-hover: #1D4ED8;
+  --primary-light: rgba(59, 130, 246, 0.15);
+  --primary-border: rgba(59, 130, 246, 0.4);
+
+  /* Button Tokens */
+  --btn-primary: #2563EB;
+  --btn-primary-hover: #1D4ED8;
+  --btn-primary-bg: #2563EB;
+  --btn-primary-text: #FFFFFF;
+  --btn-primary-border: #2563EB;
+  --btn-primary-hover-bg: #1D4ED8;
+  --btn-primary-hover-border: #1D4ED8;
+  --btn-primary-hover-text: #FFFFFF;
+  --btn-primary-active-bg: #1e40af;
+  --btn-primary-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+
+  --btn-secondary-bg: #222222;
+  --btn-secondary-text: #E5E5E5;
+  --btn-secondary-border: #383838;
+  --btn-secondary-hover-bg: #2A2A2A;
+  --btn-secondary-hover-border: #484848;
+  --btn-secondary-hover-text: #FFFFFF;
+  --btn-secondary-active-bg: #303030;
+  --btn-secondary-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+
+  --btn-outline-bg: #222222;
+  --btn-outline-text: #E5E5E5;
+  --btn-outline-border: #383838;
+  --btn-outline-hover-bg: #2A2A2A;
+  --btn-outline-hover-border: #484848;
+  --btn-outline-hover-text: #FFFFFF;
+  --btn-outline-active-bg: #303030;
+
+  --btn-disabled-bg: #202020;
+  --btn-disabled-text: #737373;
+  --btn-disabled-border: #2C2C2C;
+
+  /* Status Tokens */
+  --status-positive-text: #22C55E;
+  --status-positive-bg: #14251A;
+  --status-positive-border: #1d4029;
+  --status-negative-text: #F87171;
+  --status-negative-bg: #2A1717;
+  --status-negative-border: #4a2222;
+
+  --success: #22C55E;
+  --success-bg: #14251A;
+  --success-border: #1d4029;
+
+  --danger: #F87171;
+  --danger-hover: #ef4444;
+  --danger-bg: #2A1717;
+  --danger-border: #4a2222;
+
+  --warning: #F59E0B;
+  --warning-bg: #2d2415;
+
+  /* Chart Colors */
+  --chart-blue: #3B9DF8;
+  --chart-coral: #FF8A65;
+  --chart-violet: #8B7CFF;
+
+  --step-active: #3B82F6;
+  --step-inactive: #737373;
+
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 6px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 16px -1px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme="blue"],
+[data-theme="blue"],
+.apex-theme-blue {
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --primary-blue: #2563EB;
+  --primary-blue-hover: #1D4ED8;
+  --primary-light: rgba(37, 99, 235, 0.15);
+  --primary-border: rgba(37, 99, 235, 0.4);
+
+  --btn-primary: #2563EB;
+  --btn-primary-hover: #1D4ED8;
+  --btn-primary-bg: #2563EB;
+  --btn-primary-text: #ffffff;
+  --btn-primary-border: #2563EB;
+  --btn-primary-hover-bg: #1D4ED8;
+  --btn-primary-hover-border: #1D4ED8;
+  --btn-primary-hover-text: #ffffff;
+  --btn-primary-active-bg: #1e40af;
+  --btn-primary-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+
+  --btn-secondary-bg: #111C2E;
+  --btn-secondary-text: #F1F5F9;
+  --btn-secondary-border: #26364F;
+  --btn-secondary-hover-bg: #16243d;
+  --btn-secondary-hover-border: #38bdf8;
+  --btn-secondary-hover-text: #ffffff;
+  --btn-secondary-active-bg: #1a2c4a;
+  --btn-secondary-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+
+  --btn-outline-bg: #111C2E;
+  --btn-outline-text: #F1F5F9;
+  --btn-outline-border: #26364F;
+  --btn-outline-hover-bg: #16243d;
+  --btn-outline-hover-border: #38bdf8;
+  --btn-outline-hover-text: #ffffff;
+  --btn-outline-active-bg: #1a2c4a;
+  --btn-outline-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+
+  --btn-disabled-bg: #0D1728;
+  --btn-disabled-text: #64748B;
+  --btn-disabled-border: #1e293b;
+
+  --step-active: #2563EB;
+  --step-inactive: #64748B;
+
+  --accent-violet: #a78bfa;
+  --accent-blue: #38bdf8;
+  --accent-teal: #2dd4bf;
+  --accent-gradient: linear-gradient(135deg, #818cf8 0%, #38bdf8 50%, #2dd4bf 100%);
+
+  --success: #34d399;
+  --success-bg: rgba(16, 185, 129, 0.12);
+  --success-border: rgba(16, 185, 129, 0.3);
+
+  --danger: #f87171;
+  --danger-hover: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --danger-border: rgba(239, 68, 68, 0.3);
+
+  --warning: #fbbf24;
+  --warning-bg: rgba(245, 158, 11, 0.12);
+
+  --bg-app: #0B1220;
+  --bg-page: #0B1220;
+  --bg-surface: #111C2E;
+  --bg-card: #111C2E;
+  --bg-panel: #111C2E;
+  --bg-muted: #111C2E;
+  --bg-table-header: #111C2E;
+  --bg-modal: #111C2E;
+  --bg-dropdown: #111C2E;
+
+  --bg-input: #0D1728;
+  --bg-dropzone: #0D1728;
+
+  --text-main: #F1F5F9;
+  --text-muted: #94A3B8;
+  --text-secondary: #94A3B8;
+  --text-light: #64748B;
+
+  --border: #26364F;
+  --border-divider: #26364F;
+  --border-focus: #2563EB;
+
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 2px 6px 0 rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 4px 16px -1px rgba(0, 0, 0, 0.55), 0 0 1px 1px rgba(37, 99, 235, 0.15);
+  --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.7), 0 0 12px 1px rgba(37, 99, 235, 0.2);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 body {
@@ -419,12 +666,22 @@ select {
   vertical-align: middle;
 }
 
+.dense-table tbody tr:nth-child(even),
+.dense-table tbody tr.apex-row-alt {
+  background-color: #f0f6fc;
+}
+
+.dense-table tbody tr:nth-child(odd),
+.dense-table tbody tr.apex-row-even {
+  background-color: #ffffff;
+}
+
 .dense-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: #e0effe;
 }
 
 .dense-table tbody tr.selected {
-  background-color: #eff6ff;
+  background-color: #dbeafe;
 }
 
 .table-checkbox {
@@ -693,17 +950,21 @@ select {
    Matches User Screenshots 1, 2, 3, 4
    ========================================================================== */
 
-/* Root Layout Container */
+/* Root Layout Container - Fixed to viewport height */
 .apex-app-root {
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: #f1f5f9;
+  overflow: hidden;
 }
 
 /* Top Navigation Bar */
 .apex-topbar {
   min-height: 48px;
+  height: 48px;
+  flex-shrink: 0;
   background-color: #071531;
   color: #ffffff;
   display: flex;
@@ -746,15 +1007,32 @@ select {
 /* Branded IQRA Logo Box */
 .iqra-logo-box {
   background: #ffffff;
-  padding: 0.2rem 0.65rem;
-  border-radius: 4px;
-  display: flex;
+  padding: 3px 8px;
+  border-radius: 5px;
+  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  justify-content: center;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
   user-select: none;
   flex-shrink: 0;
+  height: 30px;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.iqra-logo-box:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.iqra-brand-logo {
+  height: 24px;
+  width: auto;
+  max-width: 120px;
+  object-fit: contain;
+  display: block;
+  user-select: none;
 }
 
 .iqra-logo-mark {
@@ -800,6 +1078,49 @@ select {
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+}
+
+/* Light / Dark Theme Switcher Button */
+.apex-theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  outline: none;
+}
+
+.apex-theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.apex-theme-toggle-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-icon-sun {
+  color: #fbbf24;
+}
+
+.theme-icon-moon {
+  color: #c7d2fe;
+}
+
+.apex-theme-toggle-label {
+  letter-spacing: 0.2px;
 }
 
 .user-profile-menu {
@@ -929,14 +1250,17 @@ select {
   color: var(--primary-blue);
 }
 
-/* Layout Body */
+/* Layout Body - Anchored below the 48px top header */
 .apex-layout-body {
   display: flex;
   flex: 1;
-  min-height: calc(100vh - 48px);
+  min-height: 0;
+  height: calc(100vh - 48px);
+  max-height: calc(100vh - 48px);
   position: relative;
   min-width: 0;
   max-width: 100vw;
+  overflow: hidden;
 }
 
 /* Sidebar Mobile Backdrop Overlay */
@@ -944,9 +1268,13 @@ select {
   display: none;
 }
 
-/* Sidebar (Left Dark Navy Menu) */
+/* Sidebar (Left Dark Navy Menu) - Fixed and anchored to viewport below top header */
 .apex-sidebar {
   width: 225px;
+  height: 100%;
+  max-height: calc(100vh - 48px);
+  position: sticky;
+  top: 48px;
   background-color: #071531;
   color: #cbd5e1;
   display: flex;
@@ -955,6 +1283,18 @@ select {
   user-select: none;
   flex-shrink: 0;
   border-right: 1px solid #050f24;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none; /* No visible scrollbar in Firefox */
+  -ms-overflow-style: none; /* No visible scrollbar in IE/Edge */
+  z-index: 40;
+}
+
+/* Hide scrollbar for Chrome, Safari, Edge and Opera */
+.apex-sidebar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .apex-sidebar.collapsed {
@@ -1003,6 +1343,67 @@ select {
   padding: 0.5rem 0;
   display: flex;
   flex-direction: column;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.apex-sidebar-nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Compact Navigation on Short Screens (height-responsive) */
+@media (max-height: 820px) {
+  .apex-sidebar-nav {
+    padding: 0.25rem 0;
+  }
+  .apex-nav-item {
+    padding: 0.42rem 0.85rem !important;
+    font-size: 0.785rem !important;
+    gap: 0.55rem !important;
+  }
+  .apex-nav-icon svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+  .apex-sub-menu {
+    padding: 0.15rem 0 0.15rem 1.85rem !important;
+  }
+  .apex-sub-item {
+    padding: 0.32rem 0.55rem !important;
+    font-size: 0.75rem !important;
+    gap: 0.4rem !important;
+  }
+  .apex-sub-icon svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+}
+
+@media (max-height: 680px) {
+  .apex-sidebar-nav {
+    padding: 0.15rem 0;
+  }
+  .apex-nav-item {
+    padding: 0.28rem 0.65rem !important;
+    font-size: 0.74rem !important;
+    gap: 0.45rem !important;
+  }
+  .apex-nav-icon svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  .apex-sub-menu {
+    padding: 0.1rem 0 0.1rem 1.45rem !important;
+  }
+  .apex-sub-item {
+    padding: 0.22rem 0.45rem !important;
+    font-size: 0.715rem !important;
+    gap: 0.35rem !important;
+  }
+  .apex-sub-icon svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
 }
 
 .apex-nav-item {
@@ -1089,15 +1490,20 @@ select {
   font-weight: 600;
 }
 
-/* Main Viewport */
+/* Main Viewport - Scrolls independently while sidebar stays fixed and anchored */
 .apex-main-viewport {
   flex: 1;
+  min-height: 0;
+  height: 100%;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   background-color: #f8fafc;
   min-width: 0;
   max-width: 100%;
-  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Decorative Pattern Strip (Matches Screenshots 1, 2, 3) */
@@ -1598,25 +2004,30 @@ select {
   padding: 1rem;
 }
 
-.apex-modal-card {
-  background: #ffffff;
-  border-radius: 8px;
+.apex-modal-card,
+.apex-modal-container {
+  background: #ffffff !important;
+  opacity: 1 !important;
+  border-radius: 10px;
   width: 100%;
   max-width: 600px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+  z-index: 10000;
   animation: fadeIn 0.15s ease-out;
 }
 
 .apex-modal-header {
-  padding: 1rem 1.25rem;
-  background-color: #071531;
-  color: #ffffff;
+  padding: 14px 20px;
+  background-color: #ffffff;
+  color: #1e293b;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .apex-modal-title {
@@ -1625,23 +2036,37 @@ select {
   gap: 0.5rem;
 }
 
-.apex-modal-title h3 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #ffffff;
+.apex-modal-title h2,
+.apex-modal-title h3,
+.apex-modal-header h2,
+.apex-modal-header h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
 }
 
+.apex-modal-close,
 .apex-close-btn {
-  background: none;
-  border: none;
-  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
   cursor: pointer;
-  padding: 0.2rem;
-  opacity: 0.8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.15s ease;
 }
 
+.apex-modal-close:hover,
 .apex-close-btn:hover {
-  opacity: 1;
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
 }
 
 .apex-modal-body {
@@ -1690,14 +2115,27 @@ select {
 }
 
 .btn-apex-cancel {
-  background-color: #ffffff;
-  color: #475569;
-  border: 1px solid var(--border);
-  padding: 0.45rem 1rem;
-  font-size: 0.825rem;
-  font-weight: 500;
-  border-radius: 4px;
+  background-color: var(--btn-secondary-bg, #222222);
+  color: var(--btn-secondary-text, #E5E5E5);
+  border: 1px solid var(--btn-secondary-border, #383838);
+  min-width: 120px;
+  height: 38px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-apex-cancel:hover {
+  background-color: var(--btn-secondary-hover-bg, #2A2A2A);
+  color: #FFFFFF;
 }
 
 /* Upload Dropzone */
@@ -1929,9 +2367,17 @@ select {
   box-sizing: border-box;
 }
 
-.apex-actions-menu-item:hover:not(.disabled) {
-  background-color: #f1f5f9;
-  color: #0f172a;
+.apex-actions-menu-item:hover:not(.disabled),
+.apex-actions-menu-item.active-sub {
+  background-color: #7048e8 !important;
+  color: #ffffff !important;
+}
+
+.apex-actions-menu-item:hover:not(.disabled) .apex-actions-menu-icon,
+.apex-actions-menu-item.active-sub .apex-actions-menu-icon,
+.apex-actions-menu-item:hover:not(.disabled) .apex-actions-menu-chevron,
+.apex-actions-menu-item.active-sub .apex-actions-menu-chevron {
+  color: #ffffff !important;
 }
 
 .apex-actions-menu-item.disabled {
@@ -1946,6 +2392,7 @@ select {
   width: 20px;
   margin-right: 0.75rem;
   color: #475569;
+  transition: color 0.12s ease;
 }
 
 .apex-actions-menu-item.disabled .apex-actions-menu-icon {
@@ -1959,6 +2406,7 @@ select {
 .apex-actions-menu-chevron {
   color: #94a3b8;
   margin-left: auto;
+  transition: color 0.12s ease;
 }
 
 .apex-actions-menu-divider {
@@ -2010,19 +2458,62 @@ select {
   border: none;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.12s;
+  transition: background-color 0.12s, color 0.12s;
   box-sizing: border-box;
 }
 
 .apex-actions-flyout-item:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: #7048e8 !important;
+  color: #ffffff !important;
+}
+
+.apex-actions-flyout-item:hover svg,
+.apex-actions-flyout-item:hover span {
+  color: #ffffff !important;
 }
 
 .apex-actions-flyout-item.active {
   background-color: #eff6ff;
-  color: #1d4ed8;
+  color: #7048e8;
   font-weight: 600;
+}
+
+/* APEX Universal Modal Buttons */
+.apex-modal-apply-btn {
+  height: 34px;
+  padding: 0 20px;
+  border-radius: 6px;
+  border: none;
+  background-color: #7048e8 !important;
+  color: #ffffff !important;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(112, 72, 232, 0.35);
+  transition: background-color 0.15s ease;
+}
+
+.apex-modal-apply-btn:hover {
+  background-color: #5f3dc4 !important;
+}
+
+.apex-modal-cancel-btn {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.apex-modal-cancel-btn:hover {
+  background-color: #f8fafc;
+  color: #1e293b;
+  border-color: #cbd5e1;
 }
 
 .apex-filter-modal-dialog {
@@ -2189,12 +2680,22 @@ select {
   transition: background-color 0.12s ease;
 }
 
-.apex-master-table tbody tr:nth-child(even) {
-  background-color: #fafbfc;
+.apex-master-table tbody tr:nth-child(even),
+.apex-master-table tbody tr.apex-row-alt {
+  background-color: #f0f6fc;
+}
+
+.apex-master-table tbody tr:nth-child(odd),
+.apex-master-table tbody tr.apex-row-even {
+  background-color: #ffffff;
 }
 
 .apex-master-table tbody tr:hover {
-  background-color: #f1f5f9;
+  background-color: #e0effe;
+}
+
+.apex-master-table tbody tr.selected {
+  background-color: #dbeafe;
 }
 
 .apex-master-table td {
@@ -3994,3 +4495,4131 @@ select {
 }
 
 
+/* ==========================================================================
+   CUSTOMER MANAGEMENT SYSTEM - NEW DARK THEME SPECIFICATION
+   Tokens:
+   - App background: #171717 (main page and outer workspace)
+   - Sidebar background: #111111 (navigation area)
+   - Card and panel background: #1C1C1C (dashboard cards, tables, schedule, grouped content)
+   - Raised surface: #222222 (dropdown menus, hover surfaces, elements above panels)
+   - Input background: #161616 (search boxes, text fields, form controls)
+   - Border and divider: #2C2C2C (subtle outlines, separators, table divisions)
+   - Primary text: #F5F5F5 (headings, important values, main labels)
+   - Secondary text: #A3A3A3 (descriptions, metadata, timestamps, inactive labels)
+   - Muted text: #737373 (placeholders and disabled labels)
+   - Primary accent: #3B82F6 (links, selected navigation, focus rings, primary actions)
+   - Primary button: background #2563EB, text #FFFFFF; hover background #1D4ED8
+   - Secondary button: background #222222, text #E5E5E5, border #383838; hover background #2A2A2A
+   - Disabled button: background #202020, text #737373, border #2C2C2C
+   - Positive status: #22C55E text on #14251A background
+   - Negative status: #F87171 text on #2A1717 background
+   - Chart colors: blue #3B9DF8, coral #FF8A65, violet #8B7CFF
+   ========================================================================== */
+
+/* 1. App background behind all content & outer workspace */
+.apex-theme-dark.apex-app-root,
+[data-theme="dark"] .apex-app-root,
+body.apex-theme-dark,
+[data-theme="dark"] body {
+  background-color: #171717 !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .apex-layout-body,
+[data-theme="dark"] .apex-layout-body,
+.apex-theme-dark .apex-main-viewport,
+[data-theme="dark"] .apex-main-viewport,
+.apex-theme-dark .apex-main-inner,
+[data-theme="dark"] .apex-main-inner,
+.apex-theme-dark .apex-master-page,
+[data-theme="dark"] .apex-master-page {
+  background-color: #171717 !important;
+  color: #F5F5F5 !important;
+}
+
+/* 2. Top Navigation Bar */
+.apex-theme-dark .apex-topbar,
+[data-theme="dark"] .apex-topbar {
+  background-color: #111111 !important;
+  border-bottom: 1px solid #2C2C2C !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+.apex-theme-dark .iqra-logo-box,
+[data-theme="dark"] .iqra-logo-box {
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35) !important;
+}
+
+.apex-theme-dark .iqra-title,
+[data-theme="dark"] .iqra-title {
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .iqra-subtitle,
+[data-theme="dark"] .iqra-subtitle {
+  color: #3B82F6 !important;
+}
+
+.apex-theme-dark .apex-app-title,
+[data-theme="dark"] .apex-app-title {
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .role-simulator-badge,
+[data-theme="dark"] .role-simulator-badge {
+  background-color: #1C1C1C !important;
+  border: 1px solid #2C2C2C !important;
+}
+
+.apex-theme-dark .role-simulator-label,
+[data-theme="dark"] .role-simulator-label {
+  color: #A3A3A3 !important;
+}
+
+.apex-theme-dark .role-simulator-select,
+[data-theme="dark"] .role-simulator-select {
+  background-color: #161616 !important;
+  color: #F5F5F5 !important;
+  border: 1px solid #2C2C2C !important;
+}
+
+.apex-theme-dark .role-simulator-select option,
+[data-theme="dark"] .role-simulator-select option {
+  background-color: #161616 !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .apex-theme-toggle-btn,
+[data-theme="dark"] .apex-theme-toggle-btn {
+  background: #222222 !important;
+  border: 1px solid #383838 !important;
+  color: #E5E5E5 !important;
+}
+
+.apex-theme-dark .apex-theme-toggle-btn:hover,
+[data-theme="dark"] .apex-theme-toggle-btn:hover {
+  background: #2A2A2A !important;
+  border-color: #3B82F6 !important;
+  color: #FFFFFF !important;
+}
+
+/* 3. Sidebar background (#111111) & Navigation */
+.apex-theme-dark .apex-sidebar,
+[data-theme="dark"] .apex-sidebar {
+  background-color: #111111 !important;
+  border-right: 1px solid #2C2C2C !important;
+  color: #A3A3A3 !important;
+}
+
+.apex-theme-dark .apex-sidebar-nav,
+[data-theme="dark"] .apex-sidebar-nav {
+  background-color: #111111 !important;
+}
+
+.apex-theme-dark .apex-nav-item,
+[data-theme="dark"] .apex-nav-item {
+  color: #A3A3A3 !important;
+}
+
+.apex-theme-dark .apex-nav-item:hover,
+[data-theme="dark"] .apex-nav-item:hover {
+  background-color: #222222 !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .apex-nav-item.active,
+[data-theme="dark"] .apex-nav-item.active,
+.apex-theme-dark .apex-nav-item.active-group,
+[data-theme="dark"] .apex-nav-item.active-group {
+  background: rgba(59, 130, 246, 0.16) !important;
+  border-left: 3px solid #3B82F6 !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .apex-sub-menu,
+[data-theme="dark"] .apex-sub-menu {
+  background-color: #111111 !important;
+  border-left: 1px solid #2C2C2C !important;
+}
+
+.apex-theme-dark .apex-sub-item,
+[data-theme="dark"] .apex-sub-item {
+  color: #A3A3A3 !important;
+}
+
+.apex-theme-dark .apex-sub-item:hover,
+[data-theme="dark"] .apex-sub-item:hover {
+  color: #F5F5F5 !important;
+  background-color: #222222 !important;
+}
+
+.apex-theme-dark .apex-sub-item.active,
+[data-theme="dark"] .apex-sub-item.active {
+  color: #3B82F6 !important;
+  background-color: rgba(59, 130, 246, 0.16) !important;
+  font-weight: 600 !important;
+}
+
+/* 4. Cards and Panels (#1C1C1C) */
+.apex-theme-dark .apex-card,
+[data-theme="dark"] .apex-card,
+.apex-theme-dark .apex-form-card,
+[data-theme="dark"] .apex-form-card,
+.apex-theme-dark .master-form-card,
+[data-theme="dark"] .master-form-card,
+.apex-theme-dark .company-filters-card,
+[data-theme="dark"] .company-filters-card,
+.apex-theme-dark .lead-filters-card,
+[data-theme="dark"] .lead-filters-card,
+.apex-theme-dark .apex-filter-panel,
+[data-theme="dark"] .apex-filter-panel,
+.apex-theme-dark .apex-table-card,
+[data-theme="dark"] .apex-table-card,
+.apex-theme-dark .apex-master-table-card,
+[data-theme="dark"] .apex-master-table-card,
+.apex-theme-dark .dense-table-wrapper,
+[data-theme="dark"] .dense-table-wrapper,
+.apex-theme-dark .apex-ir-card,
+[data-theme="dark"] .apex-ir-card,
+.apex-theme-dark .apex-report-toolbar,
+[data-theme="dark"] .apex-report-toolbar,
+.apex-theme-dark .apex-kpi-card,
+[data-theme="dark"] .apex-kpi-card,
+.apex-theme-dark .stat-card,
+[data-theme="dark"] .stat-card,
+.apex-theme-dark .apex-chart-card,
+[data-theme="dark"] .apex-chart-card,
+.apex-theme-dark .apex-active-filter-banner,
+[data-theme="dark"] .apex-active-filter-banner,
+.apex-theme-dark .apex-active-aggregations-bar,
+[data-theme="dark"] .apex-active-aggregations-bar,
+.apex-theme-dark .apex-active-groupby-banner,
+[data-theme="dark"] .apex-active-groupby-banner,
+.apex-theme-dark .apex-active-pivot-banner,
+[data-theme="dark"] .apex-active-pivot-banner {
+  background-color: #1C1C1C !important;
+  border: 1px solid #2C2C2C !important;
+  color: #F5F5F5 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Neutralize inline white backgrounds on panels & containers */
+.apex-theme-dark div[style*="background: #ffffff"],
+.apex-theme-dark div[style*="background: rgb(255, 255, 255)"],
+.apex-theme-dark div[style*="background-color: #ffffff"],
+.apex-theme-dark div[style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-dark div[style*="backgroundColor: '#ffffff'"],
+.apex-theme-dark div[style*="backgroundColor: '#fff'"],
+.apex-theme-dark form[style*="background: #ffffff"],
+.apex-theme-dark form[style*="background-color: #ffffff"],
+.apex-theme-dark section[style*="background-color: #ffffff"],
+[data-theme="dark"] div[style*="background: #ffffff"],
+[data-theme="dark"] div[style*="background: rgb(255, 255, 255)"],
+[data-theme="dark"] div[style*="background-color: #ffffff"],
+[data-theme="dark"] div[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="dark"] form[style*="background: #ffffff"],
+[data-theme="dark"] form[style*="background-color: #ffffff"] {
+  background-color: #1C1C1C !important;
+  border-color: #2C2C2C !important;
+  color: #F5F5F5 !important;
+}
+
+/* 5. Raised Surfaces (#222222) - Dropdowns, Modals, Overlays */
+.apex-theme-dark .user-dropdown-card,
+[data-theme="dark"] .user-dropdown-card,
+.apex-theme-dark .apex-actions-dropdown,
+[data-theme="dark"] .apex-actions-dropdown,
+.apex-theme-dark .apex-column-menu,
+[data-theme="dark"] .apex-column-menu,
+.apex-theme-dark .excel-filter-dropdown,
+[data-theme="dark"] .excel-filter-dropdown,
+.apex-theme-dark .multi-select-dropdown,
+[data-theme="dark"] .multi-select-dropdown,
+.apex-theme-dark .apex-actions-flyout-menu,
+[data-theme="dark"] .apex-actions-flyout-menu,
+.apex-theme-dark .apex-modal-card,
+[data-theme="dark"] .apex-modal-card {
+  background-color: #222222 !important;
+  border: 1px solid #2C2C2C !important;
+  color: #F5F5F5 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+}
+
+.apex-theme-dark .apex-modal-header,
+[data-theme="dark"] .apex-modal-header,
+.apex-theme-dark .user-dropdown-header,
+[data-theme="dark"] .user-dropdown-header {
+  background-color: #1C1C1C !important;
+  border-bottom: 1px solid #2C2C2C !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .apex-modal-footer,
+[data-theme="dark"] .apex-modal-footer {
+  background-color: #1C1C1C !important;
+  border-top: 1px solid #2C2C2C !important;
+}
+
+.apex-theme-dark .user-dropdown-item,
+[data-theme="dark"] .user-dropdown-item,
+.apex-theme-dark .apex-actions-menu-item,
+[data-theme="dark"] .apex-actions-menu-item,
+.apex-theme-dark .apex-actions-flyout-item,
+[data-theme="dark"] .apex-actions-flyout-item {
+  color: #A3A3A3 !important;
+}
+
+.apex-theme-dark .user-dropdown-item:hover,
+[data-theme="dark"] .user-dropdown-item:hover,
+.apex-theme-dark .apex-actions-menu-item:hover:not(.disabled),
+[data-theme="dark"] .apex-actions-menu-item:hover:not(.disabled),
+.apex-theme-dark .apex-actions-flyout-item:hover,
+[data-theme="dark"] .apex-actions-flyout-item:hover {
+  background-color: #2A2A2A !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .user-dropdown-divider,
+[data-theme="dark"] .user-dropdown-divider {
+  border-bottom: 1px solid #2C2C2C !important;
+}
+
+/* Dark Theme Column Menu & Multi-Select Dropdowns */
+.apex-theme-dark .apex-column-menu,
+[data-theme="dark"] .apex-column-menu,
+.apex-theme-dark .apex-multiselect-dropdown,
+[data-theme="dark"] .apex-multiselect-dropdown {
+  background-color: #222222 !important;
+  border: 1px solid #2C2C2C !important;
+  color: #F5F5F5 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+}
+
+.apex-theme-dark .apex-column-menu-actions,
+[data-theme="dark"] .apex-column-menu-actions,
+.apex-theme-dark .apex-column-menu-search,
+[data-theme="dark"] .apex-column-menu-search,
+.apex-theme-dark .apex-multiselect-header,
+[data-theme="dark"] .apex-multiselect-header {
+  background-color: #222222 !important;
+  border-bottom: 1px solid #2C2C2C !important;
+}
+
+.apex-theme-dark .apex-column-menu button,
+[data-theme="dark"] .apex-column-menu button {
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .apex-column-menu button:hover,
+[data-theme="dark"] .apex-column-menu button:hover {
+  background-color: #2A2A2A !important;
+}
+
+.apex-theme-dark .apex-column-menu-item,
+[data-theme="dark"] .apex-column-menu-item,
+.apex-theme-dark .apex-multiselect-item,
+[data-theme="dark"] .apex-multiselect-item {
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .apex-column-menu-item:hover,
+[data-theme="dark"] .apex-column-menu-item:hover,
+.apex-theme-dark .apex-multiselect-item:hover,
+[data-theme="dark"] .apex-multiselect-item:hover {
+  background-color: #2A2A2A !important;
+  color: #38bdf8 !important;
+}
+
+.apex-theme-dark .apex-multiselect-item.selected,
+[data-theme="dark"] .apex-multiselect-item.selected {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+  color: #38bdf8 !important;
+}
+
+.apex-theme-dark .apex-multiselect-item span,
+[data-theme="dark"] .apex-multiselect-item span {
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .apex-multiselect-item.selected span,
+[data-theme="dark"] .apex-multiselect-item.selected span {
+  color: #38bdf8 !important;
+}
+
+.apex-theme-dark input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+.apex-theme-blue input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="blue"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+/* 6. Inputs (#161616), Dropdowns, Textareas, Controls */
+.apex-theme-dark input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
+.apex-theme-dark select,
+.apex-theme-dark textarea,
+.apex-theme-dark .apex-search-field,
+.apex-theme-dark .apex-search-input,
+.apex-theme-dark .company-filter-input,
+.apex-theme-dark .company-filter-select,
+.apex-theme-dark .apex-form-input,
+.apex-theme-dark .form-control-input,
+.apex-theme-dark .form-control-select,
+.apex-theme-dark .apex-rows-select,
+.apex-theme-dark .upload-dropzone,
+[data-theme="dark"] input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+[data-theme="dark"] .apex-search-field,
+[data-theme="dark"] .apex-search-input,
+[data-theme="dark"] .company-filter-input,
+[data-theme="dark"] .company-filter-select,
+[data-theme="dark"] .apex-form-input,
+[data-theme="dark"] .form-control-input,
+[data-theme="dark"] .form-control-select,
+[data-theme="dark"] .apex-rows-select,
+[data-theme="dark"] .upload-dropzone {
+  background-color: #161616 !important;
+  border: 1px solid #2C2C2C !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark input::placeholder,
+.apex-theme-dark textarea::placeholder,
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #737373 !important;
+}
+
+.apex-theme-dark input:focus,
+.apex-theme-dark select:focus,
+.apex-theme-dark textarea:focus,
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: #3B82F6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+  outline: none !important;
+}
+
+.apex-theme-dark select option,
+[data-theme="dark"] select option {
+  background-color: #161616 !important;
+  color: #F5F5F5 !important;
+}
+
+/* Checkboxes */
+.apex-theme-dark input[type="checkbox"],
+.apex-theme-dark .table-checkbox,
+[data-theme="dark"] input[type="checkbox"],
+[data-theme="dark"] .table-checkbox {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 3px !important;
+  border: 1.5px solid #383838 !important;
+  background-color: #161616 !important;
+  cursor: pointer !important;
+  position: relative !important;
+  vertical-align: middle !important;
+  display: inline-block !important;
+  outline: none !important;
+}
+
+.apex-theme-dark input[type="checkbox"]:hover,
+[data-theme="dark"] input[type="checkbox"]:hover {
+  border-color: #3B82F6 !important;
+}
+
+.apex-theme-dark input[type="checkbox"]:checked,
+[data-theme="dark"] input[type="checkbox"]:checked {
+  background-color: #2563EB !important;
+  border-color: #3B82F6 !important;
+}
+
+/* 7. Typography: Primary (#F5F5F5), Secondary (#A3A3A3), Muted (#737373) */
+.apex-theme-dark h1,
+.apex-theme-dark h2,
+.apex-theme-dark h3,
+.apex-theme-dark h4,
+.apex-theme-dark h5,
+.apex-theme-dark h6,
+.apex-theme-dark .apex-page-heading,
+.apex-theme-dark .apex-page-title,
+.apex-theme-dark .apex-kpi-value,
+.apex-theme-dark .stat-value,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] .apex-page-heading,
+[data-theme="dark"] .apex-page-title,
+[data-theme="dark"] .apex-kpi-value,
+[data-theme="dark"] .stat-value {
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .apex-kpi-label,
+.apex-theme-dark .stat-label,
+.apex-theme-dark .company-filter-label,
+.apex-theme-dark .form-group label,
+.apex-theme-dark label,
+.apex-theme-dark .apex-pagination-strip,
+.apex-theme-dark .apex-rows-select-group,
+[data-theme="dark"] .apex-kpi-label,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .company-filter-label,
+[data-theme="dark"] .form-group label,
+[data-theme="dark"] label,
+[data-theme="dark"] .apex-pagination-strip,
+[data-theme="dark"] .apex-rows-select-group {
+  color: #A3A3A3 !important;
+}
+
+.apex-theme-dark .apex-kpi-subtext,
+.apex-theme-dark .stat-subtext,
+.apex-theme-dark .upload-subtitle,
+[data-theme="dark"] .apex-kpi-subtext,
+[data-theme="dark"] .stat-subtext,
+[data-theme="dark"] .upload-subtitle {
+  color: #737373 !important;
+}
+
+/* 8. Tables: Panel Background (#1C1C1C), Primary Cells (#F5F5F5), Subtle Rows (#2C2C2C), Hover (#222222) */
+.apex-theme-dark table,
+.apex-theme-dark .dense-table,
+.apex-theme-dark .apex-master-table,
+.apex-theme-dark .apex-report-table,
+[data-theme="dark"] table,
+[data-theme="dark"] .dense-table,
+[data-theme="dark"] .apex-master-table,
+[data-theme="dark"] .apex-report-table {
+  background-color: #1C1C1C !important;
+  color: #F5F5F5 !important;
+  border-color: #2C2C2C !important;
+}
+
+.apex-theme-dark .dense-table thead tr,
+.apex-theme-dark .apex-master-table thead tr,
+.apex-theme-dark .apex-report-table thead tr,
+.apex-theme-dark tr.apex-report-header-row,
+[data-theme="dark"] .dense-table thead tr,
+[data-theme="dark"] .apex-master-table thead tr,
+[data-theme="dark"] .apex-report-table thead tr,
+[data-theme="dark"] tr.apex-report-header-row {
+  background-color: #1C1C1C !important;
+  border-bottom: 1px solid #2C2C2C !important;
+}
+
+.apex-theme-dark table th,
+.apex-theme-dark .dense-table th,
+.apex-theme-dark .apex-master-table th,
+.apex-theme-dark .apex-report-table th,
+.apex-theme-dark .upload-preview-table th,
+[data-theme="dark"] table th,
+[data-theme="dark"] .dense-table th,
+[data-theme="dark"] .apex-master-table th,
+[data-theme="dark"] .apex-report-table th,
+[data-theme="dark"] .upload-preview-table th {
+  background-color: #202020 !important;
+  color: #A3A3A3 !important;
+  border-bottom: 1px solid #2C2C2C !important;
+  border-right: 1px solid #2C2C2C !important;
+}
+
+.apex-theme-dark table th:hover,
+.apex-theme-dark .dense-table th:hover,
+.apex-theme-dark .apex-master-table th:hover,
+.apex-theme-dark .apex-report-table th:hover,
+[data-theme="dark"] table th:hover,
+[data-theme="dark"] .dense-table th:hover,
+[data-theme="dark"] .apex-master-table th:hover,
+[data-theme="dark"] .apex-report-table th:hover {
+  background-color: #262626 !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark table td,
+.apex-theme-dark .dense-table td,
+.apex-theme-dark .apex-master-table td,
+.apex-theme-dark .apex-report-table td,
+.apex-theme-dark .upload-preview-table td,
+[data-theme="dark"] table td,
+[data-theme="dark"] .dense-table td,
+[data-theme="dark"] .apex-master-table td,
+[data-theme="dark"] .apex-report-table td,
+[data-theme="dark"] .upload-preview-table td {
+  color: #F5F5F5 !important;
+  border-bottom: 1px solid #2C2C2C !important;
+  border-right: 1px solid #2C2C2C !important;
+  background-color: transparent !important;
+}
+
+/* Force light readable text on all spans, labels, and text inside cells */
+.apex-theme-dark table td *:not(.status-badge):not([class*="error"]):not(.report-error-cell-text):not(button):not(input):not(select),
+[data-theme="dark"] table td *:not(.status-badge):not([class*="error"]):not(.report-error-cell-text):not(button):not(input):not(select) {
+  color: #F5F5F5 !important;
+}
+
+/* Zebra row striping across ALL tables */
+.apex-theme-dark table tbody tr:nth-child(odd),
+.apex-theme-dark .dense-table tbody tr:nth-child(odd),
+.apex-theme-dark .apex-master-table tbody tr:nth-child(odd),
+.apex-theme-dark .apex-report-table tbody tr:nth-child(odd),
+[data-theme="dark"] table tbody tr:nth-child(odd),
+[data-theme="dark"] .dense-table tbody tr:nth-child(odd),
+[data-theme="dark"] .apex-master-table tbody tr:nth-child(odd),
+[data-theme="dark"] .apex-report-table tbody tr:nth-child(odd) {
+  background-color: #1C1C1C !important;
+}
+
+.apex-theme-dark table tbody tr:nth-child(even),
+.apex-theme-dark .dense-table tbody tr:nth-child(even),
+.apex-theme-dark .apex-master-table tbody tr:nth-child(even),
+.apex-theme-dark .apex-report-table tbody tr:nth-child(even),
+[data-theme="dark"] table tbody tr:nth-child(even),
+[data-theme="dark"] .dense-table tbody tr:nth-child(even),
+[data-theme="dark"] .apex-master-table tbody tr:nth-child(even),
+[data-theme="dark"] .apex-report-table tbody tr:nth-child(even) {
+  background-color: #171717 !important;
+}
+
+.apex-theme-dark table tbody tr:hover,
+.apex-theme-dark .dense-table tbody tr:hover,
+.apex-theme-dark .apex-master-table tbody tr:hover,
+.apex-theme-dark .apex-report-table tbody tr:hover,
+[data-theme="dark"] table tbody tr:hover,
+[data-theme="dark"] .dense-table tbody tr:hover,
+[data-theme="dark"] .apex-master-table tbody tr:hover,
+[data-theme="dark"] .apex-report-table tbody tr:hover {
+  background-color: #242424 !important;
+}
+
+.apex-theme-dark table tbody tr.selected,
+.apex-theme-dark .dense-table tbody tr.selected,
+.apex-theme-dark .apex-master-table tbody tr.selected,
+.apex-theme-dark .apex-report-table tbody tr.selected,
+[data-theme="dark"] table tbody tr.selected,
+[data-theme="dark"] .dense-table tbody tr.selected,
+[data-theme="dark"] .apex-master-table tbody tr.selected,
+[data-theme="dark"] .apex-report-table tbody tr.selected {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+  border-left: 3px solid #3B82F6 !important;
+}
+
+/* Error rows in tables */
+.apex-theme-dark table tbody tr.error-row,
+.apex-theme-dark table tbody tr[style*="fef2f2"],
+[data-theme="dark"] table tbody tr.error-row,
+[data-theme="dark"] table tbody tr[style*="fef2f2"] {
+  background-color: #261616 !important;
+  border-left: 3px solid #EF4444 !important;
+}
+
+/* Status Badges in tables */
+.apex-theme-dark .status-badge.error,
+.apex-theme-dark table td span[style*="fee2e2"],
+.apex-theme-dark table td span[style*="b91c1c"],
+.apex-theme-dark table td span[style*="991b1b"],
+[data-theme="dark"] .status-badge.error,
+[data-theme="dark"] table td span[style*="fee2e2"],
+[data-theme="dark"] table td span[style*="b91c1c"],
+[data-theme="dark"] table td span[style*="991b1b"] {
+  background-color: #3b1818 !important;
+  color: #F87171 !important;
+  border: 1px solid #7f1d1d !important;
+}
+
+.apex-theme-dark .status-badge.new,
+.apex-theme-dark table td span[style*="dcfce7"],
+.apex-theme-dark table td span[style*="15803d"],
+.apex-theme-dark table td span[style*="166534"],
+[data-theme="dark"] .status-badge.new,
+[data-theme="dark"] table td span[style*="dcfce7"],
+[data-theme="dark"] table td span[style*="15803d"],
+[data-theme="dark"] table td span[style*="166534"] {
+  background-color: #143521 !important;
+  color: #4ADE80 !important;
+  border: 1px solid #166534 !important;
+}
+
+.apex-theme-dark .status-badge.update,
+.apex-theme-dark table td span[style*="e0e7ff"],
+.apex-theme-dark table td span[style*="3730a3"],
+.apex-theme-dark table td span[style*="7c3aed"],
+[data-theme="dark"] .status-badge.update,
+[data-theme="dark"] table td span[style*="e0e7ff"],
+[data-theme="dark"] table td span[style*="3730a3"],
+[data-theme="dark"] table td span[style*="7c3aed"] {
+  background-color: #1e293b !important;
+  color: #60A5FA !important;
+  border: 1px solid #2563eb !important;
+}
+
+/* Error text in table cells */
+.apex-theme-dark table td [class*="error"],
+.apex-theme-dark table td .report-error-cell-text,
+.apex-theme-dark table td span[style*="danger"],
+.apex-theme-dark table td span[style*="f87171"],
+.apex-theme-dark table td span[style*="dc2626"],
+[data-theme="dark"] table td [class*="error"],
+[data-theme="dark"] table td .report-error-cell-text,
+[data-theme="dark"] table td span[style*="danger"],
+[data-theme="dark"] table td span[style*="f87171"],
+[data-theme="dark"] table td span[style*="dc2626"] {
+  color: #F87171 !important;
+  background: transparent !important;
+  font-weight: 500 !important;
+}
+
+/* Success text in table cells */
+.apex-theme-dark table td span[style*="success"],
+.apex-theme-dark table td span[style*="34d399"],
+.apex-theme-dark table td span[style*="16a34a"],
+[data-theme="dark"] table td span[style*="success"],
+[data-theme="dark"] table td span[style*="34d399"],
+[data-theme="dark"] table td span[style*="16a34a"] {
+  color: #4ADE80 !important;
+  background: transparent !important;
+  font-weight: 500 !important;
+}
+
+/* Summary Card Table in Dark Mode */
+.apex-theme-dark .upload-summary-card,
+[data-theme="dark"] .upload-summary-card,
+.apex-theme-dark .upload-summary-content,
+[data-theme="dark"] .upload-summary-content,
+.apex-theme-dark .upload-summary-box,
+[data-theme="dark"] .upload-summary-box {
+  background-color: #1C1C1C !important;
+  border-color: #2C2C2C !important;
+}
+
+.apex-theme-dark .upload-summary-table thead tr,
+[data-theme="dark"] .upload-summary-table thead tr,
+.apex-theme-dark .upload-summary-table th,
+[data-theme="dark"] .upload-summary-table th {
+  background-color: #202020 !important;
+  color: #A3A3A3 !important;
+  border-color: #2C2C2C !important;
+}
+
+.apex-theme-dark .upload-summary-table tbody tr,
+[data-theme="dark"] .upload-summary-table tbody tr {
+  background-color: #1C1C1C !important;
+}
+
+.apex-theme-dark .upload-summary-table td,
+[data-theme="dark"] .upload-summary-table td {
+  border-color: #2C2C2C !important;
+}
+
+.apex-theme-dark .upload-summary-table .summary-val-total,
+.apex-theme-dark .upload-summary-table td:nth-child(1),
+[data-theme="dark"] .upload-summary-table .summary-val-total,
+[data-theme="dark"] .upload-summary-table td:nth-child(1) {
+  color: #F5F5F5 !important;
+  font-weight: 700 !important;
+}
+
+.apex-theme-dark .upload-summary-table .summary-val-new,
+.apex-theme-dark .upload-summary-table td:nth-child(2),
+[data-theme="dark"] .upload-summary-table .summary-val-new,
+[data-theme="dark"] .upload-summary-table td:nth-child(2) {
+  color: #4ADE80 !important;
+  font-weight: 700 !important;
+}
+
+.apex-theme-dark .upload-summary-table .summary-val-update,
+.apex-theme-dark .upload-summary-table td:nth-child(3),
+[data-theme="dark"] .upload-summary-table .summary-val-update,
+[data-theme="dark"] .upload-summary-table td:nth-child(3) {
+  color: #60A5FA !important;
+  font-weight: 700 !important;
+}
+
+.apex-theme-dark .upload-summary-table .summary-val-errors,
+.apex-theme-dark .upload-summary-table td:nth-child(4),
+[data-theme="dark"] .upload-summary-table .summary-val-errors,
+[data-theme="dark"] .upload-summary-table td:nth-child(4) {
+  color: #F87171 !important;
+  font-weight: 700 !important;
+}
+
+.apex-theme-dark .upload-summary-pagination,
+[data-theme="dark"] .upload-summary-pagination {
+  background-color: #1C1C1C !important;
+  color: #A3A3A3 !important;
+  border-top: 1px solid #2C2C2C !important;
+}
+
+/* Upload Preview Toolbar & Cards */
+.apex-theme-dark .upload-preview-card,
+[data-theme="dark"] .upload-preview-card,
+.apex-theme-dark .upload-error-card,
+[data-theme="dark"] .upload-error-card {
+  background-color: #1C1C1C !important;
+  border: 1px solid #2C2C2C !important;
+}
+
+.apex-theme-dark .upload-card-header,
+[data-theme="dark"] .upload-card-header {
+  background-color: #121212 !important;
+  color: #F5F5F5 !important;
+  border-bottom: 1px solid #2C2C2C !important;
+}
+
+.apex-theme-dark .upload-preview-toolbar,
+[data-theme="dark"] .upload-preview-toolbar {
+  background-color: #181818 !important;
+  border-bottom: 1px solid #2C2C2C !important;
+}
+
+.apex-theme-dark .upload-preview-footer,
+[data-theme="dark"] .upload-preview-footer {
+  background-color: #1C1C1C !important;
+  border-top: 1px solid #2C2C2C !important;
+  color: #A3A3A3 !important;
+}
+
+.apex-theme-dark .upload-search-input,
+[data-theme="dark"] .upload-search-input {
+  background-color: #161616 !important;
+  border: 1px solid #2C2C2C !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .upload-search-input::placeholder,
+[data-theme="dark"] .upload-search-input::placeholder {
+  color: #737373 !important;
+}
+
+.apex-theme-dark .btn-toolbar-action,
+[data-theme="dark"] .btn-toolbar-action {
+  background-color: #222222 !important;
+  border: 1px solid #383838 !important;
+  color: #E5E5E5 !important;
+}
+
+.apex-theme-dark .btn-toolbar-action:hover,
+[data-theme="dark"] .btn-toolbar-action:hover {
+  background-color: #2A2A2A !important;
+  border-color: #484848 !important;
+  color: #FFFFFF !important;
+}
+
+/* Inputs and controls inside table cells */
+.apex-theme-dark table td input[type="text"],
+.apex-theme-dark table td select,
+[data-theme="dark"] table td input[type="text"],
+[data-theme="dark"] table td select {
+  background-color: #161616 !important;
+  border: 1px solid #383838 !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark table td input[type="text"]:focus,
+.apex-theme-dark table td select:focus,
+[data-theme="dark"] table td input[type="text"]:focus,
+[data-theme="dark"] table td select:focus {
+  border-color: #3B82F6 !important;
+  outline: none !important;
+}
+
+.apex-theme-dark tfoot tr,
+[data-theme="dark"] tfoot tr {
+  background-color: #1C1C1C !important;
+  border-top: 1px solid #2C2C2C !important;
+  color: #F5F5F5 !important;
+}
+
+/* Numeric IDs & Links */
+.apex-theme-dark .apex-table-id-cell,
+[data-theme="dark"] .apex-table-id-cell {
+  color: #F5F5F5 !important;
+  font-weight: 700 !important;
+}
+
+.apex-theme-dark table td a,
+.apex-theme-dark .dense-table td a,
+[data-theme="dark"] table td a,
+[data-theme="dark"] .dense-table td a {
+  color: #3B82F6 !important;
+}
+
+.apex-theme-dark table td a:hover,
+[data-theme="dark"] table td a:hover {
+  color: #60A5FA !important;
+  text-decoration: underline !important;
+}
+
+/* 9. Buttons: Primary (#2563EB / #1D4ED8), Secondary (#222222 / #E5E5E5 / #383838), Disabled (#202020 / #737373) */
+/* Primary Buttons */
+.apex-theme-dark .btn-primary,
+.apex-theme-dark .btn-apex-primary,
+.apex-theme-dark .btn-apex-create,
+.apex-theme-dark .btn-create,
+.apex-theme-dark .btn-apex-merge,
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .btn-apex-primary,
+[data-theme="dark"] .btn-apex-create,
+[data-theme="dark"] .btn-create,
+[data-theme="dark"] .btn-apex-merge {
+  background: #2563EB !important;
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+  border: 1px solid #2563EB !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.apex-theme-dark .btn-primary span,
+.apex-theme-dark .btn-apex-primary span,
+.apex-theme-dark .btn-apex-create span,
+.apex-theme-dark .btn-create span,
+.apex-theme-dark .btn-apex-merge span,
+[data-theme="dark"] .btn-primary span,
+[data-theme="dark"] .btn-apex-primary span,
+[data-theme="dark"] .btn-apex-create span,
+[data-theme="dark"] .btn-create span,
+[data-theme="dark"] .btn-apex-merge span {
+  color: #FFFFFF !important;
+}
+
+.apex-theme-dark .btn-primary:hover:not(:disabled),
+.apex-theme-dark .btn-apex-primary:hover:not(:disabled),
+.apex-theme-dark .btn-apex-create:hover:not(:disabled),
+.apex-theme-dark .btn-create:hover:not(:disabled),
+.apex-theme-dark .btn-apex-merge:hover:not(:disabled),
+[data-theme="dark"] .btn-primary:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-primary:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-create:hover:not(:disabled),
+[data-theme="dark"] .btn-create:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-merge:hover:not(:disabled) {
+  background: #1D4ED8 !important;
+  background-color: #1D4ED8 !important;
+  border-color: #1D4ED8 !important;
+  color: #FFFFFF !important;
+}
+
+/* Secondary Buttons (Filters, Utility, View Form, Cancel, Actions, Go) */
+.apex-theme-dark .btn-secondary,
+.apex-theme-dark .btn-apex-secondary,
+.apex-theme-dark .btn-apex-actions,
+.apex-theme-dark .btn-apex-go,
+.apex-theme-dark .apex-btn-go,
+.apex-theme-dark .apex-toolbar-go-btn,
+.apex-theme-dark .btn-apex-view-form,
+.apex-theme-dark .btn-apex-cancel,
+.apex-theme-dark .btn-apex-top,
+.apex-theme-dark .btn-filter-clear,
+.apex-theme-dark .btn-outline,
+.apex-theme-dark .btn-apex-outline,
+.apex-theme-dark .btn-toggle-filters,
+.apex-theme-dark .pagination-nav-btn,
+.apex-theme-dark .btn-duplicate-nav,
+.apex-theme-dark .apex-report-toolbar button:not(.btn-apex-create):not(.btn-primary),
+[data-theme="dark"] .btn-secondary,
+[data-theme="dark"] .btn-apex-secondary,
+[data-theme="dark"] .btn-apex-actions,
+[data-theme="dark"] .btn-apex-go,
+[data-theme="dark"] .apex-btn-go,
+[data-theme="dark"] .apex-toolbar-go-btn,
+[data-theme="dark"] .btn-apex-view-form,
+[data-theme="dark"] .btn-apex-cancel,
+[data-theme="dark"] .btn-apex-top,
+[data-theme="dark"] .btn-filter-clear,
+[data-theme="dark"] .btn-outline,
+[data-theme="dark"] .btn-apex-outline,
+[data-theme="dark"] .btn-toggle-filters,
+[data-theme="dark"] .pagination-nav-btn,
+[data-theme="dark"] .btn-duplicate-nav,
+[data-theme="dark"] .apex-report-toolbar button:not(.btn-apex-create):not(.btn-primary) {
+  background: #222222 !important;
+  background-color: #222222 !important;
+  color: #E5E5E5 !important;
+  border: 1px solid #383838 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+}
+
+.apex-theme-dark .btn-secondary span,
+.apex-theme-dark .btn-apex-secondary span,
+.apex-theme-dark .btn-apex-actions span,
+.apex-theme-dark .btn-apex-view-form span,
+.apex-theme-dark .btn-duplicate-nav span,
+[data-theme="dark"] .btn-secondary span,
+[data-theme="dark"] .btn-apex-secondary span,
+[data-theme="dark"] .btn-apex-actions span,
+[data-theme="dark"] .btn-apex-view-form span,
+[data-theme="dark"] .btn-duplicate-nav span {
+  color: #E5E5E5 !important;
+}
+
+.apex-theme-dark .btn-secondary:hover:not(:disabled),
+.apex-theme-dark .btn-apex-secondary:hover:not(:disabled),
+.apex-theme-dark .btn-apex-actions:hover:not(:disabled),
+.apex-theme-dark .btn-apex-go:hover:not(:disabled),
+.apex-theme-dark .apex-btn-go:hover:not(:disabled),
+.apex-theme-dark .apex-toolbar-go-btn:hover:not(:disabled),
+.apex-theme-dark .btn-apex-view-form:hover:not(:disabled),
+.apex-theme-dark .btn-apex-cancel:hover:not(:disabled),
+.apex-theme-dark .btn-apex-top:hover:not(:disabled),
+.apex-theme-dark .btn-filter-clear:hover:not(:disabled),
+.apex-theme-dark .btn-outline:hover:not(:disabled),
+.apex-theme-dark .btn-apex-outline:hover:not(:disabled),
+.apex-theme-dark .btn-toggle-filters:hover:not(:disabled),
+.apex-theme-dark .pagination-nav-btn:hover:not(:disabled),
+.apex-theme-dark .btn-duplicate-nav:hover:not(:disabled),
+[data-theme="dark"] .btn-secondary:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-secondary:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-actions:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-go:hover:not(:disabled),
+[data-theme="dark"] .apex-btn-go:hover:not(:disabled),
+[data-theme="dark"] .apex-toolbar-go-btn:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-view-form:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-cancel:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-top:hover:not(:disabled),
+[data-theme="dark"] .btn-filter-clear:hover:not(:disabled),
+[data-theme="dark"] .btn-outline:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-outline:hover:not(:disabled),
+[data-theme="dark"] .btn-toggle-filters:hover:not(:disabled),
+[data-theme="dark"] .pagination-nav-btn:hover:not(:disabled),
+[data-theme="dark"] .btn-duplicate-nav:hover:not(:disabled) {
+  background: #2A2A2A !important;
+  background-color: #2A2A2A !important;
+  border-color: #484848 !important;
+  color: #FFFFFF !important;
+}
+
+/* Disabled Buttons */
+.apex-theme-dark button:disabled,
+.apex-theme-dark button[disabled],
+.apex-theme-dark .btn-disabled,
+[data-theme="dark"] button:disabled,
+[data-theme="dark"] button[disabled],
+[data-theme="dark"] .btn-disabled {
+  background-color: #202020 !important;
+  color: #737373 !important;
+  border: 1px solid #2C2C2C !important;
+  cursor: not-allowed !important;
+}
+
+.apex-badge-count {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+
+.apex-theme-dark .apex-badge-count,
+[data-theme="dark"] .apex-badge-count {
+  background-color: #222222 !important;
+  border: 1px solid #383838 !important;
+  color: #A3A3A3 !important;
+}
+
+.apex-theme-blue .apex-badge-count,
+[data-theme="blue"] .apex-badge-count {
+  background-color: #17243c !important;
+  border: 1px solid #283c61 !important;
+  color: #94a3b8 !important;
+}
+
+/* 10. Status Badges: Positive (#22C55E on #14251A) and Negative (#F87171 on #2A1717) */
+.apex-theme-dark .status-positive,
+.apex-theme-dark .badge-positive,
+.apex-theme-dark .badge-active,
+.apex-theme-dark .upload-status-alert.success,
+[data-theme="dark"] .status-positive,
+[data-theme="dark"] .badge-positive,
+[data-theme="dark"] .badge-active,
+[data-theme="dark"] .upload-status-alert.success {
+  color: #22C55E !important;
+  background-color: #14251A !important;
+  border: 1px solid #1c3d26 !important;
+  font-weight: 600 !important;
+}
+
+.apex-theme-dark .status-negative,
+.apex-theme-dark .badge-negative,
+.apex-theme-dark .badge-inactive,
+.apex-theme-dark .duplicate-reason-badge,
+.apex-theme-dark .upload-status-alert.error,
+[data-theme="dark"] .status-negative,
+[data-theme="dark"] .badge-negative,
+[data-theme="dark"] .badge-inactive,
+[data-theme="dark"] .duplicate-reason-badge,
+[data-theme="dark"] .upload-status-alert.error {
+  color: #F87171 !important;
+  background-color: #2A1717 !important;
+  border: 1px solid #4a2222 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.15) !important;
+}
+
+/* High contrast error text in tables */
+.apex-theme-dark table td [class*="error"],
+.apex-theme-dark table td .report-error-cell-text,
+[data-theme="dark"] table td [class*="error"],
+[data-theme="dark"] table td .report-error-cell-text {
+  color: #F87171 !important;
+  background: transparent !important;
+}
+
+
+/* ==========================================================================
+   CMS BLUE (NAVY) THEME ENGINE
+   Inspired by Reference 1 (Dark Enterprise APEX UI) & Reference 2 (Lumina Glass Aesthetics)
+   ========================================================================== */
+
+/* 1. Root & Base Layout */
+.apex-theme-blue.apex-app-root,
+[data-theme="blue"] .apex-app-root,
+body.apex-theme-blue {
+  background-color: var(--bg-page) !important;
+  color: var(--text-main) !important;
+}
+
+.apex-theme-blue .apex-layout-body {
+  background-color: var(--bg-page) !important;
+}
+
+.apex-theme-blue .apex-main-viewport,
+[data-theme="blue"] .apex-main-viewport {
+  background: #0B1220 !important;
+  color: var(--text-main, #F1F5F9) !important;
+}
+
+/* 2. Top Navigation Bar */
+.apex-theme-blue .apex-topbar,
+[data-theme="blue"] .apex-topbar {
+  background-color: #0B1220 !important;
+  border-bottom: 1px solid #26364F !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.apex-theme-blue .iqra-logo-box,
+[data-theme="blue"] .iqra-logo-box {
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35) !important;
+}
+
+.apex-theme-blue .iqra-title,
+[data-theme="blue"] .iqra-title {
+  color: #60a5fa !important;
+}
+
+.apex-theme-blue .iqra-subtitle,
+[data-theme="blue"] .iqra-subtitle {
+  color: #2dd4bf !important;
+}
+
+.apex-theme-blue .apex-app-title,
+[data-theme="blue"] .apex-app-title {
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue .role-simulator-badge,
+[data-theme="blue"] .role-simulator-badge {
+  background-color: #111C2E !important;
+  border: 1px solid #26364F !important;
+}
+
+.apex-theme-blue .role-simulator-label,
+[data-theme="blue"] .role-simulator-label {
+  color: #94A3B8 !important;
+}
+
+.apex-theme-blue .role-simulator-badge select,
+.apex-theme-blue .role-simulator-select,
+[data-theme="blue"] .role-simulator-select {
+  background-color: #0D1728 !important;
+  color: #F1F5F9 !important;
+  border: 1px solid #26364F !important;
+}
+
+.apex-theme-blue .role-simulator-badge select option,
+.apex-theme-blue .role-simulator-select option,
+[data-theme="blue"] .role-simulator-select option {
+  background-color: #111C2E !important;
+  color: #F1F5F9 !important;
+}
+
+/* 3. Header Theme Toggle Button */
+.apex-theme-blue .apex-theme-toggle-btn,
+[data-theme="blue"] .apex-theme-toggle-btn {
+  background: #111C2E !important;
+  border: 1px solid #26364F !important;
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue .apex-theme-toggle-btn:hover,
+[data-theme="blue"] .apex-theme-toggle-btn:hover {
+  background: #1D4ED8 !important;
+  border-color: #2563EB !important;
+}
+
+/* 4. Left Navigation Sidebar */
+.apex-theme-blue .apex-sidebar,
+[data-theme="blue"] .apex-sidebar {
+  background-color: #0B1220 !important;
+  border-right: 1px solid #26364F !important;
+  color: #94A3B8 !important;
+}
+
+.apex-theme-blue .apex-sidebar-nav,
+[data-theme="blue"] .apex-sidebar-nav {
+  background-color: #0B1220 !important;
+}
+
+.apex-theme-blue .apex-nav-item,
+[data-theme="blue"] .apex-nav-item {
+  color: #94A3B8 !important;
+}
+
+.apex-theme-blue .apex-nav-item:hover,
+[data-theme="blue"] .apex-nav-item:hover {
+  background-color: #111C2E !important;
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue .apex-nav-item.active,
+[data-theme="blue"] .apex-nav-item.active {
+  background: rgba(37, 99, 235, 0.2) !important;
+  border-left: 3px solid #2563EB !important;
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue .apex-nav-item.active-group,
+[data-theme="blue"] .apex-nav-item.active-group {
+  background-color: #111C2E !important;
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue .apex-sub-menu,
+[data-theme="blue"] .apex-sub-menu {
+  background-color: #0B1220 !important;
+  border-left: 1px solid #26364F !important;
+}
+
+.apex-theme-blue .apex-sub-item,
+[data-theme="blue"] .apex-sub-item {
+  color: #94A3B8 !important;
+}
+
+.apex-theme-blue .apex-sub-item:hover,
+[data-theme="blue"] .apex-sub-item:hover {
+  color: #F1F5F9 !important;
+  background-color: #111C2E !important;
+}
+
+.apex-theme-blue .apex-sub-item.active,
+[data-theme="blue"] .apex-sub-item.active {
+  color: #38bdf8 !important;
+  background-color: rgba(37, 99, 235, 0.2) !important;
+  font-weight: 600 !important;
+}
+
+/* 5. Luminous Decorative Pattern Strip */
+.apex-theme-blue .apex-pattern-strip {
+  background: linear-gradient(90deg,
+    #ec4899 0%,
+    #a855f7 20%,
+    #6366f1 40%,
+    #3b82f6 60%,
+    #14b8a6 80%,
+    #06b6d4 100%) !important;
+  opacity: 0.92 !important;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.35) !important;
+}
+
+/* 6. Typography & Headings */
+.apex-theme-blue .apex-page-heading,
+.apex-theme-blue .apex-page-title,
+[data-theme="blue"] .apex-page-heading,
+[data-theme="blue"] .apex-page-title {
+  color: #f8fafc !important;
+}
+
+.apex-theme-blue h1,
+.apex-theme-blue h2,
+.apex-theme-blue h3,
+.apex-theme-blue h4,
+.apex-theme-blue h5,
+.apex-theme-blue h6,
+[data-theme="blue"] h1,
+[data-theme="blue"] h2,
+[data-theme="blue"] h3,
+[data-theme="blue"] h4,
+[data-theme="blue"] h5,
+[data-theme="blue"] h6 {
+  color: #f8fafc !important;
+}
+
+/* 7. Home & Dashboard KPI Cards (Lumina-inspired Glass Surfaces & Soft Glow) */
+.apex-theme-blue .apex-kpi-card {
+  background: rgba(16, 26, 47, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 1px 1px rgba(99, 102, 241, 0.12) !important;
+}
+
+.apex-theme-blue .apex-kpi-card.interactive:hover {
+  border-color: rgba(129, 140, 248, 0.4) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 0 16px rgba(99, 102, 241, 0.22) !important;
+  transform: translateY(-2px);
+}
+
+.apex-theme-blue .apex-kpi-value {
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .apex-kpi-label {
+  color: #94a3b8 !important;
+}
+
+.apex-theme-blue .apex-kpi-subtext {
+  color: #64748b !important;
+}
+
+.apex-theme-blue .apex-kpi-icon-wrap.icon-blue {
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: #60a5fa !important;
+  border: 1px solid rgba(59, 130, 246, 0.35) !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.2) !important;
+}
+
+.apex-theme-blue .apex-kpi-icon-wrap.icon-green {
+  background: rgba(20, 184, 166, 0.18) !important;
+  color: #2dd4bf !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  box-shadow: 0 0 12px rgba(20, 184, 166, 0.2) !important;
+}
+
+.apex-theme-blue .apex-kpi-icon-wrap.icon-amber {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2) !important;
+}
+
+.apex-theme-blue .apex-kpi-badge.badge-blue {
+  background: rgba(59, 130, 246, 0.25) !important;
+  color: #93c5fd !important;
+  border: 1px solid rgba(59, 130, 246, 0.4) !important;
+}
+
+.apex-theme-blue .apex-kpi-badge.badge-green {
+  background: rgba(20, 184, 166, 0.25) !important;
+  color: #5eead4 !important;
+  border: 1px solid rgba(20, 184, 166, 0.4) !important;
+}
+
+.apex-theme-blue .apex-kpi-badge.badge-amber {
+  background: rgba(245, 158, 11, 0.25) !important;
+  color: #fde68a !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+
+.apex-theme-blue .stat-card {
+  background: rgba(16, 26, 47, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+.apex-theme-blue .stat-value {
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .stat-label {
+  color: #94a3b8 !important;
+}
+
+.apex-theme-blue .stat-subtext {
+  color: #64748b !important;
+}
+
+.apex-theme-blue .apex-chart-card {
+  background: rgba(16, 26, 47, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 1px 1px rgba(99, 102, 241, 0.12) !important;
+  color: #f1f5f9 !important;
+}
+
+.apex-theme-blue .apex-chart-card h4 {
+  color: #ffffff !important;
+}
+
+/* 8. Interactive Report Toolbar */
+.apex-theme-blue .apex-ir-card,
+.apex-theme-blue .apex-report-toolbar {
+  background-color: #101a2f !important;
+  border: 1px solid #233454 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  color: #f1f5f9 !important;
+}
+
+.apex-theme-blue .apex-search-group {
+  background-color: #0b1325 !important;
+  border: 1px solid #2e4266 !important;
+}
+
+.apex-theme-blue .apex-search-group div[style*="position: relative"] {
+  background-color: transparent !important;
+}
+
+.apex-theme-blue .apex-search-type-btn {
+  background-color: #131e36 !important;
+  border-right: 1px solid #2e4266 !important;
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue .apex-search-field,
+.apex-theme-blue .apex-search-input,
+.apex-theme-blue .apex-report-toolbar input {
+  background-color: #0b1325 !important;
+  color: #f8fafc !important;
+  border-color: #2e4266 !important;
+}
+
+.apex-theme-blue .apex-search-field::placeholder,
+.apex-theme-blue .apex-search-input::placeholder,
+.apex-theme-blue .apex-report-toolbar input::placeholder {
+  color: #64748b !important;
+}
+
+.apex-theme-blue .btn-apex-go,
+.apex-theme-blue .apex-btn-go,
+.apex-theme-blue .apex-report-toolbar button[type="submit"] {
+  background-color: #18253f !important;
+  border: 1px solid #2e4266 !important;
+  color: #f1f5f9 !important;
+}
+
+.apex-theme-blue .btn-apex-go:hover,
+.apex-theme-blue .apex-btn-go:hover,
+.apex-theme-blue .apex-report-toolbar button[type="submit"]:hover {
+  background-color: #223455 !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .apex-rows-select-group {
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue .apex-rows-select,
+.apex-theme-blue .apex-report-toolbar select {
+  background-color: #0b1325 !important;
+  border: 1px solid #2e4266 !important;
+  color: #f1f5f9 !important;
+}
+
+.apex-theme-blue .btn-apex-actions {
+  background: linear-gradient(135deg, #16233d 0%, #1c2b4a 100%) !important;
+  border: 1px solid rgba(129, 140, 248, 0.35) !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+}
+
+.apex-theme-blue .btn-apex-actions:hover {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+.apex-theme-blue .btn-apex-create {
+  background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%) !important;
+  border: 1px solid rgba(129, 140, 248, 0.4) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.35) !important;
+}
+
+.apex-theme-blue .btn-apex-create:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #1d4ed8 100%) !important;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.5) !important;
+}
+
+.apex-theme-blue .btn-apex-top {
+  background-color: #16233d !important;
+  border: 1px solid #2e4266 !important;
+  color: #f1f5f9 !important;
+}
+
+.apex-theme-blue .btn-apex-top:hover {
+  background-color: #213252 !important;
+  border-color: #818cf8 !important;
+}
+
+.apex-theme-blue .btn-apex-validation-rules {
+  color: #38bdf8 !important;
+}
+
+.apex-theme-blue .apex-pagination-strip {
+  color: #94a3b8 !important;
+}
+
+.apex-theme-blue .pagination-nav-btn {
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue .pagination-nav-btn:hover:not(:disabled) {
+  background-color: #1e2c48 !important;
+  color: #38bdf8 !important;
+}
+
+/* 9. Dense Tables, Master Reports & Interactive Reports */
+.apex-theme-blue .dense-table-wrapper,
+[data-theme="blue"] .dense-table-wrapper,
+.apex-theme-blue .apex-table-card,
+[data-theme="blue"] .apex-table-card,
+.apex-theme-blue .apex-master-table-card,
+[data-theme="blue"] .apex-master-table-card,
+.apex-theme-blue .apex-filter-panel,
+[data-theme="blue"] .apex-filter-panel,
+.apex-theme-blue .apex-kpi-card,
+[data-theme="blue"] .apex-kpi-card,
+.apex-theme-blue .apex-report-toolbar,
+[data-theme="blue"] .apex-report-toolbar,
+.apex-theme-blue .apex-ir-card,
+[data-theme="blue"] .apex-ir-card {
+  background-color: #111C2E !important;
+  border-color: #26364F !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue .dense-table,
+.apex-theme-blue .apex-master-table,
+.apex-theme-blue .apex-report-table,
+[data-theme="blue"] .dense-table,
+[data-theme="blue"] .apex-master-table,
+[data-theme="blue"] .apex-report-table {
+  color: #F1F5F9 !important;
+  background-color: #111C2E !important;
+}
+
+.apex-theme-blue .dense-table thead tr,
+.apex-theme-blue .apex-master-table thead tr,
+.apex-theme-blue .apex-report-table thead tr,
+.apex-theme-blue tr.apex-report-header-row,
+[data-theme="blue"] .dense-table thead tr,
+[data-theme="blue"] .apex-master-table thead tr,
+[data-theme="blue"] .apex-report-table thead tr,
+[data-theme="blue"] tr.apex-report-header-row {
+  background-color: #111C2E !important;
+  border-bottom: 2px solid #26364F !important;
+}
+
+.apex-theme-blue .dense-table th,
+.apex-theme-blue .apex-master-table th,
+.apex-theme-blue .apex-report-table th,
+[data-theme="blue"] .dense-table th,
+[data-theme="blue"] .apex-master-table th,
+[data-theme="blue"] .apex-report-table th {
+  background-color: #111C2E !important;
+  color: #F1F5F9 !important;
+  border-bottom: 2px solid #26364F !important;
+  border-right: 1px solid #26364F !important;
+}
+
+.apex-theme-blue .dense-table th:hover,
+.apex-theme-blue .apex-master-table th:hover,
+.apex-theme-blue .apex-report-table th:hover,
+[data-theme="blue"] .dense-table th:hover,
+[data-theme="blue"] .apex-master-table th:hover,
+[data-theme="blue"] .apex-report-table th:hover {
+  background-color: #16253d !important;
+  color: #ffffff !important;
+}
+[data-theme="blue"] .dense-table th:hover,
+[data-theme="blue"] .apex-master-table th:hover,
+[data-theme="blue"] .apex-report-table th:hover {
+  background-color: #0f1e36 !important;
+  color: #ffffff !important;
+}
+
+.apex-theme-blue th[style*="background-color: rgb(240, 249, 255)"],
+.apex-theme-blue th[style*="background-color: #f0f9ff"],
+[data-theme="blue"] th[style*="background-color: rgb(240, 249, 255)"],
+[data-theme="blue"] th[style*="background-color: #f0f9ff"] {
+  background-color: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+}
+
+.apex-theme-blue table,
+[data-theme="blue"] table,
+.apex-theme-blue .dense-table,
+.apex-theme-blue .apex-master-table,
+.apex-theme-blue .apex-report-table {
+  color: #e2e8f0 !important;
+  background-color: #0b1424 !important;
+}
+
+.apex-theme-blue table td,
+.apex-theme-blue .dense-table td,
+.apex-theme-blue .apex-master-table td,
+.apex-theme-blue .apex-report-table td,
+[data-theme="blue"] table td,
+[data-theme="blue"] .dense-table td,
+[data-theme="blue"] .apex-master-table td,
+[data-theme="blue"] .apex-report-table td {
+  color: #e2e8f0 !important;
+  border-bottom: 1px solid #15223c !important;
+  border-right: 1px solid #121d33 !important;
+  background-color: transparent !important;
+}
+
+/* Force light readable foreground colors on all text, spans, buttons inside table cells */
+.apex-theme-blue table td *,
+.apex-theme-blue .dense-table td *,
+.apex-theme-blue .apex-report-table td *,
+[data-theme="blue"] table td *,
+[data-theme="blue"] .dense-table td *,
+[data-theme="blue"] .apex-report-table td * {
+  color: #e2e8f0 !important;
+}
+
+/* Error Message Columns in tables: clean normal text column in error red, no button/pill */
+.apex-theme-blue table td [class*="error"],
+[data-theme="blue"] table td [class*="error"],
+.apex-theme-blue table td .report-error-cell-text,
+[data-theme="blue"] table td .report-error-cell-text,
+.apex-theme-blue table td span[style*="danger"],
+[data-theme="blue"] table td span[style*="danger"],
+.apex-theme-blue table td span[style*="f87171"],
+[data-theme="blue"] table td span[style*="f87171"],
+.apex-theme-blue table td span[style*="fee2e2"],
+[data-theme="blue"] table td span[style*="fee2e2"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  color: #f87171 !important;
+  font-weight: 500 !important;
+}
+
+/* Retain bright cyan/blue accents for clickable IDs, names, and links */
+.apex-theme-blue table td a,
+.apex-theme-blue table td a *,
+.apex-theme-blue table td span[style*="cursor: pointer"],
+.apex-theme-blue table td button[style*="cursor: pointer"]:not(.btn-apex-merge):not(.btn-apex-create):not(.btn-apex-primary):not(.btn-duplicate-nav),
+.apex-theme-blue table td button[type="button"]:not(.row-edit-btn):not(.btn-icon):not(.btn-apex-merge):not(.btn-apex-create):not(.btn-apex-primary):not(.btn-duplicate-nav),
+.apex-theme-blue .dense-table td a,
+.apex-theme-blue .dense-table td a *,
+.apex-theme-blue .dense-table td span[style*="cursor: pointer"],
+.apex-theme-blue .dense-table td button[style*="cursor: pointer"]:not(.btn-apex-merge):not(.btn-apex-create):not(.btn-apex-primary):not(.btn-duplicate-nav),
+[data-theme="blue"] table td a,
+[data-theme="blue"] table td a *,
+[data-theme="blue"] table td span[style*="cursor: pointer"],
+[data-theme="blue"] table td button[style*="cursor: pointer"]:not(.btn-apex-merge):not(.btn-apex-create):not(.btn-apex-primary):not(.btn-duplicate-nav) {
+  color: #38bdf8 !important;
+  font-weight: 500 !important;
+}
+
+.apex-theme-blue table td a:hover,
+.apex-theme-blue table td a:hover *,
+.apex-theme-blue table td span[style*="cursor: pointer"]:hover,
+.apex-theme-blue table td button[style*="cursor: pointer"]:hover,
+.apex-theme-blue .dense-table td a:hover,
+.apex-theme-blue .dense-table td span[style*="cursor: pointer"]:hover,
+.apex-theme-blue .dense-table td button[style*="cursor: pointer"]:hover {
+  color: #22d3ee !important;
+  text-decoration: underline !important;
+}
+
+/* Dark Mode Alternating Zebra Rows */
+.apex-theme-blue .dense-table tbody tr,
+.apex-theme-blue .apex-master-table tbody tr,
+.apex-theme-blue .apex-report-table tbody tr,
+[data-theme="blue"] .dense-table tbody tr,
+[data-theme="blue"] .apex-master-table tbody tr,
+[data-theme="blue"] .apex-report-table tbody tr {
+  background-color: #0b1526 !important;
+}
+
+.apex-theme-blue .dense-table tbody tr:nth-child(odd),
+.apex-theme-blue .apex-master-table tbody tr:nth-child(odd),
+.apex-theme-blue .apex-report-table tbody tr:nth-child(odd),
+.apex-theme-blue tbody tr.apex-row-even,
+[data-theme="blue"] .dense-table tbody tr:nth-child(odd),
+[data-theme="blue"] .apex-master-table tbody tr:nth-child(odd),
+[data-theme="blue"] .apex-report-table tbody tr:nth-child(odd),
+[data-theme="blue"] tbody tr.apex-row-even {
+  background-color: #0D1728 !important;
+}
+
+.apex-theme-blue .dense-table tbody tr:nth-child(even),
+.apex-theme-blue .apex-master-table tbody tr:nth-child(even),
+.apex-theme-blue .apex-report-table tbody tr:nth-child(even),
+.apex-theme-blue tbody tr.apex-row-alt,
+[data-theme="blue"] .dense-table tbody tr:nth-child(even),
+[data-theme="blue"] .apex-master-table tbody tr:nth-child(even),
+[data-theme="blue"] .apex-report-table tbody tr:nth-child(even),
+[data-theme="blue"] tbody tr.apex-row-alt {
+  background-color: #111C2E !important;
+}
+
+.apex-theme-blue .dense-table tbody tr:hover,
+.apex-theme-blue .apex-master-table tbody tr:hover,
+.apex-theme-blue .apex-report-table tbody tr:hover,
+[data-theme="blue"] .dense-table tbody tr:hover,
+[data-theme="blue"] .apex-master-table tbody tr:hover,
+[data-theme="blue"] .apex-report-table tbody tr:hover {
+  background-color: #16253d !important;
+}
+
+.apex-theme-blue .dense-table tbody tr.selected,
+.apex-theme-blue .apex-master-table tbody tr.selected,
+.apex-theme-blue .apex-report-table tbody tr.selected,
+[data-theme="blue"] .dense-table tbody tr.selected,
+[data-theme="blue"] .apex-master-table tbody tr.selected,
+[data-theme="blue"] .apex-report-table tbody tr.selected {
+  background-color: rgba(6, 182, 212, 0.18) !important;
+  border-left: 3px solid #06b6d4 !important;
+}
+
+/* Dark mode toolbar buttons, inputs, selects */
+.apex-theme-blue .apex-report-toolbar input,
+[data-theme="blue"] .apex-report-toolbar input,
+.apex-theme-blue .apex-report-toolbar select,
+[data-theme="blue"] .apex-report-toolbar select,
+.apex-theme-blue .apex-rows-select,
+[data-theme="blue"] .apex-rows-select,
+.apex-theme-blue .apex-report-toolbar button,
+[data-theme="blue"] .apex-report-toolbar button,
+.apex-theme-blue .btn-apex-actions,
+[data-theme="blue"] .btn-apex-actions {
+  background-color: #0b1325 !important;
+  border-color: #233454 !important;
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue .apex-report-toolbar button:hover,
+[data-theme="blue"] .apex-report-toolbar button:hover,
+.apex-theme-blue .btn-apex-actions:hover,
+[data-theme="blue"] .btn-apex-actions:hover {
+  background-color: #16243d !important;
+  color: #ffffff !important;
+  border-color: #06b6d4 !important;
+}
+
+/* Control Break Rows in Dark Mode */
+.apex-theme-blue tr[style*="background-color: rgb(241, 245, 249)"],
+.apex-theme-blue tr[style*="background-color: #f1f5f9"] {
+  background-color: rgba(30, 42, 69, 0.95) !important;
+  border-top: 2px solid rgba(56, 189, 248, 0.35) !important;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.35) !important;
+}
+
+.apex-theme-blue tr[style*="background-color: rgb(241, 245, 249)"] td,
+.apex-theme-blue tr[style*="background-color: #f1f5f9"] td {
+  color: #93c5fd !important;
+}
+
+/* Aggregations Table Footer */
+.apex-theme-blue tfoot tr {
+  background-color: #15213b !important;
+  border-top: 2px solid #2e4266 !important;
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .row-edit-btn {
+  color: #94a3b8 !important;
+}
+
+.apex-theme-blue .row-edit-btn:hover {
+  color: #38bdf8 !important;
+  background-color: rgba(56, 189, 248, 0.15) !important;
+}
+
+/* 10. Active Filter Banner & Aggregations Bar */
+.apex-theme-blue .apex-active-filter-banner,
+.apex-theme-blue .apex-active-aggregations-bar {
+  background-color: #101a2f !important;
+  border: 1px solid #233454 !important;
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue .apex-active-filter-banner span[style*="color: rgb(71, 85, 105)"],
+.apex-theme-blue .apex-active-aggregations-bar span[style*="color: rgb(71, 85, 105)"] {
+  color: #94a3b8 !important;
+}
+
+.apex-theme-blue .apex-active-filter-banner div[style*="background-color: rgb(239, 246, 255)"],
+.apex-theme-blue .apex-active-filter-banner div[style*="background-color: #eff6ff"] {
+  background-color: rgba(99, 102, 241, 0.2) !important;
+  border: 1px solid rgba(129, 140, 248, 0.4) !important;
+  color: #c7d2fe !important;
+}
+
+.apex-theme-blue .apex-active-aggregations-bar div[style*="background-color: rgb(239, 246, 255)"],
+.apex-theme-blue .apex-active-aggregations-bar div[style*="background-color: #eff6ff"] {
+  background-color: rgba(56, 189, 248, 0.18) !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  color: #e0f2fe !important;
+}
+
+/* 11. Company & Contact Filter Panels, Master Forms & Inputs */
+.apex-theme-blue .company-filters-card,
+.apex-theme-blue .apex-form-card,
+.apex-theme-blue .apex-card,
+.apex-theme-blue .apex-filter-panel,
+.apex-theme-blue .lead-filters-card,
+[data-theme="blue"] .company-filters-card,
+[data-theme="blue"] .apex-form-card,
+[data-theme="blue"] .apex-card,
+[data-theme="blue"] .apex-filter-panel {
+  background-color: #0e1628 !important;
+  border: 1px solid #1e2e4f !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  color: #f1f5f9 !important;
+}
+
+/* Blue Theme Column Menu & Multi-Select Dropdowns */
+.apex-theme-blue .apex-column-menu,
+[data-theme="blue"] .apex-column-menu,
+.apex-theme-blue .apex-multiselect-dropdown,
+[data-theme="blue"] .apex-multiselect-dropdown,
+.apex-theme-blue .excel-filter-dropdown,
+[data-theme="blue"] .excel-filter-dropdown,
+.apex-theme-blue .multi-select-dropdown,
+[data-theme="blue"] .multi-select-dropdown {
+  background-color: #111C2E !important;
+  border: 1px solid #26364F !important;
+  color: #F1F5F9 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+}
+
+.apex-theme-blue .apex-column-menu-actions,
+[data-theme="blue"] .apex-column-menu-actions,
+.apex-theme-blue .apex-column-menu-search,
+[data-theme="blue"] .apex-column-menu-search,
+.apex-theme-blue .apex-multiselect-header,
+[data-theme="blue"] .apex-multiselect-header {
+  background-color: #111C2E !important;
+  border-bottom: 1px solid #26364F !important;
+}
+
+.apex-theme-blue .apex-column-menu button,
+[data-theme="blue"] .apex-column-menu button {
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue .apex-column-menu button:hover,
+[data-theme="blue"] .apex-column-menu button:hover {
+  background-color: #16243d !important;
+}
+
+.apex-theme-blue .apex-column-menu-item,
+[data-theme="blue"] .apex-column-menu-item,
+.apex-theme-blue .apex-multiselect-item,
+[data-theme="blue"] .apex-multiselect-item {
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue .apex-column-menu-item:hover,
+[data-theme="blue"] .apex-column-menu-item:hover,
+.apex-theme-blue .apex-multiselect-item:hover,
+[data-theme="blue"] .apex-multiselect-item:hover {
+  background-color: #16243d !important;
+  color: #38bdf8 !important;
+}
+
+.apex-theme-blue .apex-multiselect-item.selected,
+[data-theme="blue"] .apex-multiselect-item.selected {
+  background-color: rgba(37, 99, 235, 0.25) !important;
+  color: #38bdf8 !important;
+}
+
+.apex-theme-blue .apex-multiselect-item span,
+[data-theme="blue"] .apex-multiselect-item span {
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue .apex-multiselect-item.selected span,
+[data-theme="blue"] .apex-multiselect-item.selected span {
+  color: #38bdf8 !important;
+}
+
+.apex-theme-blue .company-filter-label,
+.apex-theme-blue .form-group label,
+.apex-theme-blue .apex-modal-body label,
+.apex-theme-blue label,
+[data-theme="blue"] .company-filter-label,
+[data-theme="blue"] label {
+  color: #cbd5e1 !important;
+}
+
+/* Dark Input Fields, Dropdowns, Search Boxes, and Date Fields */
+.apex-theme-blue input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
+.apex-theme-blue select,
+.apex-theme-blue textarea,
+.apex-theme-blue .company-filter-input,
+.apex-theme-blue .company-filter-select,
+.apex-theme-blue .apex-form-input,
+.apex-theme-blue .apex-search-input,
+.apex-theme-blue .apex-search-field,
+.apex-theme-blue .form-control-input,
+.apex-theme-blue .form-control-select,
+.apex-theme-blue .apex-rows-select,
+[data-theme="blue"] input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
+[data-theme="blue"] select,
+[data-theme="blue"] textarea {
+  background-color: #0a1120 !important;
+  border: 1px solid #243556 !important;
+  color: #f1f5f9 !important;
+  border-radius: 4px;
+}
+
+.apex-theme-blue input::placeholder,
+.apex-theme-blue textarea::placeholder,
+[data-theme="blue"] input::placeholder {
+  color: #64748b !important;
+}
+
+.apex-theme-blue input:focus,
+.apex-theme-blue select:focus,
+.apex-theme-blue textarea:focus,
+.apex-theme-blue .company-filter-input:focus,
+.apex-theme-blue .company-filter-select:focus,
+.apex-theme-blue .apex-form-input:focus,
+[data-theme="blue"] input:focus,
+[data-theme="blue"] select:focus,
+[data-theme="blue"] textarea:focus {
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.25) !important;
+  outline: none !important;
+}
+
+.apex-theme-blue select option,
+[data-theme="blue"] select option {
+  background-color: #0a1120 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Custom Dark Checkbox Controls - Replace stark white squares */
+.apex-theme-blue input[type="checkbox"],
+.apex-theme-blue .table-checkbox,
+[data-theme="blue"] input[type="checkbox"],
+[data-theme="blue"] .table-checkbox {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 3px !important;
+  border: 1.5px solid #3b5074 !important;
+  background-color: #091120 !important;
+  cursor: pointer !important;
+  position: relative !important;
+  vertical-align: middle !important;
+  display: inline-block !important;
+  transition: all 0.15s ease !important;
+  outline: none !important;
+}
+
+.apex-theme-blue input[type="checkbox"]:hover,
+.apex-theme-blue .table-checkbox:hover,
+[data-theme="blue"] input[type="checkbox"]:hover,
+[data-theme="blue"] .table-checkbox:hover {
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.35) !important;
+}
+
+.apex-theme-blue input[type="checkbox"]:checked,
+.apex-theme-blue .table-checkbox:checked,
+[data-theme="blue"] input[type="checkbox"]:checked,
+[data-theme="blue"] .table-checkbox:checked {
+  background-color: #0284c7 !important;
+  border-color: #38bdf8 !important;
+}
+
+.apex-theme-blue input[type="checkbox"]:checked::after,
+.apex-theme-blue .table-checkbox:checked::after,
+[data-theme="blue"] input[type="checkbox"]:checked::after,
+[data-theme="blue"] .table-checkbox:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 4px !important;
+  top: 1px !important;
+  width: 5px !important;
+  height: 9px !important;
+  border: solid #ffffff !important;
+  border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg) !important;
+}
+
+.apex-theme-blue input[type="checkbox"]:indeterminate,
+.apex-theme-blue .table-checkbox:indeterminate,
+[data-theme="blue"] input[type="checkbox"]:indeterminate,
+[data-theme="blue"] .table-checkbox:indeterminate {
+  background-color: #0284c7 !important;
+  border-color: #38bdf8 !important;
+}
+
+.apex-theme-blue input[type="checkbox"]:indeterminate::after,
+.apex-theme-blue .table-checkbox:indeterminate::after,
+[data-theme="blue"] input[type="checkbox"]:indeterminate::after,
+[data-theme="blue"] .table-checkbox:indeterminate::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 3px !important;
+  top: 6px !important;
+  width: 8px !important;
+  height: 2px !important;
+  background-color: #ffffff !important;
+}
+
+/* Dark Search 'Go' Button & Actions Dropdown */
+.apex-theme-blue .btn-apex-go,
+.apex-theme-blue .apex-btn-go,
+.apex-theme-blue form button[type="submit"]:not(.btn-apex-create):not(.btn-apex-primary):not([style*="071531"]),
+[data-theme="blue"] .btn-apex-go,
+[data-theme="blue"] .apex-btn-go,
+[data-theme="blue"] form button[type="submit"]:not(.btn-apex-create):not(.btn-apex-primary):not([style*="071531"]) {
+  background-color: #17243c !important;
+  border: 1px solid #283c61 !important;
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+}
+
+.apex-theme-blue .btn-apex-go:hover,
+.apex-theme-blue .apex-btn-go:hover,
+.apex-theme-blue form button[type="submit"]:not(.btn-apex-create):not(.btn-apex-primary):hover,
+[data-theme="blue"] .btn-apex-go:hover,
+[data-theme="blue"] .apex-btn-go:hover,
+[data-theme="blue"] form button[type="submit"]:not(.btn-apex-create):not(.btn-apex-primary):hover {
+  background-color: #213559 !important;
+  border-color: #06b6d4 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.3) !important;
+}
+
+.apex-theme-blue .btn-apex-actions,
+.apex-theme-blue button.btn-apex-actions,
+.apex-theme-blue .apex-actions-wrapper > button,
+[data-theme="blue"] .btn-apex-actions,
+[data-theme="blue"] button.btn-apex-actions {
+  background: linear-gradient(135deg, #131f36 0%, #1a2a47 100%) !important;
+  border: 1px solid #2b3d63 !important;
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+}
+
+.apex-theme-blue .btn-apex-actions:hover,
+[data-theme="blue"] .btn-apex-actions:hover {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25) !important;
+}
+
+/* Blue and Teal Accent Buttons & Highlights */
+.apex-theme-blue .btn-apex-create,
+.apex-theme-blue .btn-create,
+.apex-theme-blue button[style*="backgroundColor: '#071531'"],
+.apex-theme-blue button[style*="background-color: #071531"],
+[data-theme="blue"] .btn-apex-create,
+[data-theme="blue"] .btn-create {
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(6, 182, 212, 0.25) !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.apex-theme-blue .btn-apex-create:hover,
+.apex-theme-blue .btn-create:hover,
+.apex-theme-blue button[style*="backgroundColor: '#071531'"]:hover,
+[data-theme="blue"] .btn-apex-create:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #0891b2 100%) !important;
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.45) !important;
+}
+
+/* Zero White Surfaces Override */
+.apex-theme-blue div[style*="backgroundColor: '#ffffff'"],
+.apex-theme-blue div[style*="backgroundColor: '#fff'"],
+.apex-theme-blue div[style*="backgroundColor: 'white'"],
+.apex-theme-blue div[style*="background-color: #ffffff"],
+.apex-theme-blue div[style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-blue div[style*="background: #ffffff"],
+.apex-theme-blue div[style*="background: rgb(255, 255, 255)"],
+.apex-theme-blue div[style*="background: white"],
+.apex-theme-blue section[style*="background-color: #ffffff"],
+.apex-theme-blue section[style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-blue form[style*="background-color: #ffffff"],
+.apex-theme-blue form[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="blue"] div[style*="backgroundColor: '#ffffff'"],
+[data-theme="blue"] div[style*="background-color: #ffffff"],
+[data-theme="blue"] div[style*="background-color: rgb(255, 255, 255)"] {
+  background-color: #0e1628 !important;
+  border-color: #1e2e4f !important;
+  color: #f1f5f9 !important;
+}
+
+.apex-theme-blue table th[style*="background-color: #ffffff"],
+.apex-theme-blue table th[style*="backgroundColor: '#ffffff'"],
+.apex-theme-blue table td[style*="background-color: #ffffff"],
+.apex-theme-blue table td[style*="backgroundColor: '#ffffff'"],
+[data-theme="blue"] table th[style*="background-color: #ffffff"],
+[data-theme="blue"] table td[style*="background-color: #ffffff"] {
+  background-color: transparent !important;
+}
+
+.apex-theme-blue button[style*="background-color: #f1f5f9"],
+.apex-theme-blue button[style*="backgroundColor: '#f1f5f9'"],
+.apex-theme-blue button[style*="rgb(241, 245, 249)"],
+.apex-theme-blue .btn-apex-cancel,
+[data-theme="blue"] .btn-apex-cancel {
+  background-color: #17243c !important;
+  border: 1px solid #283c61 !important;
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue button[style*="background-color: #f1f5f9"]:hover,
+.apex-theme-blue button[style*="backgroundColor: '#f1f5f9'"]:hover,
+.apex-theme-blue button[style*="rgb(241, 245, 249)"]:hover,
+.apex-theme-blue .btn-apex-cancel:hover,
+[data-theme="blue"] .btn-apex-cancel:hover {
+  background-color: #213559 !important;
+  border-color: #06b6d4 !important;
+  color: #ffffff !important;
+}
+
+/* 12. Modals & Dialogs */
+.apex-theme-blue .apex-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.78) !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+.apex-theme-blue .apex-modal-card {
+  background-color: #101a2f !important;
+  border: 1px solid rgba(129, 140, 248, 0.3) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75), 0 0 25px rgba(99, 102, 241, 0.25) !important;
+  color: #f1f5f9 !important;
+}
+
+.apex-theme-blue .apex-modal-header {
+  background-color: #070e1c !important;
+  border-bottom: 1px solid #233454 !important;
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .apex-modal-body {
+  background-color: #101a2f !important;
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue .rules-section h4 {
+  color: #f8fafc !important;
+}
+
+.apex-theme-blue .apex-modal-footer {
+  background-color: #0b1325 !important;
+  border-top: 1px solid #233454 !important;
+}
+
+.apex-theme-blue .btn-apex-primary {
+  background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(129, 140, 248, 0.35) !important;
+}
+
+.apex-theme-blue .btn-apex-cancel {
+  background-color: #18253f !important;
+  border: 1px solid #2e4266 !important;
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue .btn-apex-cancel:hover {
+  background-color: #223455 !important;
+  color: #ffffff !important;
+}
+
+/* 13. Dropdowns, Menus & Action Dialogs */
+.apex-theme-blue .user-dropdown-card,
+.apex-theme-blue .apex-actions-dropdown,
+.apex-theme-blue .apex-column-menu,
+.apex-theme-blue .excel-filter-dropdown,
+.apex-theme-blue .multi-select-dropdown {
+  background-color: #121e36 !important;
+  border: 1px solid rgba(129, 140, 248, 0.3) !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7), 0 0 15px rgba(99, 102, 241, 0.15) !important;
+  color: #f1f5f9 !important;
+}
+
+.apex-theme-blue .user-dropdown-header {
+  background-color: #0c1424 !important;
+  border-bottom: 1px solid #233454 !important;
+}
+
+.apex-theme-blue .user-dropdown-item {
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue .user-dropdown-item:hover {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+  color: #38bdf8 !important;
+}
+
+.apex-theme-blue .user-dropdown-divider {
+  background-color: #233454 !important;
+}
+
+/* 14. Upload Dropzone & Staging Grid */
+.apex-theme-blue .upload-dropzone {
+  background-color: #0b1325 !important;
+  border-color: #2e4266 !important;
+}
+
+.apex-theme-blue .upload-dropzone:hover {
+  border-color: #38bdf8 !important;
+  background-color: rgba(56, 189, 248, 0.08) !important;
+}
+
+.apex-theme-blue .upload-title {
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .upload-subtitle {
+  color: #94a3b8 !important;
+}
+
+.apex-theme-blue .upload-icon {
+  color: #38bdf8 !important;
+}
+
+.apex-theme-blue .upload-status-alert.success {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  color: #6ee7b7 !important;
+}
+
+.apex-theme-blue .upload-status-alert.error {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+  color: #fca5a5 !important;
+}
+
+/* 16. Dark Theme Overrides for APEX Actions Menu & Modals */
+.apex-theme-blue .apex-actions-menu-item {
+  color: #f1f5f9 !important;
+}
+
+.apex-theme-blue .apex-actions-menu-item:hover:not(.disabled),
+.apex-theme-blue .apex-actions-menu-item.active-sub {
+  background-color: #7048e8 !important;
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .apex-actions-menu-item:hover:not(.disabled) .apex-actions-menu-icon,
+.apex-theme-blue .apex-actions-menu-item.active-sub .apex-actions-menu-icon,
+.apex-theme-blue .apex-actions-menu-item:hover:not(.disabled) .apex-actions-menu-chevron,
+.apex-theme-blue .apex-actions-menu-item.active-sub .apex-actions-menu-chevron {
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .apex-actions-flyout-menu {
+  background: #121e36 !important;
+  border: 1px solid rgba(129, 140, 248, 0.3) !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7), 0 0 15px rgba(99, 102, 241, 0.15) !important;
+}
+
+.apex-theme-blue .apex-actions-flyout-item {
+  color: #f1f5f9 !important;
+}
+
+.apex-theme-blue .apex-actions-flyout-item:hover {
+  background-color: #7048e8 !important;
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .apex-actions-flyout-item:hover svg,
+.apex-theme-blue .apex-actions-flyout-item:hover span {
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .apex-modal-card,
+.apex-theme-blue .apex-modal-container {
+  background: #101a2f !important;
+  background-color: #101a2f !important;
+  opacity: 1 !important;
+  border: 1px solid rgba(129, 140, 248, 0.3) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(112, 72, 232, 0.25) !important;
+}
+
+.apex-theme-blue .apex-modal-header {
+  background-color: #101a2f !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
+.apex-theme-blue .apex-modal-header h2,
+.apex-theme-blue .apex-modal-header h3,
+.apex-theme-blue .apex-modal-title h2,
+.apex-theme-blue .apex-modal-title h3 {
+  color: #f8fafc !important;
+}
+
+.apex-theme-blue .apex-modal-close {
+  background-color: #17233d !important;
+  border-color: #2b3b5c !important;
+  color: #94a3b8 !important;
+}
+
+.apex-theme-blue .apex-modal-close:hover {
+  background-color: #202e4d !important;
+  color: #ffffff !important;
+}
+
+.apex-theme-blue .apex-modal-footer {
+  background-color: #101a2f !important;
+  border-top: 1px solid #1e293b !important;
+}
+
+.apex-theme-blue .apex-modal-apply-btn {
+  background-color: #7048e8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(112, 72, 232, 0.45) !important;
+}
+
+.apex-theme-blue .apex-modal-apply-btn:hover {
+  background-color: #5f3dc4 !important;
+}
+
+.apex-theme-blue .apex-modal-cancel-btn {
+  background-color: #17233d !important;
+  border-color: #2b3b5c !important;
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue .apex-modal-cancel-btn:hover {
+  background-color: #202e4d !important;
+  color: #ffffff !important;
+}
+
+.apex-active-groupby-banner,
+.apex-active-pivot-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background-color: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.apex-theme-blue .apex-active-groupby-banner,
+.apex-theme-blue .apex-active-pivot-banner {
+  background-color: #17233d !important;
+  border-color: #3b2d54 !important;
+  color: #e2e8f0 !important;
+}
+
+.apex-theme-blue .apex-active-groupby-banner span,
+.apex-theme-blue .apex-active-pivot-banner span {
+  color: #cbd5e1 !important;
+}
+
+.apex-theme-blue .apex-active-groupby-banner strong,
+.apex-theme-blue .apex-active-pivot-banner strong {
+  color: #a78bfa !important;
+}
+
+/* ==========================================================================
+   Duplicate Report & Toolbar Buttons High-Contrast Dark Mode Styles
+   ========================================================================== */
+
+/* Plain Numeric Table IDs */
+.apex-table-id-cell {
+  font-weight: 700;
+  color: #0f172a;
+}
+.apex-theme-blue .apex-table-id-cell,
+[data-theme="blue"] .apex-table-id-cell {
+  color: #f8fafc !important;
+}
+
+/* View Form Button */
+.btn-apex-view-form {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid #0284c7;
+  background-color: #f0f9ff;
+  color: #0284c7;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-apex-view-form:hover {
+  background-color: #0284c7;
+  color: #ffffff !important;
+}
+.apex-theme-blue .btn-apex-view-form,
+[data-theme="blue"] .btn-apex-view-form {
+  background-color: #17243c !important;
+  border: 1px solid #38bdf8 !important;
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+.apex-theme-blue .btn-apex-view-form:hover,
+[data-theme="blue"] .btn-apex-view-form:hover {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.4) !important;
+}
+
+/* Action: Merge Button */
+.btn-apex-merge {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  border: none;
+  background-color: #0284c7;
+  color: #ffffff !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+.btn-apex-merge span {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+.btn-apex-merge:hover {
+  background-color: #0369a1;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+}
+.apex-theme-blue .btn-apex-merge,
+[data-theme="blue"] .btn-apex-merge {
+  background-color: #0284c7 !important;
+  border: 1px solid #38bdf8 !important;
+  color: #ffffff !important;
+}
+.apex-theme-blue .btn-apex-merge span,
+[data-theme="blue"] .btn-apex-merge span {
+  color: #ffffff !important;
+}
+.apex-theme-blue .btn-apex-merge:hover,
+[data-theme="blue"] .btn-apex-merge:hover {
+  background-color: #0369a1 !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5) !important;
+}
+
+/* Duplicate Reason Badge */
+.duplicate-reason-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+}
+.apex-theme-blue .duplicate-reason-badge,
+[data-theme="blue"] .duplicate-reason-badge {
+  background-color: rgba(220, 38, 38, 0.28) !important;
+  border: 1px solid rgba(248, 113, 113, 0.6) !important;
+  color: #fecaca !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Top-Right Navigation Button (Go to Merge...) */
+.btn-duplicate-nav {
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid #0284c7;
+  background-color: #0284c7;
+  color: #ffffff !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.btn-duplicate-nav span {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+.btn-duplicate-nav:hover {
+  background-color: #0369a1;
+  border-color: #0369a1;
+}
+.apex-theme-blue .btn-duplicate-nav,
+[data-theme="blue"] .btn-duplicate-nav {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  border: 1px solid #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+}
+.apex-theme-blue .btn-duplicate-nav:hover,
+[data-theme="blue"] .btn-duplicate-nav:hover {
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5) !important;
+}
+
+/* Toolbar 'Go' Action Button - Bright & High Contrast */
+.apex-theme-blue .apex-toolbar-go-btn,
+[data-theme="blue"] .apex-toolbar-go-btn,
+.apex-theme-blue .btn-apex-go,
+[data-theme="blue"] .btn-apex-go {
+  background-color: #0284c7 !important;
+  border: 1px solid #38bdf8 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+.apex-theme-blue .apex-toolbar-go-btn:hover,
+[data-theme="blue"] .apex-toolbar-go-btn:hover,
+.apex-theme-blue .btn-apex-go:hover,
+[data-theme="blue"] .btn-apex-go:hover {
+  background-color: #0369a1 !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.45) !important;
+  color: #ffffff !important;
+}
+
+/* Toolbar 'Actions' Button */
+.apex-theme-blue .btn-apex-actions,
+[data-theme="blue"] .btn-apex-actions {
+  background: #17243c !important;
+  border: 1px solid #283c61 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+.apex-theme-blue .btn-apex-actions:hover,
+[data-theme="blue"] .btn-apex-actions:hover {
+  border-color: #38bdf8 !important;
+  color: #38bdf8 !important;
+}
+
+/* Toolbar Rows Selector Text & Dropdown */
+.apex-theme-blue .apex-rows-select-group,
+[data-theme="blue"] .apex-rows-select-group {
+  color: #cbd5e1 !important;
+}
+.apex-theme-blue .apex-rows-select-group span,
+[data-theme="blue"] .apex-rows-select-group span {
+  color: #cbd5e1 !important;
+  font-weight: 600 !important;
+}
+.apex-theme-blue .apex-rows-select,
+[data-theme="blue"] .apex-rows-select {
+  background-color: #17243c !important;
+  border: 1px solid #283c61 !important;
+  color: #f8fafc !important;
+  font-weight: 600 !important;
+}
+
+/* Modal Dialogs in Dark Mode */
+.apex-modal-card {
+  background-color: #ffffff;
+}
+.apex-modal-header {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+.apex-modal-footer {
+  background-color: #f8fafc;
+}
+.apex-theme-blue .apex-modal-card,
+[data-theme="blue"] .apex-modal-card {
+  background-color: #0f172a !important;
+  border: 1px solid #283c61 !important;
+  color: #f8fafc !important;
+}
+.apex-theme-blue .apex-modal-header,
+[data-theme="blue"] .apex-modal-header {
+  background-color: #17243c !important;
+  border-bottom-color: #283c61 !important;
+  color: #f8fafc !important;
+}
+.apex-theme-blue .apex-modal-header h3,
+[data-theme="blue"] .apex-modal-header h3 {
+  color: #f8fafc !important;
+}
+.apex-theme-blue .apex-modal-footer,
+[data-theme="blue"] .apex-modal-footer {
+  background-color: #17243c !important;
+  border-top-color: #283c61 !important;
+}
+
+/* Page Headings in Dark Mode */
+.apex-page-heading {
+  color: #0f172a;
+}
+.apex-theme-blue .apex-page-heading,
+[data-theme="blue"] .apex-page-heading {
+  color: #f8fafc !important;
+}
+.apex-header-icon {
+  color: #0f172a;
+}
+.apex-theme-blue .apex-header-icon,
+[data-theme="blue"] .apex-header-icon {
+  color: #38bdf8 !important;
+}
+
+/* ==========================================================================
+   DARK THEME: FONT COLOR LIGHTENING & CONTRAST ENHANCEMENT
+   Ensures text, labels, steppers, metrics, and tabs never blend into dark backgrounds
+   ========================================================================== */
+
+/* 1. Global Light Text Protection for Dark Mode */
+.apex-theme-blue,
+[data-theme="blue"] {
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-light: #cbd5e1;
+}
+
+/* 2. Overrule hardcoded dark/black font colors on inline styles */
+.apex-theme-blue [style*="color: #0f172a"],
+[data-theme="blue"] [style*="color: #0f172a"],
+.apex-theme-blue [style*="color: #1e293b"],
+[data-theme="blue"] [style*="color: #1e293b"],
+.apex-theme-blue [style*="color: #071531"],
+[data-theme="blue"] [style*="color: #071531"],
+.apex-theme-blue [style*="color: #111827"],
+[data-theme="blue"] [style*="color: #111827"],
+.apex-theme-blue [style*="color: #000000"],
+[data-theme="blue"] [style*="color: #000000"],
+.apex-theme-blue [style*="color: #000"],
+[data-theme="blue"] [style*="color: #000"],
+.apex-theme-blue [style*="color: #172554"],
+[data-theme="blue"] [style*="color: #172554"],
+.apex-theme-blue [style*="color: #1e1b4b"],
+[data-theme="blue"] [style*="color: #1e1b4b"],
+.apex-theme-blue [style*="color: #334155"],
+[data-theme="blue"] [style*="color: #334155"] {
+  color: #f8fafc !important;
+}
+
+/* 3. Deep purple/violet KPI numbers & labels -> Luminous violet/purple */
+.apex-theme-blue [style*="color: #4c1d95"],
+[data-theme="blue"] [style*="color: #4c1d95"],
+.apex-theme-blue [style*="color: #581c87"],
+[data-theme="blue"] [style*="color: #581c87"],
+.apex-theme-blue [style*="color: #3b0764"],
+[data-theme="blue"] [style*="color: #3b0764"],
+.apex-theme-blue [style*="color: #6b21a8"],
+[data-theme="blue"] [style*="color: #6b21a8"] {
+  color: #c084fc !important;
+  text-shadow: 0 0 16px rgba(192, 132, 252, 0.4) !important;
+}
+
+/* 4. Muted grays that are too dim on dark navy/black background -> crisp readable light slate */
+.apex-theme-blue [style*="color: #475569"],
+[data-theme="blue"] [style*="color: #475569"],
+.apex-theme-blue [style*="color: #64748b"],
+[data-theme="blue"] [style*="color: #64748b"] {
+  color: #cbd5e1 !important;
+}
+
+/* 5. Strong and Bold tags in dark mode */
+.apex-theme-blue strong,
+[data-theme="blue"] strong,
+.apex-theme-blue b,
+[data-theme="blue"] b {
+  color: #ffffff !important;
+}
+
+/* 6. Form labels across the application */
+.apex-theme-blue label,
+[data-theme="blue"] label {
+  color: #f8fafc !important;
+}
+
+/* 7. Sub-Navigation & Dashboard Tabs (Screenshot 2) */
+.apex-theme-blue div[style*="overflowX"] button,
+[data-theme="blue"] div[style*="overflowX"] button,
+.apex-theme-blue div[style*="overflow-x"] button,
+[data-theme="blue"] div[style*="overflow-x"] button {
+  color: #94a3b8 !important;
+  transition: color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.apex-theme-blue div[style*="overflowX"] button:hover,
+[data-theme="blue"] div[style*="overflowX"] button:hover,
+.apex-theme-blue div[style*="overflow-x"] button:hover,
+[data-theme="blue"] div[style*="overflow-x"] button:hover {
+  color: #ffffff !important;
+}
+
+/* Active tab text and border */
+.apex-theme-blue div[style*="overflowX"] button[style*="3px solid"],
+[data-theme="blue"] div[style*="overflowX"] button[style*="3px solid"],
+.apex-theme-blue div[style*="overflow-x"] button[style*="3px solid"],
+[data-theme="blue"] div[style*="overflow-x"] button[style*="3px solid"] {
+  color: #ffffff !important;
+  border-bottom: 3px solid #2dd4bf !important;
+  font-weight: 700 !important;
+}
+
+/* 8. Stepper Progress Bars & Labels (Screenshot 1) */
+.apex-theme-blue span[style*="font-size: 0.85rem"],
+[data-theme="blue"] span[style*="font-size: 0.85rem"],
+.apex-theme-blue span[style*="fontSize: 0.85rem"],
+[data-theme="blue"] span[style*="fontSize: 0.85rem"],
+.apex-theme-blue span[style*="font-size: 0.825rem"],
+[data-theme="blue"] span[style*="font-size: 0.825rem"],
+.apex-theme-blue span[style*="fontSize: 0.825rem"],
+[data-theme="blue"] span[style*="fontSize: 0.825rem"] {
+  color: #f8fafc !important;
+}
+
+/* Stepper inactive step circles in dark mode */
+.apex-theme-blue [style*="border: 1px solid #cbd5e1"],
+[data-theme="blue"] [style*="border: 1px solid #cbd5e1"],
+.apex-theme-blue [style*="border: 2px solid #cbd5e1"],
+[data-theme="blue"] [style*="border: 2px solid #cbd5e1"] {
+  border-color: #334155 !important;
+}
+
+.apex-theme-blue [style*="backgroundColor: #f1f5f9"],
+[data-theme="blue"] [style*="backgroundColor: #f1f5f9"],
+.apex-theme-blue [style*="background-color: #f1f5f9"],
+[data-theme="blue"] [style*="background-color: #f1f5f9"] {
+  background-color: #15223c !important;
+  color: #cbd5e1 !important;
+}
+
+/* 9. Dropzone & File Upload Boxes in Dark Mode */
+.apex-theme-blue [style*="border: 2px dashed"],
+[data-theme="blue"] [style*="border: 2px dashed"],
+.apex-theme-blue [style*="border: 1px dashed"],
+[data-theme="blue"] [style*="border: 1px dashed"] {
+  background-color: #0D1728 !important;
+  border-color: #26364F !important;
+  color: #F1F5F9 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.apex-theme-blue [style*="border: 2px dashed"] div,
+[data-theme="blue"] [style*="border: 2px dashed"] div,
+.apex-theme-blue [style*="border: 1px dashed"] div,
+[data-theme="blue"] [style*="border: 1px dashed"] div {
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue [style*="border: 2px dashed"] div[style*="0.75rem"],
+[data-theme="blue"] [style*="border: 2px dashed"] div[style*="0.75rem"],
+.apex-theme-blue [style*="border: 1px dashed"] div[style*="0.8rem"],
+[data-theme="blue"] [style*="border: 1px dashed"] div[style*="0.8rem"] {
+  color: #94A3B8 !important;
+}
+
+/* 10. Dark Mode Buttons with hardcoded dark backgrounds */
+.apex-theme-blue [style*="background: #071531"],
+[data-theme="blue"] [style*="background: #071531"],
+.apex-theme-blue [style*="backgroundColor: #071531"],
+[data-theme="blue"] [style*="backgroundColor: #071531"],
+.apex-theme-blue [style*="background-color: #071531"],
+[data-theme="blue"] [style*="background-color: #071531"],
+.apex-theme-blue [style*="background: #0b1a3d"],
+[data-theme="blue"] [style*="background: #0b1a3d"],
+.apex-theme-blue [style*="backgroundColor: #0b1a3d"],
+[data-theme="blue"] [style*="backgroundColor: #0b1a3d"],
+.apex-theme-blue [style*="background-color: #0b1a3d"],
+[data-theme="blue"] [style*="background-color: #0b1a3d"] {
+  background-color: #111C2E !important;
+  border: 1px solid #26364F !important;
+  color: #F1F5F9 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 11. White card surfaces in dark mode -> dark glass surfaces */
+.apex-theme-blue [style*="backgroundColor: #ffffff"],
+[data-theme="blue"] [style*="backgroundColor: #ffffff"],
+.apex-theme-blue [style*="background-color: #ffffff"],
+[data-theme="blue"] [style*="background-color: #ffffff"],
+.apex-theme-blue [style*="backgroundColor: #f8fafc"],
+[data-theme="blue"] [style*="backgroundColor: #f8fafc"],
+.apex-theme-blue [style*="background-color: #f8fafc"],
+[data-theme="blue"] [style*="background-color: #f8fafc"] {
+  background-color: #111C2E !important;
+  border-color: #26364F !important;
+  color: #F1F5F9 !important;
+}
+
+/* 12. Select inputs and options in dark mode */
+.apex-theme-blue select,
+[data-theme="blue"] select,
+.apex-theme-blue input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="blue"] input:not([type="checkbox"]):not([type="radio"]) {
+  background-color: #0D1728 !important;
+  border-color: #26364F !important;
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue select option,
+[data-theme="blue"] select option {
+  background-color: #111C2E !important;
+  color: #F1F5F9 !important;
+}
+
+/* 13. Table Error Message Columns: Normal column with error font color, NO button or pill */
+.apex-theme-blue td span[style*="#fee2e2"],
+[data-theme="blue"] td span[style*="#fee2e2"],
+.apex-theme-blue td span[style*="fee2e2"],
+[data-theme="blue"] td span[style*="fee2e2"],
+.apex-theme-blue td div[style*="#fee2e2"],
+[data-theme="blue"] td div[style*="#fee2e2"],
+.apex-theme-blue .report-error-cell-text,
+[data-theme="blue"] .report-error-cell-text {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: #f87171 !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  display: inline !important;
+}
+
+/* ======================================================== */
+/* 16. COMPREHENSIVE THEME-AWARE BUTTON SYSTEM             */
+/* Covers Primary, Secondary, Outline, and Disabled states */
+/* in both Light Mode and Dark Mode                        */
+/* ======================================================== */
+
+/* --- A. LIGHT THEME BUTTON STYLES (.apex-theme-light / [data-theme="light"]) --- */
+.apex-theme-light .btn-primary,
+.apex-theme-light .btn-apex-primary,
+.apex-theme-light .btn-filter-search,
+.apex-theme-light .btn-apex-create,
+.apex-theme-light .btn-apex-go,
+.apex-theme-light .apex-toolbar-go-btn,
+[data-theme="light"] .btn-primary,
+[data-theme="light"] .btn-apex-primary,
+[data-theme="light"] .btn-filter-search,
+[data-theme="light"] .btn-apex-create,
+[data-theme="light"] .btn-apex-go,
+[data-theme="light"] .apex-toolbar-go-btn {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border: 1px solid #2563eb !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25) !important;
+}
+
+.apex-theme-light .btn-primary:hover:not(:disabled),
+.apex-theme-light .btn-apex-primary:hover:not(:disabled),
+.apex-theme-light .btn-filter-search:hover:not(:disabled),
+.apex-theme-light .btn-apex-create:hover:not(:disabled),
+.apex-theme-light .btn-apex-go:hover:not(:disabled),
+.apex-theme-light .apex-toolbar-go-btn:hover:not(:disabled),
+[data-theme="light"] .btn-primary:hover:not(:disabled),
+[data-theme="light"] .btn-apex-primary:hover:not(:disabled),
+[data-theme="light"] .btn-filter-search:hover:not(:disabled),
+[data-theme="light"] .btn-apex-create:hover:not(:disabled),
+[data-theme="light"] .btn-apex-go:hover:not(:disabled),
+[data-theme="light"] .apex-toolbar-go-btn:hover:not(:disabled) {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35) !important;
+}
+
+.apex-theme-light .btn-secondary,
+.apex-theme-light .btn-apex-secondary,
+.apex-theme-light .btn-filter-clear,
+.apex-theme-light .btn-apex-actions,
+.apex-theme-light .btn-apex-cancel,
+.apex-theme-light .btn-apex-download,
+[data-theme="light"] .btn-secondary,
+[data-theme="light"] .btn-apex-secondary,
+[data-theme="light"] .btn-filter-clear,
+[data-theme="light"] .btn-apex-actions,
+[data-theme="light"] .btn-apex-cancel,
+[data-theme="light"] .btn-apex-download {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+
+.apex-theme-light .btn-secondary:hover:not(:disabled),
+.apex-theme-light .btn-apex-secondary:hover:not(:disabled),
+.apex-theme-light .btn-filter-clear:hover:not(:disabled),
+.apex-theme-light .btn-apex-actions:hover:not(:disabled),
+.apex-theme-light .btn-apex-cancel:hover:not(:disabled),
+.apex-theme-light .btn-apex-download:hover:not(:disabled),
+[data-theme="light"] .btn-secondary:hover:not(:disabled),
+[data-theme="light"] .btn-apex-secondary:hover:not(:disabled),
+[data-theme="light"] .btn-filter-clear:hover:not(:disabled),
+[data-theme="light"] .btn-apex-actions:hover:not(:disabled),
+[data-theme="light"] .btn-apex-cancel:hover:not(:disabled),
+[data-theme="light"] .btn-apex-download:hover:not(:disabled) {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Outline & Toggle Buttons in Light Mode ("Hide Filter" / "Show Filter") */
+.apex-theme-light .btn-outline,
+.apex-theme-light .btn-apex-outline,
+.apex-theme-light .btn-toggle-filters,
+[data-theme="light"] .btn-outline,
+[data-theme="light"] .btn-apex-outline,
+[data-theme="light"] .btn-toggle-filters {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.apex-theme-light .btn-outline:hover:not(:disabled),
+.apex-theme-light .btn-apex-outline:hover:not(:disabled),
+.apex-theme-light .btn-toggle-filters:hover:not(:disabled),
+[data-theme="light"] .btn-outline:hover:not(:disabled),
+[data-theme="light"] .btn-apex-outline:hover:not(:disabled),
+[data-theme="light"] .btn-toggle-filters:hover:not(:disabled) {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Disabled Buttons in Light Mode */
+.apex-theme-light button:disabled,
+.apex-theme-light button[disabled],
+.apex-theme-light .btn-disabled,
+[data-theme="light"] button:disabled,
+[data-theme="light"] button[disabled],
+[data-theme="light"] .btn-disabled {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+  border: 1px solid #cbd5e1 !important;
+  cursor: not-allowed !important;
+  opacity: 0.75 !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+
+/* --- B. DARK THEME BUTTON STYLES (.apex-theme-blue / [data-theme="blue"]) --- */
+.apex-theme-blue .btn-primary,
+.apex-theme-blue .btn-apex-primary,
+.apex-theme-blue .btn-filter-search,
+.apex-theme-blue .btn-apex-create,
+.apex-theme-blue .btn-apex-go,
+.apex-theme-blue .apex-toolbar-go-btn,
+[data-theme="blue"] .btn-primary,
+[data-theme="blue"] .btn-apex-primary,
+[data-theme="blue"] .btn-filter-search,
+[data-theme="blue"] .btn-apex-create,
+[data-theme="blue"] .btn-apex-go,
+[data-theme="blue"] .apex-toolbar-go-btn {
+  background-color: #2563EB !important;
+  color: #ffffff !important;
+  border: 1px solid #2563EB !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.apex-theme-blue .btn-primary:hover:not(:disabled),
+.apex-theme-blue .btn-apex-primary:hover:not(:disabled),
+.apex-theme-blue .btn-filter-search:hover:not(:disabled),
+.apex-theme-blue .btn-apex-create:hover:not(:disabled),
+.apex-theme-blue .btn-apex-go:hover:not(:disabled),
+.apex-theme-blue .apex-toolbar-go-btn:hover:not(:disabled),
+[data-theme="blue"] .btn-primary:hover:not(:disabled),
+[data-theme="blue"] .btn-apex-primary:hover:not(:disabled),
+[data-theme="blue"] .btn-filter-search:hover:not(:disabled),
+[data-theme="blue"] .btn-apex-create:hover:not(:disabled),
+[data-theme="blue"] .btn-apex-go:hover:not(:disabled),
+[data-theme="blue"] .apex-toolbar-go-btn:hover:not(:disabled) {
+  background-color: #1D4ED8 !important;
+  border-color: #1D4ED8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.5) !important;
+}
+
+.apex-theme-blue .btn-secondary,
+.apex-theme-blue .btn-apex-secondary,
+.apex-theme-blue .btn-filter-clear,
+.apex-theme-blue .btn-apex-actions,
+.apex-theme-blue .btn-apex-cancel,
+.apex-theme-blue .btn-apex-download,
+[data-theme="blue"] .btn-secondary,
+[data-theme="blue"] .btn-apex-secondary,
+[data-theme="blue"] .btn-filter-clear,
+[data-theme="blue"] .btn-apex-actions,
+[data-theme="blue"] .btn-apex-cancel,
+[data-theme="blue"] .btn-apex-download {
+  background-color: #111C2E !important;
+  color: #F1F5F9 !important;
+  border: 1px solid #26364F !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.apex-theme-blue .btn-secondary:hover:not(:disabled),
+.apex-theme-blue .btn-apex-secondary:hover:not(:disabled),
+.apex-theme-blue .btn-filter-clear:hover:not(:disabled),
+.apex-theme-blue .btn-apex-actions:hover:not(:disabled),
+.apex-theme-blue .btn-apex-cancel:hover:not(:disabled),
+.apex-theme-blue .btn-apex-download:hover:not(:disabled),
+[data-theme="blue"] .btn-secondary:hover:not(:disabled),
+[data-theme="blue"] .btn-apex-secondary:hover:not(:disabled),
+[data-theme="blue"] .btn-filter-clear:hover:not(:disabled),
+[data-theme="blue"] .btn-apex-actions:hover:not(:disabled),
+[data-theme="blue"] .btn-apex-cancel:hover:not(:disabled),
+[data-theme="blue"] .btn-apex-download:hover:not(:disabled) {
+  background-color: #16243d !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.25) !important;
+}
+
+/* Outline & Toggle Buttons in Dark Mode ("Hide Filter" / "Show Filter") */
+.apex-theme-blue .btn-outline,
+.apex-theme-blue .btn-apex-outline,
+.apex-theme-blue .btn-toggle-filters,
+[data-theme="blue"] .btn-outline,
+[data-theme="blue"] .btn-apex-outline,
+[data-theme="blue"] .btn-toggle-filters {
+  background-color: #111C2E !important;
+  color: #F1F5F9 !important;
+  border: 1px solid #26364F !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.apex-theme-blue .btn-outline:hover:not(:disabled),
+.apex-theme-blue .btn-apex-outline:hover:not(:disabled),
+.apex-theme-blue .btn-toggle-filters:hover:not(:disabled),
+[data-theme="blue"] .btn-outline:hover:not(:disabled),
+[data-theme="blue"] .btn-apex-outline:hover:not(:disabled),
+[data-theme="blue"] .btn-toggle-filters:hover:not(:disabled) {
+  background-color: #16243d !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.25) !important;
+}
+
+/* Disabled Buttons in Dark Mode */
+.apex-theme-blue button:disabled,
+.apex-theme-blue button[disabled],
+.apex-theme-blue .btn-disabled,
+[data-theme="blue"] button:disabled,
+[data-theme="blue"] button[disabled],
+[data-theme="blue"] .btn-disabled {
+  background-color: #0D1728 !important;
+  color: #64748B !important;
+  border: 1px solid #1e293b !important;
+  cursor: not-allowed !important;
+  opacity: 0.75 !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+
+/* Focus Visibility & Accessibility */
+button:focus-visible {
+  outline: 2px solid #2563eb !important;
+  outline-offset: 2px !important;
+}
+
+/* ======================================================== */
+/* Form Footer & Modal Action Buttons: Parity for Cancel & Create */
+/* ======================================================== */
+.btn-apex-cancel,
+.form-footer-bar .btn-apex-cancel,
+.form-footer-bar .btn-cancel,
+.form-footer-bar button[type="button"].btn-cancel,
+.apex-form-actions-row .btn-apex-cancel,
+.apex-form-actions-row button.apex-btn-secondary,
+.form-actions-bar .btn-cancel,
+.modal-footer .btn-secondary,
+.modal-footer .btn-apex-cancel {
+  min-width: 120px !important;
+  height: 38px !important;
+  padding: 0.5rem 1.25rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.form-footer-bar button[type="submit"],
+.form-footer-bar .btn-apex-top,
+.form-footer-bar .btn-apex-create,
+.apex-form-actions-row button[type="submit"],
+.apex-form-actions-row .btn-apex-create,
+.apex-form-actions-row .btn-apex-top,
+.modal-footer button[type="submit"],
+.modal-footer .btn-primary,
+.modal-footer .btn-apex-create {
+  min-width: 120px !important;
+  height: 38px !important;
+  padding: 0.5rem 1.25rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+/* Form Action Buttons in Dark Theme (#171717) */
+.apex-theme-dark .btn-apex-cancel,
+.apex-theme-dark .form-footer-bar .btn-apex-cancel,
+.apex-theme-dark .apex-form-actions-row .btn-apex-cancel,
+.apex-theme-dark .apex-form-actions-row button.apex-btn-secondary,
+[data-theme="dark"] .btn-apex-cancel,
+[data-theme="dark"] .form-footer-bar .btn-apex-cancel,
+[data-theme="dark"] .apex-form-actions-row .btn-apex-cancel,
+[data-theme="dark"] .apex-form-actions-row button.apex-btn-secondary {
+  background-color: #222222 !important;
+  color: #E5E5E5 !important;
+  border: 1px solid #383838 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+}
+
+.apex-theme-dark .btn-apex-cancel:hover:not(:disabled),
+.apex-theme-dark .form-footer-bar .btn-apex-cancel:hover:not(:disabled),
+.apex-theme-dark .apex-form-actions-row .btn-apex-cancel:hover:not(:disabled),
+.apex-theme-dark .apex-form-actions-row button.apex-btn-secondary:hover:not(:disabled),
+[data-theme="dark"] .btn-apex-cancel:hover:not(:disabled),
+[data-theme="dark"] .form-footer-bar .btn-apex-cancel:hover:not(:disabled),
+[data-theme="dark"] .apex-form-actions-row .btn-apex-cancel:hover:not(:disabled),
+[data-theme="dark"] .apex-form-actions-row button.apex-btn-secondary:hover:not(:disabled) {
+  background-color: #2A2A2A !important;
+  border-color: #484848 !important;
+  color: #FFFFFF !important;
+}
+
+/* Form Action Buttons in Blue Theme */
+.apex-theme-blue .btn-apex-cancel,
+.apex-theme-blue .form-footer-bar .btn-apex-cancel,
+.apex-theme-blue .apex-form-actions-row .btn-apex-cancel,
+.apex-theme-blue .apex-form-actions-row button.apex-btn-secondary,
+[data-theme="blue"] .btn-apex-cancel,
+[data-theme="blue"] .form-footer-bar .btn-apex-cancel,
+[data-theme="blue"] .apex-form-actions-row .btn-apex-cancel,
+[data-theme="blue"] .apex-form-actions-row button.apex-btn-secondary {
+  background-color: #17243c !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #283c61 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.apex-theme-blue .btn-apex-cancel:hover:not(:disabled),
+.apex-theme-blue .form-footer-bar .btn-apex-cancel:hover:not(:disabled),
+.apex-theme-blue .apex-form-actions-row .btn-apex-cancel:hover:not(:disabled),
+.apex-theme-blue .apex-form-actions-row button.apex-btn-secondary:hover:not(:disabled),
+[data-theme="blue"] .btn-apex-cancel:hover:not(:disabled),
+[data-theme="blue"] .form-footer-bar .btn-apex-cancel:hover:not(:disabled),
+[data-theme="blue"] .apex-form-actions-row .btn-apex-cancel:hover:not(:disabled),
+[data-theme="blue"] .apex-form-actions-row button.apex-btn-secondary:hover:not(:disabled) {
+  background-color: #213559 !important;
+  border-color: #06b6d4 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.25) !important;
+}
+
+
+
+
+
+
+
+
+
+
+/* =============================================================================
+   APPLICATION-WIDE CONTRAST FIX
+   Fixes low-contrast text, table values, labels, placeholders, badges, and
+   UI states across all themes (light, dark, blue). Appended globally so fixes
+   apply to every page and feature without layout changes.
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------
+   1. LIGHT MODE TABLE TEXT — Explicit color on td/th for all table types
+      Fixes: table values appearing too light on white/near-white cells
+   ----------------------------------------------------------------------- */
+.dense-table td,
+.dense-table th,
+.apex-master-table td,
+.apex-report-table td,
+.apex-report-table th {
+  color: #1e293b;
+}
+
+/* Raise table header contrast in light mode */
+.dense-table th {
+  color: #0f172a !important;
+}
+
+/* -----------------------------------------------------------------------
+   2. LIGHT MODE LABELS, SECONDARY TEXT — Raise contrast for marginal colors
+      Fixes: #64748b on light backgrounds (4.4:1 — below WCAG AA 4.5:1)
+   ----------------------------------------------------------------------- */
+.apex-rows-select-group,
+.apex-rows-select-group span,
+.apex-pagination-strip {
+  color: #374151;
+}
+
+.company-filter-label {
+  color: #111827 !important;
+}
+
+.filter-item label {
+  color: #374151 !important;
+}
+
+.form-field-label {
+  color: #111827 !important;
+}
+
+.audit-field label {
+  color: #374151 !important;
+}
+
+.audit-field input {
+  color: #374151 !important;
+}
+
+/* Page subtitle / secondary text — keep muted but readable */
+.page-subtitle {
+  color: #374151 !important;
+}
+
+/* -----------------------------------------------------------------------
+   3. INPUT & SELECT PLACEHOLDER CONTRAST — Ensure placeholders are readable
+   ----------------------------------------------------------------------- */
+.apex-form-input::placeholder,
+.apex-search-input::placeholder,
+.company-filter-input::placeholder,
+.form-control-input::placeholder,
+input[type="text"]::placeholder,
+input[type="search"]::placeholder,
+input[type="date"]::placeholder,
+textarea::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
+
+/* Light theme: slightly darker placeholder */
+.apex-theme-light input::placeholder,
+[data-theme="light"] input::placeholder,
+.apex-theme-light textarea::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* -----------------------------------------------------------------------
+   4. LIGHT MODE BADGE CONTRAST — Ensure badge text is readable
+   ----------------------------------------------------------------------- */
+.badge-muted {
+  color: #374151 !important;
+  background-color: #f3f4f6 !important;
+}
+
+/* General badge fix: ensure text isn't too light */
+.badge {
+  font-weight: 600;
+}
+
+/* -----------------------------------------------------------------------
+   5. TOOLBAR / PAGINATION — Ensure readable in all themes
+   ----------------------------------------------------------------------- */
+.apex-ir-card,
+.apex-report-toolbar {
+  color: #1e293b;
+}
+
+/* Rows label text */
+.apex-rows-select-group span {
+  font-weight: 600;
+}
+
+/* -----------------------------------------------------------------------
+   6. DARK THEME — Catch hardcoded inline light colors on table rows
+      Fixes: GroupBy/Pivot totals, control breaks, aggregation rows
+      that use inline styles with hardcoded light colors
+   ----------------------------------------------------------------------- */
+
+/* GroupBy & Pivot total/summary rows with white background in dark themes */
+.apex-theme-dark tr[style*="background-color: #f1f5f9"],
+.apex-theme-dark tr[style*="backgroundColor: '#f1f5f9'"],
+[data-theme="dark"] tr[style*="background-color: #f1f5f9"] {
+  background-color: #252525 !important;
+  border-color: #333333 !important;
+}
+
+.apex-theme-dark tr[style*="background-color: #f8fafc"],
+[data-theme="dark"] tr[style*="background-color: #f8fafc"] {
+  background-color: #202020 !important;
+  border-color: #333333 !important;
+}
+
+/* td inside those rows */
+.apex-theme-dark tr[style*="background-color: #f1f5f9"] td,
+[data-theme="dark"] tr[style*="background-color: #f1f5f9"] td,
+.apex-theme-dark tr[style*="background-color: #f8fafc"] td,
+[data-theme="dark"] tr[style*="background-color: #f8fafc"] td {
+  color: #F5F5F5 !important;
+  border-color: #333333 !important;
+}
+
+/* td with hardcoded dark text color in GroupBy/Pivot tables */
+.apex-theme-dark td[style*="color: #1e293b"],
+[data-theme="dark"] td[style*="color: #1e293b"],
+.apex-theme-dark td[style*="color: #0f172a"],
+[data-theme="dark"] td[style*="color: #0f172a"],
+.apex-theme-dark td[style*="color: #334155"],
+[data-theme="dark"] td[style*="color: #334155"],
+.apex-theme-dark td[style*="color: #475569"],
+[data-theme="dark"] td[style*="color: #475569"] {
+  color: #F5F5F5 !important;
+}
+
+/* th with hardcoded dark text */
+.apex-theme-dark th[style*="color: #1e293b"],
+[data-theme="dark"] th[style*="color: #1e293b"],
+.apex-theme-dark th[style*="color: #0f172a"],
+[data-theme="dark"] th[style*="color: #0f172a"],
+.apex-theme-dark th[style*="color: #334155"],
+[data-theme="dark"] th[style*="color: #334155"] {
+  color: #A3A3A3 !important;
+}
+
+/* GroupBy/Pivot: white/light row backgrounds in dark mode */
+.apex-theme-dark tr[style*="backgroundColor: '#fafafa'"],
+[data-theme="dark"] tr[style*="backgroundColor: '#fafafa'"],
+.apex-theme-dark tr[style*="background-color: #fafafa"],
+[data-theme="dark"] tr[style*="background-color: #fafafa"] {
+  background-color: #1E1E1E !important;
+}
+
+.apex-theme-dark tr[style*="backgroundColor: '#ffffff'"],
+[data-theme="dark"] tr[style*="backgroundColor: '#ffffff'"],
+.apex-theme-dark tr[style*="background-color: #ffffff"],
+[data-theme="dark"] tr[style*="background-color: #ffffff"] {
+  background-color: #1C1C1C !important;
+}
+
+/* td with violet GroupBy accent colors — keep them visible in dark */
+.apex-theme-dark td[style*="color: #7048e8"],
+[data-theme="dark"] td[style*="color: #7048e8"],
+.apex-theme-dark td[style*="color: #9333ea"],
+[data-theme="dark"] td[style*="color: #9333ea"] {
+  color: #c084fc !important;
+}
+
+/* td/th with light purple background (GroupBy aggregate column) */
+.apex-theme-dark td[style*="background-color: #faf5ff"],
+[data-theme="dark"] td[style*="background-color: #faf5ff"],
+.apex-theme-dark th[style*="background-color: #faf5ff"],
+[data-theme="dark"] th[style*="background-color: #faf5ff"],
+.apex-theme-dark td[style*="backgroundColor: '#faf5ff'"],
+[data-theme="dark"] td[style*="backgroundColor: '#faf5ff'"],
+.apex-theme-dark td[style*="background-color: #f3e8ff"],
+[data-theme="dark"] td[style*="background-color: #f3e8ff"] {
+  background-color: #2d1f4a !important;
+}
+
+/* Report title h3 with hardcoded dark color */
+.apex-theme-dark h3[style*="color: #1e293b"],
+[data-theme="dark"] h3[style*="color: #1e293b"] {
+  color: #F5F5F5 !important;
+}
+
+/* Active Pivot/GroupBy banner buttons with white background */
+.apex-theme-dark button[style*="background: '#ffffff'"],
+[data-theme="dark"] button[style*="background: '#ffffff'"],
+.apex-theme-dark button[style*="background-color: '#ffffff'"],
+[data-theme="dark"] button[style*="background-color: '#ffffff'"] {
+  background-color: #2A2A2A !important;
+  border-color: #c084fc !important;
+  color: #c084fc !important;
+}
+
+/* Badge spans with light background (view badge, report name badge) */
+.apex-theme-dark span[style*="background-color: #e0f2fe"],
+[data-theme="dark"] span[style*="background-color: #e0f2fe"],
+.apex-theme-dark span[style*="backgroundColor: '#e0f2fe'"],
+[data-theme="dark"] span[style*="backgroundColor: '#e0f2fe'"] {
+  background-color: rgba(14, 165, 233, 0.2) !important;
+  color: #7dd3fc !important;
+}
+
+.apex-theme-dark span[style*="background-color: #e2e8f0"],
+[data-theme="dark"] span[style*="background-color: #e2e8f0"],
+.apex-theme-dark span[style*="backgroundColor: '#e2e8f0'"],
+[data-theme="dark"] span[style*="backgroundColor: '#e2e8f0'"] {
+  background-color: #2A2A2A !important;
+  color: #A3A3A3 !important;
+}
+
+/* Row selected state: blue highlight in dark */
+.apex-theme-dark tr.selected,
+.apex-theme-dark tr[style*="background-color: #dbeafe"],
+[data-theme="dark"] tr.selected,
+[data-theme="dark"] tr[style*="background-color: #dbeafe"] {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Control Break header rows in dark mode */
+.apex-theme-dark tr[style*="background-color: #f1f5f9"][style*="border"],
+[data-theme="dark"] tr[style*="background-color: #f1f5f9"][style*="border"] {
+  background-color: #252525 !important;
+  border-color: #383838 !important;
+}
+
+/* -----------------------------------------------------------------------
+   7. BLUE THEME — Same hardcoded inline color fixes for blue/navy theme
+   ----------------------------------------------------------------------- */
+
+/* Table rows with hardcoded light backgrounds in blue theme */
+.apex-theme-blue tr[style*="background-color: #f1f5f9"],
+[data-theme="blue"] tr[style*="background-color: #f1f5f9"] {
+  background-color: #15223d !important;
+  border-color: #26364F !important;
+}
+
+.apex-theme-blue tr[style*="background-color: #f8fafc"],
+[data-theme="blue"] tr[style*="background-color: #f8fafc"] {
+  background-color: #0F1B2D !important;
+  border-color: #26364F !important;
+}
+
+.apex-theme-blue tr[style*="background-color: #fafafa"],
+[data-theme="blue"] tr[style*="background-color: #fafafa"] {
+  background-color: #0D1728 !important;
+}
+
+.apex-theme-blue tr[style*="background-color: #ffffff"],
+[data-theme="blue"] tr[style*="background-color: #ffffff"] {
+  background-color: #0B1526 !important;
+}
+
+/* td text in blue theme with hardcoded dark colors */
+.apex-theme-blue td[style*="color: #1e293b"],
+[data-theme="blue"] td[style*="color: #1e293b"],
+.apex-theme-blue td[style*="color: #0f172a"],
+[data-theme="blue"] td[style*="color: #0f172a"],
+.apex-theme-blue td[style*="color: #334155"],
+[data-theme="blue"] td[style*="color: #334155"],
+.apex-theme-blue td[style*="color: #475569"],
+[data-theme="blue"] td[style*="color: #475569"] {
+  color: #F1F5F9 !important;
+}
+
+/* th text in blue theme with hardcoded dark colors */
+.apex-theme-blue th[style*="color: #1e293b"],
+[data-theme="blue"] th[style*="color: #1e293b"],
+.apex-theme-blue th[style*="color: #0f172a"],
+[data-theme="blue"] th[style*="color: #0f172a"] {
+  color: #94A3B8 !important;
+}
+
+/* td inside light-bg rows in blue theme */
+.apex-theme-blue tr[style*="background-color: #f1f5f9"] td,
+[data-theme="blue"] tr[style*="background-color: #f1f5f9"] td,
+.apex-theme-blue tr[style*="background-color: #f8fafc"] td,
+[data-theme="blue"] tr[style*="background-color: #f8fafc"] td {
+  color: #F1F5F9 !important;
+  border-color: #26364F !important;
+}
+
+/* Purple accent cells in blue theme */
+.apex-theme-blue td[style*="color: #7048e8"],
+[data-theme="blue"] td[style*="color: #7048e8"],
+.apex-theme-blue td[style*="color: #9333ea"],
+[data-theme="blue"] td[style*="color: #9333ea"] {
+  color: #c084fc !important;
+}
+
+/* Purple bg cells in blue theme */
+.apex-theme-blue td[style*="background-color: #faf5ff"],
+[data-theme="blue"] td[style*="background-color: #faf5ff"],
+.apex-theme-blue th[style*="background-color: #faf5ff"],
+[data-theme="blue"] th[style*="background-color: #faf5ff"],
+.apex-theme-blue td[style*="background-color: #f3e8ff"],
+[data-theme="blue"] td[style*="background-color: #f3e8ff"] {
+  background-color: rgba(139, 92, 246, 0.25) !important;
+}
+
+/* Blue theme: row selected */
+.apex-theme-blue tr.selected,
+.apex-theme-blue tr[style*="background-color: #dbeafe"],
+[data-theme="blue"] tr.selected,
+[data-theme="blue"] tr[style*="background-color: #dbeafe"] {
+  background-color: rgba(6, 182, 212, 0.2) !important;
+}
+
+/* Blue theme: GroupBy/pivot banner buttons */
+.apex-theme-blue button[style*="background: '#ffffff'"],
+[data-theme="blue"] button[style*="background: '#ffffff'"],
+.apex-theme-blue button[style*="background-color: '#ffffff'"],
+[data-theme="blue"] button[style*="background-color: '#ffffff'"] {
+  background-color: #17243c !important;
+  border-color: #c084fc !important;
+  color: #c084fc !important;
+}
+
+/* Blue theme: view/report badge */
+.apex-theme-blue span[style*="background-color: #e0f2fe"],
+[data-theme="blue"] span[style*="background-color: #e0f2fe"] {
+  background-color: rgba(14, 165, 233, 0.2) !important;
+  color: #7dd3fc !important;
+}
+
+.apex-theme-blue span[style*="background-color: #e2e8f0"],
+[data-theme="blue"] span[style*="background-color: #e2e8f0"] {
+  background-color: rgba(100, 116, 139, 0.25) !important;
+  color: #CBD5E1 !important;
+}
+
+/* -----------------------------------------------------------------------
+   8. LIGHT THEME EXPLICIT OVERRIDES — Ensure maximum contrast in light mode
+      Specifically for areas noted in screenshot (white cell, light text)
+   ----------------------------------------------------------------------- */
+
+/* Light theme: table text must be fully dark */
+.apex-theme-light .dense-table td,
+.apex-theme-light .apex-master-table td,
+.apex-theme-light .apex-report-table td,
+[data-theme="light"] .dense-table td,
+[data-theme="light"] .apex-master-table td,
+[data-theme="light"] .apex-report-table td {
+  color: #0f172a !important;
+}
+
+.apex-theme-light .dense-table th,
+.apex-theme-light .apex-master-table th,
+.apex-theme-light .apex-report-table th,
+[data-theme="light"] .dense-table th,
+[data-theme="light"] .apex-master-table th,
+[data-theme="light"] .apex-report-table th {
+  color: #0f172a !important;
+  background-color: #f8fafc !important;
+}
+
+/* Light theme: toolbar text */
+.apex-theme-light .apex-ir-card,
+.apex-theme-light .apex-report-toolbar,
+[data-theme="light"] .apex-ir-card,
+[data-theme="light"] .apex-report-toolbar {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.apex-theme-light .apex-rows-select-group,
+.apex-theme-light .apex-rows-select-group span,
+.apex-theme-light .apex-pagination-strip,
+[data-theme="light"] .apex-rows-select-group,
+[data-theme="light"] .apex-rows-select-group span,
+[data-theme="light"] .apex-pagination-strip {
+  color: #374151 !important;
+}
+
+/* Light theme: forms and labels */
+.apex-theme-light label,
+[data-theme="light"] label {
+  color: #111827 !important;
+}
+
+.apex-theme-light .apex-form-input,
+[data-theme="light"] .apex-form-input {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+}
+
+.apex-theme-light select,
+.apex-theme-light input[type="text"],
+.apex-theme-light input[type="date"],
+[data-theme="light"] select,
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="date"] {
+  color: #0f172a !important;
+}
+
+/* Light theme: toolbar buttons must be clearly readable */
+.apex-theme-light .btn-apex-go,
+.apex-theme-light .apex-toolbar-go-btn,
+[data-theme="light"] .btn-apex-go,
+[data-theme="light"] .apex-toolbar-go-btn {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  font-weight: 700 !important;
+}
+
+.apex-theme-light .btn-apex-actions,
+[data-theme="light"] .btn-apex-actions {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #d1d5db !important;
+  font-weight: 600 !important;
+}
+
+/* Light theme: pagination nav */
+.apex-theme-light .pagination-nav-btn,
+[data-theme="light"] .pagination-nav-btn {
+  color: #374151 !important;
+}
+
+/* Light theme: modal body text */
+.apex-theme-light .apex-modal-body,
+[data-theme="light"] .apex-modal-body {
+  color: #0f172a !important;
+}
+
+/* -----------------------------------------------------------------------
+   9. GLOBAL INLINE OVERRIDE — Catch remaining hardcoded low-contrast grays
+      in light-mode contexts (not inside dark/blue theme wrappers)
+   ----------------------------------------------------------------------- */
+
+/* Any span using #94a3b8 as text on light background (e.g., aggregation label) */
+.apex-theme-light span[style*="color: #94a3b8"],
+.apex-theme-light span[style*="color: #64748b"],
+[data-theme="light"] span[style*="color: #94a3b8"],
+[data-theme="light"] span[style*="color: #64748b"] {
+  color: #374151 !important;
+}
+
+/* Any td using #94a3b8 as text on light background */
+.apex-theme-light td[style*="color: #94a3b8"],
+.apex-theme-light td[style*="color: #64748b"],
+[data-theme="light"] td[style*="color: #94a3b8"],
+[data-theme="light"] td[style*="color: #64748b"] {
+  color: #374151 !important;
+}
+
+/* -----------------------------------------------------------------------
+   10. DARK MODE LABEL & FILTER CONTRAST (extra specificity for dark theme)
+       Ensures form labels, filter chips, error badges read clearly
+   ----------------------------------------------------------------------- */
+
+/* Error badge text in dark must stay vivid red, not darken */
+.apex-theme-dark .apex-errors-badge,
+[data-theme="dark"] .apex-errors-badge,
+.apex-theme-blue .apex-errors-badge,
+[data-theme="blue"] .apex-errors-badge {
+  color: #fecaca !important;
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(248, 113, 113, 0.5) !important;
+}
+
+/* Active Filter Banner text in dark */
+.apex-theme-dark .apex-active-filter-banner,
+[data-theme="dark"] .apex-active-filter-banner {
+  color: #E5E5E5 !important;
+}
+
+/* Active Filter Banner text in blue */
+.apex-theme-blue .apex-active-filter-banner,
+[data-theme="blue"] .apex-active-filter-banner {
+  color: #CBD5E1 !important;
+}
+
+/* Table placeholder em-dash in dark must be visible */
+.apex-theme-dark td span,
+.apex-theme-dark td,
+[data-theme="dark"] td span,
+[data-theme="dark"] td {
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-blue td span,
+.apex-theme-blue td,
+[data-theme="blue"] td span,
+[data-theme="blue"] td {
+  color: #F1F5F9 !important;
+}
+
+/* -----------------------------------------------------------------------
+   11. AGGREGATION / TFOOT ROWS — Explicit contrast for all themes
+   ----------------------------------------------------------------------- */
+
+/* Light mode tfoot */
+tfoot tr {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+tfoot td {
+  color: #0f172a !important;
+  font-weight: 700;
+}
+
+/* Dark mode tfoot */
+.apex-theme-dark tfoot tr,
+[data-theme="dark"] tfoot tr {
+  background-color: #252525 !important;
+  border-top: 2px solid #383838 !important;
+  border-bottom: 1px solid #383838 !important;
+}
+
+.apex-theme-dark tfoot td,
+[data-theme="dark"] tfoot td {
+  color: #F5F5F5 !important;
+  border-color: #383838 !important;
+}
+
+/* Blue mode tfoot */
+.apex-theme-blue tfoot tr,
+[data-theme="blue"] tfoot tr {
+  background-color: #15223d !important;
+  border-top: 2px solid #26364F !important;
+  border-bottom: 1px solid #26364F !important;
+}
+
+.apex-theme-blue tfoot td,
+[data-theme="blue"] tfoot td {
+  color: #F1F5F9 !important;
+  border-color: #26364F !important;
+}
+
+/* -----------------------------------------------------------------------
+   12. FILTER CARD DARK MODE — Ensure filter forms are readable in dark themes
+   ----------------------------------------------------------------------- */
+
+.apex-theme-dark .company-filters-card,
+[data-theme="dark"] .company-filters-card {
+  background-color: #1C1C1C !important;
+  border-color: #2C2C2C !important;
+}
+
+.apex-theme-dark .company-filter-label,
+[data-theme="dark"] .company-filter-label {
+  color: #A3A3A3 !important;
+}
+
+.apex-theme-dark .company-filter-input,
+.apex-theme-dark .company-filter-select,
+[data-theme="dark"] .company-filter-input,
+[data-theme="dark"] .company-filter-select {
+  background-color: #161616 !important;
+  border-color: #2C2C2C !important;
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-blue .company-filters-card,
+[data-theme="blue"] .company-filters-card {
+  background-color: #111C2E !important;
+  border-color: #26364F !important;
+}
+
+.apex-theme-blue .company-filter-label,
+[data-theme="blue"] .company-filter-label {
+  color: #94A3B8 !important;
+}
+
+.apex-theme-blue .company-filter-input,
+.apex-theme-blue .company-filter-select,
+[data-theme="blue"] .company-filter-input,
+[data-theme="blue"] .company-filter-select {
+  background-color: #0D1728 !important;
+  border-color: #26364F !important;
+  color: #F1F5F9 !important;
+}
+
+/* -----------------------------------------------------------------------
+   13. MASTER PAGE TABLE ROW ACTIONS — icon buttons visible in all themes
+   ----------------------------------------------------------------------- */
+
+/* Light theme row-edit-btn */
+.row-edit-btn {
+  color: #374151;
+}
+.row-edit-btn:hover {
+  background-color: #e5e7eb;
+  color: #0f172a;
+}
+
+/* Dark theme row-edit-btn */
+.apex-theme-dark .row-edit-btn,
+[data-theme="dark"] .row-edit-btn {
+  color: #A3A3A3 !important;
+}
+.apex-theme-dark .row-edit-btn:hover,
+[data-theme="dark"] .row-edit-btn:hover {
+  background-color: #2A2A2A !important;
+  color: #F5F5F5 !important;
+}
+
+/* Blue theme row-edit-btn */
+.apex-theme-blue .row-edit-btn,
+[data-theme="blue"] .row-edit-btn {
+  color: #94A3B8 !important;
+}
+.apex-theme-blue .row-edit-btn:hover,
+[data-theme="blue"] .row-edit-btn:hover {
+  background-color: #17243c !important;
+  color: #F1F5F9 !important;
+}
+
+/* -----------------------------------------------------------------------
+   14. DARK THEME BUTTON SPECIFICITY — ensure all button text stays white
+   ----------------------------------------------------------------------- */
+
+/* Primary action buttons: always white text */
+.apex-theme-dark .btn-apex-top,
+[data-theme="dark"] .btn-apex-top,
+.apex-theme-blue .btn-apex-top,
+[data-theme="blue"] .btn-apex-top {
+  color: #ffffff !important;
+}
+
+/* Cancel/secondary buttons in dark: ensure readable */
+.apex-theme-dark .btn-apex-cancel,
+[data-theme="dark"] .btn-apex-cancel {
+  color: #E5E5E5 !important;
+}
+
+.apex-theme-blue .btn-apex-cancel,
+[data-theme="blue"] .btn-apex-cancel {
+  color: #CBD5E1 !important;
+}
+
+/* Validation rules link */
+.apex-theme-dark .btn-apex-validation-rules,
+[data-theme="dark"] .btn-apex-validation-rules {
+  color: #60a5fa !important;
+}
+
+.apex-theme-blue .btn-apex-validation-rules,
+[data-theme="blue"] .btn-apex-validation-rules {
+  color: #38bdf8 !important;
+}
+
+/* -----------------------------------------------------------------------
+   15. MODALS — body text in dark must be fully bright
+   ----------------------------------------------------------------------- */
+
+.apex-theme-dark .apex-modal-body,
+[data-theme="dark"] .apex-modal-body {
+  color: #E5E5E5 !important;
+}
+
+.apex-theme-dark .apex-modal-body label,
+[data-theme="dark"] .apex-modal-body label {
+  color: #A3A3A3 !important;
+}
+
+.apex-theme-dark .rules-section h4,
+[data-theme="dark"] .rules-section h4 {
+  color: #F5F5F5 !important;
+}
+
+.apex-theme-dark .rules-list,
+.apex-theme-dark .rules-list li,
+[data-theme="dark"] .rules-list,
+[data-theme="dark"] .rules-list li {
+  color: #D1D5DB !important;
+}
+
+.apex-theme-blue .apex-modal-body,
+[data-theme="blue"] .apex-modal-body {
+  color: #E2E8F0 !important;
+}
+
+.apex-theme-blue .apex-modal-body label,
+[data-theme="blue"] .apex-modal-body label {
+  color: #94A3B8 !important;
+}
+
+.apex-theme-blue .rules-section h4,
+[data-theme="blue"] .rules-section h4 {
+  color: #F1F5F9 !important;
+}
+
+.apex-theme-blue .rules-list,
+.apex-theme-blue .rules-list li,
+[data-theme="blue"] .rules-list,
+[data-theme="blue"] .rules-list li {
+  color: #CBD5E1 !important;
+}
+
+/* -----------------------------------------------------------------------
+   16. PAGE-LEVEL BACKGROUND & TEXT for light mode (default)
+       Ensure content area text is always maximum contrast
+   ----------------------------------------------------------------------- */
+
+.apex-theme-light,
+[data-theme="light"] {
+  --text-main: #0f172a;
+  --text-muted: #374151;
+  --text-light: #6b7280;
+  --bg-page: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --border: #e2e8f0;
+}
+
+
+
+
+/* =======================================================================
+   DARK MODE NUCLEAR INLINE-STYLE OVERRIDE
+   -----------------------------------------------------------------------
+   React serializes inline `style={{ backgroundColor: '#ffffff' }}` to
+   `style="background-color: rgb(255, 255, 255);"` in the DOM.
+   These selectors catch all such hardcoded light colours in dark mode and
+   replace them with dark-theme equivalents — no JSX edits required.
+   ======================================================================= */
+
+/* ── 1. White backgrounds  #ffffff = rgb(255,255,255) ── */
+.apex-theme-dark [style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-dark [style*="background: rgb(255, 255, 255)"],
+[data-theme="dark"] [style*="background-color: rgb(255, 255, 255)"],
+[data-theme="dark"] [style*="background: rgb(255, 255, 255)"] {
+  background-color: #1e293b !important;
+  background:       #1e293b !important;
+  color: #f1f5f9 !important;
+  border-color: #334155 !important;
+}
+
+/* ── 2. Very light gray  #f8fafc = rgb(248,250,252) ── */
+.apex-theme-dark [style*="background-color: rgb(248, 250, 252)"],
+.apex-theme-dark [style*="background: rgb(248, 250, 252)"],
+[data-theme="dark"] [style*="background-color: rgb(248, 250, 252)"],
+[data-theme="dark"] [style*="background: rgb(248, 250, 252)"] {
+  background-color: #182234 !important;
+  background:       #182234 !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── 3. Light gray  #f1f5f9 = rgb(241,245,249) ── (prob-badge, subtotal rows) */
+.apex-theme-dark [style*="background-color: rgb(241, 245, 249)"],
+.apex-theme-dark [style*="background: rgb(241, 245, 249)"],
+[data-theme="dark"] [style*="background-color: rgb(241, 245, 249)"],
+[data-theme="dark"] [style*="background: rgb(241, 245, 249)"] {
+  background-color: #263548 !important;
+  background:       #263548 !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── 4. Near-white  #fafafa = rgb(250,250,250) ── */
+.apex-theme-dark [style*="background-color: rgb(250, 250, 250)"],
+[data-theme="dark"] [style*="background-color: rgb(250, 250, 250)"] {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── 5. Light gray #f5f5f5 = rgb(245,245,245) ── */
+.apex-theme-dark [style*="background-color: rgb(245, 245, 245)"],
+[data-theme="dark"] [style*="background-color: rgb(245, 245, 245)"] {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── 6. Blue tint active-filter chips  #eff6ff = rgb(239,246,255) ── */
+.apex-theme-dark [style*="background-color: rgb(239, 246, 255)"],
+[data-theme="dark"] [style*="background-color: rgb(239, 246, 255)"] {
+  background-color: #1e3a5f !important;
+  color: #93c5fd !important;
+  border-color: #1e40af !important;
+}
+
+/* ── 7. Blue tint selected rows  #f0f9ff = rgb(240,249,255) ── */
+.apex-theme-dark [style*="background-color: rgb(240, 249, 255)"],
+[data-theme="dark"] [style*="background-color: rgb(240, 249, 255)"] {
+  background-color: #1e3a5f !important;
+  color: #bfdbfe !important;
+}
+
+/* ── 8. Dark text colours → light in dark mode ── */
+.apex-theme-dark [style*="color: rgb(15, 23, 42)"],
+[data-theme="dark"] [style*="color: rgb(15, 23, 42)"] {
+  color: #f1f5f9 !important;
+}
+.apex-theme-dark [style*="color: rgb(30, 41, 59)"],
+[data-theme="dark"] [style*="color: rgb(30, 41, 59)"] {
+  color: #f1f5f9 !important;
+}
+.apex-theme-dark [style*="color: rgb(51, 65, 85)"],
+[data-theme="dark"] [style*="color: rgb(51, 65, 85)"] {
+  color: #cbd5e1 !important;
+}
+.apex-theme-dark [style*="color: rgb(71, 85, 105)"],
+[data-theme="dark"] [style*="color: rgb(71, 85, 105)"] {
+  color: #94a3b8 !important;
+}
+.apex-theme-dark [style*="color: rgb(100, 116, 139)"],
+[data-theme="dark"] [style*="color: rgb(100, 116, 139)"] {
+  color: #94a3b8 !important;
+}
+.apex-theme-dark [style*="color: rgb(55, 65, 81)"],
+[data-theme="dark"] [style*="color: rgb(55, 65, 81)"] {
+  color: #cbd5e1 !important;
+}
+
+/* ── 9. Light borders → dark borders ── */
+.apex-theme-dark [style*="border-color: rgb(226, 232, 240)"],
+.apex-theme-dark [style*="border-color: rgb(203, 213, 225)"],
+[data-theme="dark"] [style*="border-color: rgb(226, 232, 240)"],
+[data-theme="dark"] [style*="border-color: rgb(203, 213, 225)"] {
+  border-color: #334155 !important;
+}
+
+/* ── 10. Prob-badge  — targeted semantic class ── */
+.apex-theme-dark .prob-badge,
+[data-theme="dark"] .prob-badge {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── 11. Table row hover via JS (onMouseEnter sets #f8fafc / #f1f5f9) ──
+   CSS :hover overrides JS-set background when dark, since !important wins */
+.apex-theme-dark .apex-master-table tbody tr:hover,
+.apex-theme-dark table tbody tr:hover,
+[data-theme="dark"] .apex-master-table tbody tr:hover,
+[data-theme="dark"] table tbody tr:hover {
+  background-color: #263548 !important;
+  color: #f1f5f9 !important;
+}
+
+/* ── 12. Table subtotal / header rows with explicit light bg ── */
+.apex-theme-dark tr[style*="background-color: rgb(241, 245, 249)"],
+[data-theme="dark"] tr[style*="background-color: rgb(241, 245, 249)"] {
+  background-color: #1e3a5f !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+.apex-theme-dark tr[style*="background-color: rgb(248, 250, 252)"],
+[data-theme="dark"] tr[style*="background-color: rgb(248, 250, 252)"] {
+  background-color: #182234 !important;
+  color: #e2e8f0 !important;
+}
+.apex-theme-dark tr[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="dark"] tr[style*="background-color: rgb(255, 255, 255)"] {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+/* ── 13. Span / badge with inline light bg (prob-badge fallback by rgb) ── */
+.apex-theme-dark span[style*="background-color: rgb(241, 245, 249)"],
+[data-theme="dark"] span[style*="background-color: rgb(241, 245, 249)"] {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+.apex-theme-dark span[style*="background-color: rgb(248, 250, 252)"],
+[data-theme="dark"] span[style*="background-color: rgb(248, 250, 252)"] {
+  background-color: #263548 !important;
+  color: #e2e8f0 !important;
+}
+.apex-theme-dark span[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="dark"] span[style*="background-color: rgb(255, 255, 255)"] {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+.apex-theme-dark span[style*="background: rgb(241, 245, 249)"],
+[data-theme="dark"] span[style*="background: rgb(241, 245, 249)"] {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── 14. All inputs/selects/textareas — broad nuclear fallback for
+         any that escape the class-based rule at line 4868 ── */
+.apex-theme-dark input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.apex-theme-dark select,
+.apex-theme-dark textarea,
+[data-theme="dark"] input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: #161616 !important;
+  color: #F5F5F5 !important;
+  border-color: #2C2C2C !important;
+}
+
+/* ── 15. Form containers with light bg ── */
+.apex-theme-dark form[style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-dark form[style*="background: rgb(255, 255, 255)"],
+[data-theme="dark"] form[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="dark"] form[style*="background: rgb(255, 255, 255)"] {
+  background-color: #1e293b !important;
+  background:       #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+.apex-theme-dark form[style*="background-color: rgb(248, 250, 252)"],
+.apex-theme-dark form[style*="background: rgb(248, 250, 252)"],
+[data-theme="dark"] form[style*="background-color: rgb(248, 250, 252)"],
+[data-theme="dark"] form[style*="background: rgb(248, 250, 252)"] {
+  background-color: #182234 !important;
+  background:       #182234 !important;
+  border-color: #334155 !important;
+}
+
+/* ── 16. th with light bg (pivot/breakdown table headers) ── */
+.apex-theme-dark th[style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-dark th[style*="background-color: rgb(248, 250, 252)"],
+.apex-theme-dark th[style*="background-color: rgb(241, 245, 249)"],
+[data-theme="dark"] th[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="dark"] th[style*="background-color: rgb(248, 250, 252)"],
+[data-theme="dark"] th[style*="background-color: rgb(241, 245, 249)"] {
+  background-color: #182234 !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+/* ── 17. td with explicit white/light bg (breakdown table data cells) ── */
+.apex-theme-dark td[style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-dark td[style*="background-color: rgb(250, 250, 250)"],
+[data-theme="dark"] td[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="dark"] td[style*="background-color: rgb(250, 250, 250)"] {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+/* ── 18. Dense table wrapper with inline white bg ── */
+.apex-theme-dark .dense-table-wrapper[style*="background"],
+[data-theme="dark"] .dense-table-wrapper[style*="background"] {
+  background-color: #1a2537 !important;
+  background:       #1a2537 !important;
+  border-color: #334155 !important;
+}
+
+/* ── 19. Light border shorthand  #f1f5f9 as border-bottom ── */
+.apex-theme-dark [style*="border-bottom: 1px solid rgb(241, 245, 249)"],
+[data-theme="dark"] [style*="border-bottom: 1px solid rgb(241, 245, 249)"] {
+  border-bottom-color: #334155 !important;
+}
+.apex-theme-dark [style*="border-right: 1px solid rgb(241, 245, 249)"],
+[data-theme="dark"] [style*="border-right: 1px solid rgb(241, 245, 249)"] {
+  border-right-color: #334155 !important;
+}

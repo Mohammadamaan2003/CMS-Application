@@ -25,7 +25,7 @@ import {
  * - Reset Handler: onReset
  */
 export default function SelectColumnsModal({
-  isOpen,
+  isOpen = true,
   onClose,
   allColumns,
   columns,
@@ -271,51 +271,62 @@ export default function SelectColumnsModal({
   };
 
   return (
-    <div className="apex-modal-overlay">
-      <div className="apex-modal-card apex-shuttle-modal" role="dialog" aria-modal="true">
-        {/* Header matching Oracle APEX specification */}
+    <div className="apex-modal-overlay" style={{ zIndex: 1200 }}>
+      <div
+        className="apex-modal-card apex-shuttle-modal"
+        role="dialog"
+        aria-modal="true"
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '10px',
+          boxShadow: '0 20px 45px rgba(0,0,0,0.25)',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Header matching Oracle APEX Reference Screenshot */}
         <div
           className="apex-modal-header"
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '1rem 1.25rem',
-            backgroundColor: '#071531',
-            color: '#ffffff',
-            borderTopLeftRadius: '8px',
-            borderTopRightRadius: '8px',
+            padding: '14px 20px',
+            backgroundColor: '#ffffff',
+            borderBottom: '1px solid #f1f5f9',
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#ffffff' }}>
-            Select Columns
+          <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#1e293b' }}>
+            Columns
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
+            className="apex-modal-close"
             style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#94a3b8',
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              border: '1px solid #e2e8f0',
+              background: '#ffffff',
+              color: '#64748b',
               cursor: 'pointer',
-              padding: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: '4px',
+              padding: 0,
               transition: 'all 0.15s ease',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.color = '#ffffff';
-              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.backgroundColor = '#f1f5f9';
+              e.currentTarget.style.color = '#0f172a';
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.color = '#94a3b8';
-              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.backgroundColor = '#ffffff';
+              e.currentTarget.style.color = '#64748b';
             }}
           >
-            <IconClose size={18} />
+            <IconClose size={14} />
           </button>
         </div>
 
@@ -476,30 +487,34 @@ export default function SelectColumnsModal({
           </div>
         </div>
 
-        {/* Footer with Cancel & Apply */}
+        {/* Footer with Cancel & Purple Apply Button */}
         <div
           className="apex-modal-footer"
           style={{
-            borderTop: '1px solid #e2e8f0',
-            padding: '1rem 1.5rem',
+            borderTop: '1px solid #f1f5f9',
+            padding: '12px 20px',
             display: 'flex',
             justifyContent: 'flex-end',
-            gap: '0.75rem',
-            backgroundColor: '#f8fafc',
-            borderBottomLeftRadius: '8px',
-            borderBottomRightRadius: '8px',
+            gap: '10px',
+            backgroundColor: '#ffffff',
+            borderBottomLeftRadius: '10px',
+            borderBottomRightRadius: '10px',
           }}
         >
           <button
             type="button"
-            className="btn btn-secondary"
+            className="apex-modal-cancel-btn"
             style={{
-              border: 'none',
-              background: 'transparent',
-              color: '#334155',
+              height: '34px',
+              padding: '0 16px',
+              borderRadius: '6px',
+              border: '1px solid #e2e8f0',
+              background: '#ffffff',
+              color: '#475569',
+              fontSize: '0.8rem',
               fontWeight: 600,
               cursor: 'pointer',
-              padding: '0.5rem 1rem',
+              transition: 'background-color 0.15s ease',
             }}
             onClick={onClose}
           >
@@ -507,18 +522,22 @@ export default function SelectColumnsModal({
           </button>
           <button
             type="button"
+            className="apex-modal-apply-btn"
             style={{
-              background: '#071531',
-              color: '#ffffff',
-              padding: '0.5rem 1.5rem',
-              borderRadius: '4px',
-              fontWeight: 600,
+              height: '34px',
+              padding: '0 20px',
+              borderRadius: '6px',
               border: 'none',
+              backgroundColor: '#7048e8',
+              color: '#ffffff',
+              fontSize: '0.8rem',
+              fontWeight: 600,
               cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(112, 72, 232, 0.35)',
               transition: 'background-color 0.15s ease',
             }}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#0f274e')}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#071531')}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#5f3dc4')}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#7048e8')}
             onClick={handleApply}
           >
             Apply

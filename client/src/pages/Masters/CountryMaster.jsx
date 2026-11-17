@@ -10,6 +10,7 @@ import ActiveAggregationsBar from '../../components/ActiveAggregationsBar';
 import { computeAggregationValue } from '../../utils/aggregationUtils';
 import ApexColumnHeaderMenu from '../../components/ApexColumnHeaderMenu';
 import ApexActiveFilterBanner from '../../components/ApexActiveFilterBanner';
+import ApexInteractiveReport from '../../components/ApexInteractiveReport';
 import { useApexColumnMenu } from '../../utils/useApexColumnMenu';
 import {
   IconSearch,
@@ -63,15 +64,25 @@ const DEFAULT_MASTER_KEYS = COUNTRY_MASTER_COLUMNS.map((c) => c.key);
 export const COUNTRY_COLUMNS = COUNTRY_MASTER_COLUMNS;
 
 // Child Report Columns for Company Drilldown
-const CHILD_COMPANY_COLUMNS = [
-  { key: 'id', label: 'ID' },
-  { key: 'comp_name', label: 'Company Name' },
-  { key: 'country', label: 'Country' },
-  { key: 'city', label: 'City' },
-  { key: 'industry', label: 'Industry' },
-  { key: 'company_type', label: 'Company Type' },
-  { key: 'website', label: 'Website' },
-  { key: 'technology', label: 'Technology' },
+export const CHILD_COMPANY_COLUMNS = [
+  { key: 'id', label: 'ID', width: '80px', getValue: (r) => r.id },
+  { key: 'comp_name', label: 'Company Name', minWidth: '220px', getValue: (r) => r.comp_name || r.name || '' },
+  { key: 'country', label: 'Country', minWidth: '140px', getValue: (r) => r.country || '' },
+  { key: 'city', label: 'City', minWidth: '140px', getValue: (r) => r.city || '' },
+  { key: 'industry', label: 'Industry', minWidth: '180px', getValue: (r) => r.industry || '' },
+  { key: 'company_type', label: 'Company Type', minWidth: '140px', getValue: (r) => r.company_type || '' },
+  {
+    key: 'website',
+    label: 'Website',
+    minWidth: '180px',
+    getValue: (r) => r.website || '',
+    render: (c) => c.website ? (
+      <a href={c.website.startsWith('http') ? c.website : `https://${c.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'none' }}>
+        {c.website}
+      </a>
+    ) : '-',
+  },
+  { key: 'technology', label: 'Technology', minWidth: '140px', getValue: (r) => r.technology || '' },
 ];
 
 export default function CountryMaster({ onShowToast, onNavigateToCompanyForm, onNavigateToContactForm }) {
@@ -374,12 +385,15 @@ export default function CountryMaster({ onShowToast, onNavigateToCompanyForm, on
   };
 
   // Selection Checkboxes
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = new Set(masterList.map((m) => m.id));
-      setSelectedIds(allIds);
-    } else {
+  const handleSelectAll = () => {
+    const isAllSelected = processedMasterList.length > 0 && selectedIds.size >= processedMasterList.length;
+    if (isAllSelected) {
       setSelectedIds(new Set());
+      if (onShowToast) onShowToast('info', 'Deselected all records.');
+    } else {
+      const allIds = new Set(processedMasterList.map((m) => m.id));
+      setSelectedIds(allIds);
+      if (onShowToast) onShowToast('info', `Selected all ${processedMasterList.length} records throughout report.`);
     }
   };
 
@@ -778,10 +792,21 @@ export default function CountryMaster({ onShowToast, onNavigateToCompanyForm, on
                 <ApexActionsMenu
                   isOpen={showMasterActions}
                   onClose={() => setShowMasterActions(false)}
+                  isEditableGrid={true}
+                  hasSelection={selectedIds.size > 0}
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={() => setSelectedIds(new Set())}
                   onOpenColumns={() => setShowMasterColumnsModal(true)}
                   onOpenFilter={() => setShowMasterFilterModal(true)}
                   onOpenAggregate={() => setShowAggregateModal(true)}
-                  onOpenGroupBy={() => setShowMasterChartModal(true)}
+                  columns={COUNTRY_MASTER_COLUMNS}
+                  data={masterList}
+                  reportId="country_master_report"
+                  onApplySort={(rules) => {
+                    if (rules && rules[0] && rules[0].key) {
+                      handleMenuSort(rules[0].key, rules[0].dir || 'asc');
+                    }
+                  }}
                   onDownload={handleDownloadMasterCsv}
                   onOpenChart={() => setShowMasterChartModal(true)}
                   onRefresh={loadMasterData}
@@ -1041,9 +1066,19 @@ export default function CountryMaster({ onShowToast, onNavigateToCompanyForm, on
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <input
                           type="checkbox"
-                          checked={processedMasterList.length > 0 && selectedIds.size === processedMasterList.length}
+                          checked={processedMasterList.length > 0 && selectedIds.size >= processedMasterList.length}
+                          ref={(el) => {
+                            if (el) {
+                              el.indeterminate = selectedIds.size > 0 && selectedIds.size < processedMasterList.length;
+                            }
+                          }}
                           onChange={handleSelectAll}
                           style={{ cursor: 'pointer' }}
+                          title={
+                            selectedIds.size >= processedMasterList.length && processedMasterList.length > 0
+                              ? `All ${processedMasterList.length} records selected`
+                              : `Select all ${processedMasterList.length} records throughout report`
+                          }
                         />
                       </div>
                     </th>
@@ -1386,60 +1421,62 @@ export default function CountryMaster({ onShowToast, onNavigateToCompanyForm, on
                     </div>
                   </div>
 
-                  {/* Read-Only System Audit Fields */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>
-                        Created By
-                      </label>
-                      <input
-                        type="text"
-                        readOnly
-                        className="apex-form-input"
-                        style={{ width: '100%', height: '32px', borderRadius: '4px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.65rem', color: '#64748b', fontSize: '0.775rem' }}
-                        value={formData.created_by}
-                      />
-                    </div>
+                  {/* Read-Only System Audit Fields (Only visible when editing an existing record) */}
+                  {selectedRecord && !selectedRecord.isCreate && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>
+                          Created By
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          className="apex-form-input"
+                          style={{ width: '100%', height: '32px', borderRadius: '4px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.65rem', color: '#64748b', fontSize: '0.775rem' }}
+                          value={formData.created_by}
+                        />
+                      </div>
 
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>
-                        Created Date
-                      </label>
-                      <input
-                        type="text"
-                        readOnly
-                        className="apex-form-input"
-                        style={{ width: '100%', height: '32px', borderRadius: '4px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.65rem', color: '#64748b', fontSize: '0.775rem' }}
-                        value={formatAppDate(formData.created_date)}
-                      />
-                    </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>
+                          Created Date
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          className="apex-form-input"
+                          style={{ width: '100%', height: '32px', borderRadius: '4px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.65rem', color: '#64748b', fontSize: '0.775rem' }}
+                          value={formatAppDate(formData.created_date)}
+                        />
+                      </div>
 
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>
-                        Modified By
-                      </label>
-                      <input
-                        type="text"
-                        readOnly
-                        className="apex-form-input"
-                        style={{ width: '100%', height: '32px', borderRadius: '4px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.65rem', color: '#64748b', fontSize: '0.775rem' }}
-                        value={formData.modified_by}
-                      />
-                    </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>
+                          Modified By
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          className="apex-form-input"
+                          style={{ width: '100%', height: '32px', borderRadius: '4px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.65rem', color: '#64748b', fontSize: '0.775rem' }}
+                          value={formData.modified_by}
+                        />
+                      </div>
 
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>
-                        Modified Date
-                      </label>
-                      <input
-                        type="text"
-                        readOnly
-                        className="apex-form-input"
-                        style={{ width: '100%', height: '32px', borderRadius: '4px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.65rem', color: '#64748b', fontSize: '0.775rem' }}
-                        value={formatAppDate(formData.modified_date)}
-                      />
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>
+                          Modified Date
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          className="apex-form-input"
+                          style={{ width: '100%', height: '32px', borderRadius: '4px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.65rem', color: '#64748b', fontSize: '0.775rem' }}
+                          value={formatAppDate(formData.modified_date)}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
@@ -1447,9 +1484,8 @@ export default function CountryMaster({ onShowToast, onNavigateToCompanyForm, on
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9' }}>
                 <button
                   type="button"
-                  className="apex-btn apex-btn-secondary"
+                  className="btn-apex-cancel"
                   onClick={handleCancelForm}
-                  style={{ minWidth: '90px' }}
                 >
                   Cancel
                 </button>
@@ -1514,121 +1550,41 @@ export default function CountryMaster({ onShowToast, onNavigateToCompanyForm, on
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem',
-                  marginBottom: '1rem',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {/* Search Bar (Industry Style) */}
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      setChildActiveSearch(childSearch);
-                      setChildPage(1);
+              <ApexInteractiveReport
+                reportTitle={`Companies in ${activeCountryFilter || formData.master_country || 'Country'}`}
+                badge={childTotal}
+                columns={CHILD_COMPANY_COLUMNS}
+                data={childCompanies}
+                total={childTotal}
+                page={childPage}
+                onPageChange={setChildPage}
+                rowsPerPage={childRows}
+                onRowsPerPageChange={(nr) => { setChildRows(nr); setChildPage(1); }}
+                search={childSearch}
+                onSearchChange={setChildSearch}
+                onSearchSubmit={() => { setChildActiveSearch(childSearch.trim()); setChildPage(1); }}
+                isServerSide={true}
+                isLoading={childLoading}
+                renderLeadingCell={(c) => (
+                  <button
+                    type="button"
+                    className="apex-edit-icon-btn"
+                    onClick={() => {
+                      if (onNavigateToCompanyForm) {
+                        onNavigateToCompanyForm(c.id);
+                      } else {
+                        try {
+                          localStorage.setItem('apex_open_company_id', String(c.id));
+                        } catch (e) {}
+                        window.location.hash = `#/companies?id=${c.id}`;
+                      }
                     }}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                    title={`Edit Company #${c.id} Form`}
                   >
-                    <div style={{ position: 'relative', width: '220px' }}>
-                      <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                        <IconSearch size={15} />
-                      </span>
-                      <input
-                        type="text"
-                        className="apex-form-input"
-                        placeholder="Search"
-                        value={childSearch}
-                        onChange={(e) => setChildSearch(e.target.value)}
-                        style={{
-                          width: '100%',
-                          height: '34px',
-                          paddingLeft: '32px',
-                          paddingRight: '10px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.825rem',
-                          backgroundColor: '#ffffff',
-                        }}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      style={{
-                        height: '34px',
-                        padding: '0 14px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '4px',
-                        fontSize: '0.825rem',
-                        fontWeight: 600,
-                        color: '#1e293b',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Go
-                    </button>
-                  </form>
-
-                  {/* Rows Selector */}
-                  <div className="apex-rows-select-group">
-                    <span>Rows</span>
-                    <select
-                      className="apex-rows-select"
-                      value={childRows}
-                      onChange={(e) => {
-                        const val = e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10);
-                        setChildRows(val);
-                        setChildPage(1);
-                      }}
-                    >
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                      <option value="500">500</option>
-                      <option value="1000">1000</option>
-                      <option value="all">All</option>
-                    </select>
-                  </div>
-
-                  {/* Actions Dropdown */}
-                  <div className="apex-actions-wrapper">
-                    <button
-                      type="button"
-                      className="btn-apex-actions"
-                      onClick={() => setShowChildActions((prev) => !prev)}
-                    >
-                      <span>Actions</span>
-                      <IconChevronDown size={13} />
-                    </button>
-
-                    <ApexActionsMenu
-                      isOpen={showChildActions}
-                      onClose={() => setShowChildActions(false)}
-                      onOpenColumns={() => setShowChildColumnsModal(true)}
-                      onDownload={handleDownloadChildCsv}
-                      onRefresh={loadChildCompanies}
-                      onResetReport={() => {
-                        setChildVisibleKeys(['id', 'comp_name', 'country', 'city']);
-                        setChildSearch('');
-                        setChildActiveSearch('');
-                        setChildRows(50);
-                        setChildPage(1);
-                      }}
-                      onChangeRows={(newRows) => {
-                        setChildRows(newRows);
-                        setChildPage(1);
-                      }}
-                      currentRows={childRows}
-                    />
-                  </div>
-
-                  {/* Update Country Button */}
+                    <IconFilePenLine size={15} />
+                  </button>
+                )}
+                toolbarButtons={
                   <button
                     type="button"
                     className="btn-apex-top"
@@ -1641,145 +1597,16 @@ export default function CountryMaster({ onShowToast, onNavigateToCompanyForm, on
                   >
                     Update Country
                   </button>
-                </div>
-              </div>
-
-              {/* Pagination summary row matching Screenshot 2: "1 - 50 of 9,634 >" */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0.4rem 0.5rem', color: '#64748b', fontSize: '0.8rem', fontWeight: 500 }}>
-                <span>{childStartIdx} - {childEndIdx} of {childTotal.toLocaleString()}</span>
-                <div style={{ display: 'inline-flex', gap: '0.2rem', marginLeft: '0.5rem' }}>
-                  <button
-                    type="button"
-                    disabled={childPage <= 1}
-                    onClick={() => setChildPage((p) => Math.max(1, p - 1))}
-                    style={{ border: 'none', background: 'none', cursor: childPage <= 1 ? 'default' : 'pointer', opacity: childPage <= 1 ? 0.3 : 1, padding: '2px' }}
-                  >
-                    <IconChevronLeft size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={childEndIdx >= childTotal}
-                    onClick={() => setChildPage((p) => p + 1)}
-                    style={{ border: 'none', background: 'none', cursor: childEndIdx >= childTotal ? 'default' : 'pointer', opacity: childEndIdx >= childTotal ? 0.3 : 1, padding: '2px' }}
-                  >
-                    <IconChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Child Companies Table */}
-              <div style={{ overflowX: 'auto' }}>
-                {childLoading ? (
-                  <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                    Loading linked companies for "{activeCountryFilter}"...
-                  </div>
-                ) : childCompanies.length === 0 ? (
-                  <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                    No companies found matching country "{activeCountryFilter}".
-                  </div>
-                ) : (
-                  <table className="apex-master-table">
-                    <thead>
-                      <tr>
-                        <th style={{ width: '48px', textAlign: 'center' }}></th>
-                        {childVisibleKeys.includes('id') && <th style={{ minWidth: '90px' }}>ID</th>}
-                        {childVisibleKeys.includes('comp_name') && <th style={{ minWidth: '240px' }}>Company Name</th>}
-                        {childVisibleKeys.includes('country') && <th style={{ minWidth: '160px' }}>Country</th>}
-                        {childVisibleKeys.includes('city') && <th style={{ minWidth: '160px' }}>City</th>}
-                        {childVisibleKeys.includes('industry') && <th style={{ minWidth: '200px' }}>Industry</th>}
-                        {childVisibleKeys.includes('company_type') && <th style={{ minWidth: '140px' }}>Company Type</th>}
-                        {childVisibleKeys.includes('website') && <th style={{ minWidth: '200px' }}>Website</th>}
-                        {childVisibleKeys.includes('technology') && <th style={{ minWidth: '140px' }}>Technology</th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {childCompanies.map((c) => (
-                        <tr key={c.id}>
-                          <td style={{ textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              className="apex-edit-icon-btn"
-                              onClick={() => {
-                                if (onNavigateToCompanyForm) {
-                                  onNavigateToCompanyForm(c.id);
-                                } else {
-                                  try {
-                                    localStorage.setItem('apex_open_company_id', String(c.id));
-                                  } catch (e) {}
-                                  window.location.hash = `#/companies?id=${c.id}`;
-                                }
-                              }}
-                              title={`Edit Company #${c.id} Form`}
-                            >
-                              <IconFilePenLine size={15} />
-                            </button>
-                          </td>
-                          {childVisibleKeys.includes('id') && (
-                            <td style={{ color: '#475569', fontWeight: 600 }}>{c.id}</td>
-                          )}
-                          {childVisibleKeys.includes('comp_name') && (
-                            <td style={{ fontWeight: 500, color: '#1e293b' }}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (onNavigateToCompanyForm) {
-                                    onNavigateToCompanyForm(c.id);
-                                  } else {
-                                    try {
-                                      localStorage.setItem('apex_open_company_id', String(c.id));
-                                    } catch (e) {}
-                                    window.location.hash = `#/companies?id=${c.id}`;
-                                  }
-                                }}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  padding: 0,
-                                  textAlign: 'left',
-                                  cursor: 'pointer',
-                                  color: '#1e293b',
-                                  fontWeight: 500,
-                                  fontSize: '0.785rem',
-                                }}
-                                onMouseOver={(e) => (e.currentTarget.style.color = '#2563eb')}
-                                onMouseOut={(e) => (e.currentTarget.style.color = '#1e293b')}
-                              >
-                                {c.comp_name || c.name}
-                              </button>
-                            </td>
-                          )}
-                          {childVisibleKeys.includes('country') && (
-                            <td style={{ color: '#475569' }}>{c.country || '-'}</td>
-                          )}
-                          {childVisibleKeys.includes('city') && (
-                            <td style={{ color: '#475569' }}>{c.city || '-'}</td>
-                          )}
-                          {childVisibleKeys.includes('industry') && (
-                            <td style={{ color: '#475569' }}>{c.industry || '-'}</td>
-                          )}
-                          {childVisibleKeys.includes('company_type') && (
-                            <td style={{ color: '#475569' }}>{c.company_type || '-'}</td>
-                          )}
-                          {childVisibleKeys.includes('website') && (
-                            <td>
-                              {c.website ? (
-                                <a href={c.website} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'none' }}>
-                                  {c.website}
-                                </a>
-                              ) : (
-                                '-'
-                              )}
-                            </td>
-                          )}
-                          {childVisibleKeys.includes('technology') && (
-                            <td style={{ color: '#475569' }}>{c.technology || '-'}</td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+                }
+                onRefresh={loadChildCompanies}
+                onReset={() => {
+                  setChildSearch('');
+                  setChildActiveSearch('');
+                  setChildPage(1);
+                  setChildRows(50);
+                }}
+                onShowToast={onShowToast}
+              />
             </div>
           )}
         </div>

@@ -655,7 +655,19 @@ router.get('/filters', async (req, res, next) => {
 router.get('/upload/meta', async (req, res, next) => {
   try {
     const meta = await uploadService.getUploadMeta();
-    res.json({ success: true, data: meta });
+    // Exclude 45,000 existing company records from HTTP payload to keep it ultralight (~15KB vs 4MB)
+    const clientMeta = {
+      countries: meta.countries || [],
+      industries: meta.industries || [],
+      companyTypes: meta.companyTypes || [],
+      companySizes: meta.companySizes || [],
+      companyCategories: meta.companyCategories || [],
+      sources: meta.sources || [],
+      technologies: meta.technologies || [],
+      salesPersons: meta.salesPersons || [],
+      registrationStatuses: meta.registrationStatuses || [],
+    };
+    res.json({ success: true, data: clientMeta });
   } catch (err) {
     next(err);
   }
@@ -681,9 +693,21 @@ router.get('/upload/template', (req, res) => {
 router.post('/upload/validate', async (req, res, next) => {
   try {
     const { rows, mode } = req.body;
+    console.log(`[Upload Validate] Received ${rows?.length} rows, mode: ${mode}`);
+    if (rows && rows.length > 0) {
+      console.log(`[Upload Validate] Sample Row 1 keys:`, Object.keys(rows[0]));
+    }
     const validation = await uploadService.validateCompanyBatch(rows, mode || 'insert');
+    console.log(`[Upload Validate] Result Summary:`, JSON.stringify(validation.summary));
+    if (validation.results && validation.results.length > 0) {
+      const errorRows = validation.results.filter(r => !r.isValid);
+      if (errorRows.length > 0) {
+        console.log(`[Upload Validate] Found ${errorRows.length} error rows. Sample error:`, JSON.stringify(errorRows[0].errors));
+      }
+    }
     res.json(validation);
   } catch (err) {
+    console.error(`[Upload Validate] Error:`, err);
     next(err);
   }
 });
@@ -695,9 +719,12 @@ router.post('/upload/validate', async (req, res, next) => {
 router.post('/upload/import', async (req, res, next) => {
   try {
     const { rows, mode, policy } = req.body;
+    console.log(`[Upload Import] Received ${rows?.length} rows, mode: ${mode}, policy: ${policy}`);
     const result = await uploadService.importCompanyBatch(rows, mode || 'insert', policy || 'skip');
+    console.log(`[Upload Import] Result:`, JSON.stringify(result));
     res.json(result);
   } catch (err) {
+    console.error(`[Upload Import] Error:`, err);
     next(err);
   }
 });
@@ -816,9 +843,16 @@ router.post('/', async (req, res, next) => {
       }
     }
 
-    // 3. Validate WEBSITE (unique when supplied)
+    // 3. Validate WEBSITE (unique when supplied & format check)
     const websiteVal = (b.website || '').trim();
     if (websiteVal) {
+      if (/\s/.test(websiteVal)) {
+        return res.status(400).json({
+          success: false,
+          field: 'website',
+          message: 'Website cannot contain spaces.',
+        });
+      }
       const websiteCheck = await db.query('SELECT id FROM companies WHERE TRIM(website) = $1 LIMIT 1', [websiteVal]);
       if (websiteCheck.rows.length > 0) {
         return res.status(409).json({
@@ -827,6 +861,17 @@ router.post('/', async (req, res, next) => {
           message: `WEBSITE "${websiteVal}" already exists for Company #${websiteCheck.rows[0].id}.`,
         });
       }
+    }
+
+    // 3b. Validate EMAIL format (matches Oracle APEX rule: "Company Email format is invalid")
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const compEmailVal = (b.email || b.com_email || '').trim();
+    if (compEmailVal && !emailRegex.test(compEmailVal)) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'Company Email format is invalid (e.g. contact@example.com).',
+      });
     }
 
     // 4. Validate REGISTRATION_STATUS (must match approved states)
@@ -971,9 +1016,16 @@ router.put('/:id', async (req, res, next) => {
       }
     }
 
-    // 3. Validate WEBSITE (unique when supplied)
+    // 3. Validate WEBSITE (unique when supplied & format check)
     const websiteVal = (b.website || '').trim();
     if (websiteVal) {
+      if (/\s/.test(websiteVal)) {
+        return res.status(400).json({
+          success: false,
+          field: 'website',
+          message: 'Website cannot contain spaces.',
+        });
+      }
       const websiteCheck = await db.query(
         'SELECT id FROM companies WHERE TRIM(website) = $1 AND id != $2 LIMIT 1',
         [websiteVal, parseInt(id, 10)]
@@ -985,6 +1037,17 @@ router.put('/:id', async (req, res, next) => {
           message: `WEBSITE "${websiteVal}" already exists for Company #${websiteCheck.rows[0].id}.`,
         });
       }
+    }
+
+    // 3b. Validate EMAIL format (matches Oracle APEX rule: "Company Email format is invalid")
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const compEmailVal = (b.email || b.com_email || '').trim();
+    if (compEmailVal && !emailRegex.test(compEmailVal)) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'Company Email format is invalid (e.g. contact@example.com).',
+      });
     }
 
     // 4. Validate REGISTRATION_STATUS (must match approved states)

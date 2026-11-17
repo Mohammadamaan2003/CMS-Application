@@ -121,30 +121,33 @@ export default function ApexColumnHeaderMenu({
   return (
     <div
       ref={menuRef}
+      className="apex-column-menu"
       style={{
         position: 'fixed',
         top: `${top}px`,
         left: `${left}px`,
         width: `${menuWidth}px`,
-        backgroundColor: '#ffffff',
-        border: '1px solid #cbd5e1',
+        backgroundColor: 'var(--bg-dropdown, var(--bg-surface, #ffffff))',
+        border: '1px solid var(--border, #cbd5e1)',
         borderRadius: '6px',
-        boxShadow: '0 4px 18px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.08)',
+        boxShadow: '0 4px 18px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.16)',
         zIndex: 9999,
         fontFamily: 'inherit',
         overflow: 'hidden',
         animation: 'fadeInMenu 0.12s ease-out',
+        color: 'var(--text-main, #0f172a)',
       }}
     >
       {/* 1. TOP ACTION BUTTONS ROW (Sort Asc, Sort Desc, Hide Column, Control Break) */}
       <div
+        className="apex-column-menu-actions"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '4px',
           padding: '6px 8px',
-          borderBottom: '1px solid #f1f5f9',
-          backgroundColor: '#ffffff',
+          borderBottom: '1px solid var(--border, #f1f5f9)',
+          backgroundColor: 'var(--bg-dropdown, var(--bg-surface, #ffffff))',
         }}
       >
         {/* Sort Ascending Button */}
@@ -161,15 +164,15 @@ export default function ApexColumnHeaderMenu({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: isAscActive ? '#e2e8f0' : 'transparent',
-            border: isAscActive ? '1px dashed #64748b' : '1px solid transparent',
+            background: isAscActive ? 'var(--bg-muted, #e2e8f0)' : 'transparent',
+            border: isAscActive ? '1px dashed var(--text-muted, #64748b)' : '1px solid transparent',
             borderRadius: '4px',
-            color: '#1e293b',
+            color: 'var(--text-main, #0f172a)',
             cursor: 'pointer',
             transition: 'background-color 0.1s ease',
           }}
           onMouseOver={(e) => {
-            if (!isAscActive) e.currentTarget.style.backgroundColor = '#f1f5f9';
+            if (!isAscActive) e.currentTarget.style.backgroundColor = 'var(--bg-muted, #f1f5f9)';
           }}
           onMouseOut={(e) => {
             if (!isAscActive) e.currentTarget.style.backgroundColor = 'transparent';
@@ -192,15 +195,15 @@ export default function ApexColumnHeaderMenu({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: isDescActive ? '#e2e8f0' : 'transparent',
-            border: isDescActive ? '1px dashed #64748b' : '1px solid transparent',
+            background: isDescActive ? 'var(--bg-muted, #e2e8f0)' : 'transparent',
+            border: isDescActive ? '1px dashed var(--text-muted, #64748b)' : '1px solid transparent',
             borderRadius: '4px',
-            color: '#1e293b',
+            color: 'var(--text-main, #0f172a)',
             cursor: 'pointer',
             transition: 'background-color 0.1s ease',
           }}
           onMouseOver={(e) => {
-            if (!isDescActive) e.currentTarget.style.backgroundColor = '#f1f5f9';
+            if (!isDescActive) e.currentTarget.style.backgroundColor = 'var(--bg-muted, #f1f5f9)';
           }}
           onMouseOut={(e) => {
             if (!isDescActive) e.currentTarget.style.backgroundColor = 'transparent';
@@ -226,11 +229,11 @@ export default function ApexColumnHeaderMenu({
             background: 'transparent',
             border: '1px solid transparent',
             borderRadius: '4px',
-            color: '#1e293b',
+            color: 'var(--text-main, #0f172a)',
             cursor: 'pointer',
             transition: 'background-color 0.1s ease',
           }}
-          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-muted, #f1f5f9)')}
           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
         >
           <IconHideColumn size={16} />
@@ -253,11 +256,11 @@ export default function ApexColumnHeaderMenu({
             background: 'transparent',
             border: '1px solid transparent',
             borderRadius: '4px',
-            color: '#1e293b',
+            color: 'var(--text-main, #0f172a)',
             cursor: 'pointer',
             transition: 'background-color 0.1s ease',
           }}
-          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-muted, #f1f5f9)')}
           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
         >
           <IconControlBreak size={16} />
@@ -266,9 +269,10 @@ export default function ApexColumnHeaderMenu({
 
       {/* 2. SEARCH / FILTER INPUT (with 🔍 Filter...) */}
       <div
+        className="apex-column-menu-search"
         style={{
           padding: '6px 8px',
-          borderBottom: '1px solid #f1f5f9',
+          borderBottom: '1px solid var(--border, #f1f5f9)',
           position: 'relative',
           display: 'flex',
           alignItems: 'center',
@@ -281,7 +285,7 @@ export default function ApexColumnHeaderMenu({
             top: '50%',
             transform: 'translateY(-50%)',
             pointerEvents: 'none',
-            color: '#94a3b8',
+            color: 'var(--text-muted, #94a3b8)',
             display: 'flex',
             alignItems: 'center',
           }}
@@ -295,25 +299,27 @@ export default function ApexColumnHeaderMenu({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onClick={(e) => e.stopPropagation()}
+          className="apex-column-menu-input"
           style={{
             width: '100%',
             height: '30px',
             paddingLeft: '28px',
             paddingRight: '8px',
             fontSize: '0.825rem',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border, #e2e8f0)',
             borderRadius: '4px',
             outline: 'none',
-            backgroundColor: '#ffffff',
-            color: '#1e293b',
+            backgroundColor: 'var(--bg-input, #ffffff)',
+            color: 'var(--text-main, #0f172a)',
           }}
-          onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-          onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
+          onFocus={(e) => (e.target.style.borderColor = 'var(--primary, #2563eb)')}
+          onBlur={(e) => (e.target.style.borderColor = 'var(--border, #e2e8f0)')}
         />
       </div>
 
       {/* 3. SCROLLABLE VALUES LIST */}
       <div
+        className="apex-column-menu-list"
         style={{
           maxHeight: '190px',
           overflowY: 'auto',
@@ -326,7 +332,7 @@ export default function ApexColumnHeaderMenu({
               padding: '1rem',
               textAlign: 'center',
               fontSize: '0.8rem',
-              color: '#94a3b8',
+              color: 'var(--text-muted, #94a3b8)',
             }}
           >
             {search.trim() ? 'No matches found' : 'No values available'}
@@ -341,10 +347,11 @@ export default function ApexColumnHeaderMenu({
                 onClose();
               }}
               title={val}
+              className="apex-column-menu-item"
               style={{
                 padding: '6px 12px',
                 fontSize: '0.825rem',
-                color: '#1e293b',
+                color: 'var(--text-main, #0f172a)',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -352,12 +359,12 @@ export default function ApexColumnHeaderMenu({
                 transition: 'background-color 0.1s ease, color 0.1s ease',
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#f1f5f9';
-                e.currentTarget.style.color = '#2563eb';
+                e.currentTarget.style.backgroundColor = 'var(--bg-muted, #f1f5f9)';
+                e.currentTarget.style.color = 'var(--primary-accent, #38bdf8)';
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#1e293b';
+                e.currentTarget.style.color = 'var(--text-main, #0f172a)';
               }}
             >
               {val}

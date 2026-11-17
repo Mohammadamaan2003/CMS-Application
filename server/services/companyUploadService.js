@@ -426,15 +426,19 @@ async function validateCompanyBatch(rows, mode = 'insert') {
     const rawRow = rows[i];
     const src = rawRow.normalized ? { ...rawRow.normalized, ...rawRow } : rawRow;
     const name = String(
-      src['Company Name'] || src['company_name'] || src['comp_name'] || src['Name'] || src['name'] || ''
+      src['Company Name'] || src['company_name'] || src['comp_name'] || src['Company'] || src['company'] || src['Name'] || src['name'] || src['Organization'] || ''
     ).trim();
     const id = String(src['Comp Id'] || src['Company ID'] || src['comp_id'] || src['id'] || '').trim();
+    const lowerName = name.toLowerCase();
+    const lowerId = id.toLowerCase();
     if (
-      name === 'Company_Categories' ||
-      id === 'Company_Categories' ||
-      name === 'Company_Type' ||
-      id === 'Company_Type' ||
-      rawRow['Company_Categories'] !== undefined
+      lowerName === 'company_categories' ||
+      lowerName === 'company categories' ||
+      lowerName === 'company_type' ||
+      lowerName === 'company type' ||
+      lowerName === '--- reference data ---' ||
+      lowerId === 'company_categories' ||
+      lowerId === 'company_type'
     ) {
       break;
     }

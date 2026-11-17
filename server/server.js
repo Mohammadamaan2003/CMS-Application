@@ -63,6 +63,14 @@ app.use((req, res) => {
   });
 });
 
+// Process-level resilience against crashes
+process.on('uncaughtException', (err) => {
+  console.error('[Process] Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Process] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // Centralized Error Handler
 app.use(errorHandler);
 

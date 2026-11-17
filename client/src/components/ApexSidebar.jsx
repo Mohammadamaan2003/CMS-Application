@@ -52,12 +52,22 @@ const MASTER_ITEMS = [
 ];
 
 export default function ApexSidebar({ activeTab, onTabChange, isCollapsed, currentUser }) {
-  const [crmOpen, setCrmOpen] = useState(false);
-  const [mastersOpen, setMastersOpen] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [mergerOpen, setMergerOpen] = useState(false);
-  const [dashboardsOpen, setDashboardsOpen] = useState(false);
-  const [campaignsOpen, setCampaignsOpen] = useState(false);
+  // Controlled group open state: collapsed by default (null).
+  // Clicking an expanded group collapses it again.
+  // Expanding one group auto-collapses others so that on short screens, navigation links remain accessible without overflowing or getting cut off.
+  const [openGroup, setOpenGroup] = useState(null);
+
+  const toggleGroup = (groupName) => {
+    setOpenGroup((prev) => (prev === groupName ? null : groupName));
+  };
+
+  const mastersOpen = openGroup === 'masters';
+  const crmOpen = openGroup === 'crm';
+  const uploadOpen = openGroup === 'upload';
+  const mergerOpen = openGroup === 'merger';
+  const mergerSuggestedOpen = openGroup === 'merger_suggested';
+  const dashboardsOpen = openGroup === 'dashboards';
+  const campaignsOpen = openGroup === 'campaigns';
 
   const role = (currentUser?.role || 'admin').toLowerCase();
 
@@ -95,7 +105,7 @@ export default function ApexSidebar({ activeTab, onTabChange, isCollapsed, curre
             <button
               type="button"
               className={`apex-nav-item has-sub ${isMasterActive ? 'active-group' : ''}`}
-              onClick={() => setMastersOpen(!mastersOpen)}
+              onClick={() => toggleGroup('masters')}
               title="Masters"
             >
               <span className="apex-nav-icon"><IconSparkles size={17} /></span>
@@ -138,7 +148,7 @@ export default function ApexSidebar({ activeTab, onTabChange, isCollapsed, curre
           <button
             type="button"
             className={`apex-nav-item has-sub ${(activeTab === 'companies' || activeTab === 'contacts') ? 'active-group' : ''}`}
-            onClick={() => setCrmOpen(!crmOpen)}
+            onClick={() => toggleGroup('crm')}
             title="CRM"
           >
             <span className="apex-nav-icon"><IconUsers size={17} /></span>
@@ -195,7 +205,7 @@ export default function ApexSidebar({ activeTab, onTabChange, isCollapsed, curre
               <button
                 type="button"
                 className={`apex-nav-item has-sub ${isUploadActive ? 'active-group' : ''}`}
-                onClick={() => setUploadOpen(!uploadOpen)}
+                onClick={() => toggleGroup('upload')}
                 title="CRM Upload"
               >
                 <span className="apex-nav-icon"><IconUploadCloud size={17} /></span>
@@ -257,17 +267,21 @@ export default function ApexSidebar({ activeTab, onTabChange, isCollapsed, curre
           </button>
         )}
 
-        {/* Duplicate Merger */}
+        {/* Duplicate Merger (APEX 4-Page System) */}
         {canViewMerger && (() => {
-          const isMergerActive = activeTab === 'merge_companies' || activeTab === 'merge_contacts';
-          const isGroupOpen = mergerOpen || isMergerActive;
+          const isMergerActive =
+            activeTab === 'duplicate_company_report' ||
+            activeTab === 'merge_companies' ||
+            activeTab === 'duplicate_contact_report' ||
+            activeTab === 'merge_contacts';
+          const isGroupOpen = mergerOpen;
 
           return (
             <div className={`apex-nav-group ${isGroupOpen ? 'open' : ''}`}>
               <button
                 type="button"
                 className={`apex-nav-item has-sub ${isMergerActive ? 'active-group' : ''}`}
-                onClick={() => setMergerOpen(!mergerOpen)}
+                onClick={() => toggleGroup('merger')}
                 title="Duplicate Merger"
               >
                 <span className="apex-nav-icon"><IconGitMerge size={17} /></span>
@@ -284,6 +298,13 @@ export default function ApexSidebar({ activeTab, onTabChange, isCollapsed, curre
                 <div className="apex-sub-menu">
                   <button
                     type="button"
+                    className={`apex-sub-item ${activeTab === 'duplicate_company_report' ? 'active' : ''}`}
+                    onClick={() => onTabChange('duplicate_company_report')}
+                  >
+                    Duplicate Company Report
+                  </button>
+                  <button
+                    type="button"
                     className={`apex-sub-item ${activeTab === 'merge_companies' ? 'active' : ''}`}
                     onClick={() => onTabChange('merge_companies')}
                   >
@@ -291,8 +312,62 @@ export default function ApexSidebar({ activeTab, onTabChange, isCollapsed, curre
                   </button>
                   <button
                     type="button"
+                    className={`apex-sub-item ${activeTab === 'duplicate_contact_report' ? 'active' : ''}`}
+                    onClick={() => onTabChange('duplicate_contact_report')}
+                  >
+                    Duplicate Contact Report
+                  </button>
+                  <button
+                    type="button"
                     className={`apex-sub-item ${activeTab === 'merge_contacts' ? 'active' : ''}`}
                     onClick={() => onTabChange('merge_contacts')}
+                  >
+                    Merge Contacts
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Duplicate Merger Suggested */}
+        {canViewMerger && (() => {
+          const isSuggestedActive =
+            activeTab === 'merge_companies_suggested' ||
+            activeTab === 'merge_contacts_suggested';
+          const isGroupOpen = mergerSuggestedOpen;
+
+          return (
+            <div className={`apex-nav-group ${isGroupOpen ? 'open' : ''}`}>
+              <button
+                type="button"
+                className={`apex-nav-item has-sub ${isSuggestedActive ? 'active-group' : ''}`}
+                onClick={() => toggleGroup('merger_suggested')}
+                title="Duplicate Merger Suggested"
+              >
+                <span className="apex-nav-icon"><IconGitMerge size={17} /></span>
+                {!isCollapsed && (
+                  <>
+                    <span className="apex-nav-text">Duplicate Merger Suggested</span>
+                    <span className="apex-nav-arrow">
+                      {isGroupOpen ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                    </span>
+                  </>
+                )}
+              </button>
+              {!isCollapsed && isGroupOpen && (
+                <div className="apex-sub-menu">
+                  <button
+                    type="button"
+                    className={`apex-sub-item ${activeTab === 'merge_companies_suggested' ? 'active' : ''}`}
+                    onClick={() => onTabChange('merge_companies_suggested')}
+                  >
+                    Merge Companies
+                  </button>
+                  <button
+                    type="button"
+                    className={`apex-sub-item ${activeTab === 'merge_contacts_suggested' ? 'active' : ''}`}
+                    onClick={() => onTabChange('merge_contacts_suggested')}
                   >
                     Merge Contacts
                   </button>
@@ -311,14 +386,14 @@ export default function ApexSidebar({ activeTab, onTabChange, isCollapsed, curre
             activeTab === 'lead_dashboard' ||
             activeTab === 'company_dashboard' ||
             activeTab === 'glass_dashboard';
-          const isGroupOpen = dashboardsOpen || isDashboardActive;
+          const isGroupOpen = dashboardsOpen;
 
           return (
             <div className={`apex-nav-group ${isGroupOpen ? 'open' : ''}`}>
               <button
                 type="button"
                 className={`apex-nav-item has-sub ${isDashboardActive ? 'active-group' : ''}`}
-                onClick={() => setDashboardsOpen(!dashboardsOpen)}
+                onClick={() => toggleGroup('dashboards')}
                 title="Dashboards"
               >
                 <span className="apex-nav-icon"><IconBarChart size={17} /></span>
@@ -385,7 +460,7 @@ export default function ApexSidebar({ activeTab, onTabChange, isCollapsed, curre
             <button
               type="button"
               className="apex-nav-item has-sub"
-              onClick={() => setCampaignsOpen(!campaignsOpen)}
+              onClick={() => toggleGroup('campaigns')}
               title="Campaigns"
             >
               <span className="apex-nav-icon"><IconBullhorn size={17} /></span>

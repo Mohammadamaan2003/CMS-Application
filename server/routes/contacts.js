@@ -867,7 +867,7 @@ router.post('/', async (req, res, next) => {
 
     const trimmedContactName = contactName.trim();
 
-    // Validate Contact Name uniqueness (case-insensitive & trimmed)
+    // 0. Validate Contact Name uniqueness (case-insensitive & trimmed)
     if (db.isAvailable && db.isAvailable()) {
       const dupCheck = await db.query(
         'SELECT id, contact_name FROM contacts WHERE LOWER(TRIM(COALESCE(contact_name, \'\'))) = LOWER(TRIM($1)) LIMIT 1',
@@ -878,6 +878,89 @@ router.post('/', async (req, res, next) => {
           success: false,
           field: 'contact_name',
           message: `A contact with the name "${trimmedContactName}" already exists (Contact #${dupCheck.rows[0].id}). Duplicate contact records are not allowed.`,
+        });
+      }
+    }
+
+    // 1. Validate Company ID existence (FK constraint matching Oracle APEX rule: "Company ID <id> does not exist")
+    const compIdRaw = b.company_id !== undefined && b.company_id !== null && b.company_id !== ''
+      ? b.company_id
+      : (b.comp_id !== undefined && b.comp_id !== null && b.comp_id !== '' ? b.comp_id : null);
+    let parsedCompId = null;
+    if (compIdRaw !== null) {
+      parsedCompId = parseInt(compIdRaw, 10);
+      if (isNaN(parsedCompId) || parsedCompId <= 0) {
+        return res.status(400).json({
+          success: false,
+          field: 'company_id',
+          message: `Company ID "${compIdRaw}" is not a valid number.`,
+        });
+      }
+      if (db.isAvailable && db.isAvailable()) {
+        const compCheck = await db.query('SELECT id, comp_name FROM companies WHERE id = $1 LIMIT 1', [parsedCompId]);
+        if (compCheck.rows.length === 0) {
+          return res.status(400).json({
+            success: false,
+            field: 'company_id',
+            message: `Company ID ${parsedCompId} does not exist.`,
+          });
+        }
+      }
+    }
+
+    // 2. Validate LinkedIn URL uniqueness & format (matches Oracle constraint UK_CONTACT_LINKEDIN & APEX rules)
+    const rawLinkedin = (b.linkedin_url || '').trim();
+    if (rawLinkedin) {
+      if (/\s/.test(rawLinkedin)) {
+        return res.status(400).json({
+          success: false,
+          field: 'linkedin_url',
+          message: 'LinkedIn URL cannot contain spaces.',
+        });
+      }
+      if (db.isAvailable && db.isAvailable()) {
+        const dupLinkedin = await db.query(
+          'SELECT id, contact_name FROM contacts WHERE LOWER(TRIM(linkedin_url)) = LOWER(TRIM($1)) LIMIT 1',
+          [rawLinkedin]
+        );
+        if (dupLinkedin.rows.length > 0) {
+          return res.status(409).json({
+            success: false,
+            field: 'linkedin_url',
+            message: `LinkedIn URL already exists (Contact #${dupLinkedin.rows[0].id} - ${dupLinkedin.rows[0].contact_name}). Duplicate LinkedIn URLs are not allowed.`,
+          });
+        }
+      }
+    }
+
+    // 3. Validate Email format (matches Oracle APEX rule: "Company Email format is invalid")
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const rawEmail = (b.email || b.comp_email || '').trim();
+    if (rawEmail && !emailRegex.test(rawEmail)) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'Email format is invalid (e.g. user@domain.com).',
+      });
+    }
+    const rawOtherEmail = (b.other_email || '').trim();
+    if (rawOtherEmail && !emailRegex.test(rawOtherEmail)) {
+      return res.status(400).json({
+        success: false,
+        field: 'other_email',
+        message: 'Other Email format is invalid (e.g. user@domain.com).',
+      });
+    }
+
+    // 4. Validate Mobile Verified (matches Oracle APEX rule: "Mobile Verified must be a valid Yes/No value")
+    const rawMobileVerified = (b.mobile_verified || '').trim();
+    if (rawMobileVerified) {
+      const mvLower = rawMobileVerified.toLowerCase();
+      if (!['yes', 'no', 'y', 'n'].includes(mvLower)) {
+        return res.status(400).json({
+          success: false,
+          field: 'mobile_verified',
+          message: 'Mobile Verified must be a valid Yes/No value.',
         });
       }
     }
@@ -986,7 +1069,7 @@ router.put('/:id', async (req, res, next) => {
 
     const trimmedContactName = contactName.trim();
 
-    // Validate Contact Name uniqueness (case-insensitive & trimmed, excluding current contact)
+    // 0. Validate Contact Name uniqueness (case-insensitive & trimmed, excluding current contact)
     if (db.isAvailable && db.isAvailable()) {
       const dupCheck = await db.query(
         'SELECT id, contact_name FROM contacts WHERE LOWER(TRIM(COALESCE(contact_name, \'\'))) = LOWER(TRIM($1)) AND id != $2 LIMIT 1',
@@ -997,6 +1080,89 @@ router.put('/:id', async (req, res, next) => {
           success: false,
           field: 'contact_name',
           message: `A contact with the name "${trimmedContactName}" already exists (Contact #${dupCheck.rows[0].id}). Duplicate contact records are not allowed.`,
+        });
+      }
+    }
+
+    // 1. Validate Company ID existence (FK constraint matching Oracle APEX rule: "Company ID <id> does not exist")
+    const compIdRaw = b.company_id !== undefined && b.company_id !== null && b.company_id !== ''
+      ? b.company_id
+      : (b.comp_id !== undefined && b.comp_id !== null && b.comp_id !== '' ? b.comp_id : null);
+    let parsedCompId = null;
+    if (compIdRaw !== null) {
+      parsedCompId = parseInt(compIdRaw, 10);
+      if (isNaN(parsedCompId) || parsedCompId <= 0) {
+        return res.status(400).json({
+          success: false,
+          field: 'company_id',
+          message: `Company ID "${compIdRaw}" is not a valid number.`,
+        });
+      }
+      if (db.isAvailable && db.isAvailable()) {
+        const compCheck = await db.query('SELECT id, comp_name FROM companies WHERE id = $1 LIMIT 1', [parsedCompId]);
+        if (compCheck.rows.length === 0) {
+          return res.status(400).json({
+            success: false,
+            field: 'company_id',
+            message: `Company ID ${parsedCompId} does not exist.`,
+          });
+        }
+      }
+    }
+
+    // 2. Validate LinkedIn URL uniqueness & format (matches Oracle constraint UK_CONTACT_LINKEDIN & APEX rules)
+    const rawLinkedin = (b.linkedin_url || '').trim();
+    if (rawLinkedin) {
+      if (/\s/.test(rawLinkedin)) {
+        return res.status(400).json({
+          success: false,
+          field: 'linkedin_url',
+          message: 'LinkedIn URL cannot contain spaces.',
+        });
+      }
+      if (db.isAvailable && db.isAvailable()) {
+        const dupLinkedin = await db.query(
+          'SELECT id, contact_name FROM contacts WHERE LOWER(TRIM(linkedin_url)) = LOWER(TRIM($1)) AND id != $2 LIMIT 1',
+          [rawLinkedin, parseInt(id, 10)]
+        );
+        if (dupLinkedin.rows.length > 0) {
+          return res.status(409).json({
+            success: false,
+            field: 'linkedin_url',
+            message: `LinkedIn URL already exists (Contact #${dupLinkedin.rows[0].id} - ${dupLinkedin.rows[0].contact_name}). Duplicate LinkedIn URLs are not allowed.`,
+          });
+        }
+      }
+    }
+
+    // 3. Validate Email format (matches Oracle APEX rule: "Company Email format is invalid")
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const rawEmail = (b.email || b.comp_email || '').trim();
+    if (rawEmail && !emailRegex.test(rawEmail)) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'Email format is invalid (e.g. user@domain.com).',
+      });
+    }
+    const rawOtherEmail = (b.other_email || '').trim();
+    if (rawOtherEmail && !emailRegex.test(rawOtherEmail)) {
+      return res.status(400).json({
+        success: false,
+        field: 'other_email',
+        message: 'Other Email format is invalid (e.g. user@domain.com).',
+      });
+    }
+
+    // 4. Validate Mobile Verified (matches Oracle APEX rule: "Mobile Verified must be a valid Yes/No value")
+    const rawMobileVerified = (b.mobile_verified || '').trim();
+    if (rawMobileVerified) {
+      const mvLower = rawMobileVerified.toLowerCase();
+      if (!['yes', 'no', 'y', 'n'].includes(mvLower)) {
+        return res.status(400).json({
+          success: false,
+          field: 'mobile_verified',
+          message: 'Mobile Verified must be a valid Yes/No value.',
         });
       }
     }

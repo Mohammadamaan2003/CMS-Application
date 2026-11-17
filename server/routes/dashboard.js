@@ -4,6 +4,7 @@ const db = require('../db/pool');
 const localStore = require('../services/localStore');
 const dashboardService = require('../services/dashboardService');
 const leadDashboardService = require('../services/leadDashboardService');
+const companyDashboardService = require('../services/companyDashboardService');
 
 function parseQueryParams(query) {
   const parsed = {};
@@ -12,7 +13,7 @@ function parseQueryParams(query) {
     const cleanKey = key.replace(/\[\]$/, '');
     if (Array.isArray(val)) {
       parsed[cleanKey] = val;
-    } else if (typeof val === 'string' && val.includes(',')) {
+    } else if (typeof val === 'string' && val.includes(',') && !val.startsWith('(')) {
       parsed[cleanKey] = val.split(',').map((s) => s.trim()).filter(Boolean);
     } else {
       parsed[cleanKey] = val;
@@ -263,6 +264,53 @@ router.get('/lead/resources-report', async (req, res, next) => {
       search: req.query.search || '',
     };
     const data = await leadDashboardService.getLeadResourcesReport(filters, pagination);
+    res.json({ success: true, ...data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/dashboard/company/filter-options
+ * Fetches distinct dropdown values for all 21 APEX Page 74 Company Dashboard filters
+ */
+router.get('/company/filter-options', async (req, res, next) => {
+  try {
+    const options = await companyDashboardService.getCompanyDashboardFilterOptions();
+    res.json({ success: true, data: options });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/dashboard/company/kpis
+ * Returns Company Count and Contact Count
+ */
+router.get('/company/kpis', async (req, res, next) => {
+  try {
+    const filters = parseQueryParams(req.query);
+    const kpis = await companyDashboardService.getCompanyDashboardKpis(filters);
+    res.json({ success: true, data: kpis });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/dashboard/company/report
+ * Returns paginated report data for any of the 11 tabs
+ */
+router.get('/company/report', async (req, res, next) => {
+  try {
+    const filters = parseQueryParams(req.query);
+    const tabId = req.query.tabId || 'company_contact_details';
+    const pagination = {
+      page: parseInt(req.query.page, 10) || 1,
+      pageSize: req.query.pageSize === 'all' ? 'all' : (parseInt(req.query.pageSize, 10) || 50),
+      search: req.query.search || '',
+    };
+    const data = await companyDashboardService.getCompanyDashboardReport(tabId, filters, pagination);
     res.json({ success: true, ...data });
   } catch (error) {
     next(error);

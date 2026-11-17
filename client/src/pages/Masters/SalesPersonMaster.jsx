@@ -7,6 +7,10 @@ import ApexFilterModal from '../../components/ApexFilterModal';
 import ApexChartModal from '../../components/ApexChartModal';
 import ApexAggregateModal from '../../components/ApexAggregateModal';
 import ActiveAggregationsBar from '../../components/ActiveAggregationsBar';
+import ApexColumnHeaderMenu from '../../components/ApexColumnHeaderMenu';
+import ApexActiveFilterBanner from '../../components/ApexActiveFilterBanner';
+import ApexReportToolbar from '../../components/ApexReportToolbar';
+import { useApexColumnMenu } from '../../utils/useApexColumnMenu';
 import { computeAggregationValue } from '../../utils/aggregationUtils';
 import {
   IconSearch,
@@ -200,8 +204,24 @@ export default function SalesPersonMaster({
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showChartModal, setShowChartModal] = useState(false);
   const [showAggregateModal, setShowAggregateModal] = useState(false);
+  const [showMasterActions, setShowMasterActions] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showUploadModal, setShowUploadModal] = useState(false);
+
+  // Oracle APEX Column Header Menu & Live Filter/Sort Hook
+  const {
+    headerMenu,
+    handleHeaderClick,
+    sortKey,
+    sortDir,
+    headerFilter,
+    handleMenuSort,
+    handleMenuHideColumn,
+    handleMenuFilterValue,
+    handleClearHeaderFilter,
+    closeHeaderMenu,
+    processedData,
+  } = useApexColumnMenu(data);
 
   // Sub-report: Child contacts for the open salesperson record
   const [contactsData, setContactsData] = useState([]);
@@ -213,6 +233,49 @@ export default function SalesPersonMaster({
   const [contactsSearchInput, setContactsSearchInput] = useState('');
   const [contactsSortBy, setContactsSortBy] = useState('id');
   const [contactsSortOrder, setContactsSortOrder] = useState('DESC');
+  const [showContactsActions, setShowContactsActions] = useState(false);
+
+  const handleDownloadContactsCsv = () => {
+    if (!contactsData || contactsData.length === 0) {
+      if (onShowToast) onShowToast('warning', 'No contacts to export.');
+      return;
+    }
+    const header = 'ID,First Name,Last Name,Designation,Account Name,Email,Mobile Phone,Country,City';
+    const rows = contactsData.map((c) =>
+      `"${c.id}","${(c.first_name || '').replace(/"/g, '""')}","${(c.last_name || '').replace(/"/g, '""')}","${(c.designation || '').replace(/"/g, '""')}","${(c.comp_name || c.account_name || '').replace(/"/g, '""')}","${(c.comp_email || c.email || '').replace(/"/g, '""')}","${(c.contact_phone || c.phone || '').replace(/"/g, '""')}","${(c.country || '').replace(/"/g, '""')}","${(c.city || '').replace(/"/g, '""')}"`
+    );
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Contacts_Salesperson_${(formData.sales_person_name || 'rep').replace(/\\s+/g, '_')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (onShowToast) onShowToast('success', 'Contacts CSV exported.');
+  };
+
+  const handleDownloadMasterCsv = () => {
+    if (!data || data.length === 0) {
+      if (onShowToast) onShowToast('warning', 'No salespersons to export.');
+      return;
+    }
+    const header = ['ID', 'Salesperson Name', 'Role', 'Status', 'Email'];
+    const rows = data.map((s) => [
+      s.id,
+      `"${s.sales_person_name || ''}"`,
+      `"${s.role || ''}"`,
+      `"${s.status || ''}"`,
+      `"${s.email || ''}"`,
+    ].join(','));
+    const blob = new Blob([[header.join(','), ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Salespersons_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (onShowToast) onShowToast('success', 'Salesperson CSV exported.');
+  };
 
   // Child Emails state for the open salesperson (Screenshots 1 & 2)
   const [emailsList, setEmailsList] = useState([]);
@@ -351,12 +414,15 @@ export default function SalesPersonMaster({
   };
 
   // Selection Checkboxes
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = new Set(data.map((m) => m.id));
-      setSelectedIds(allIds);
-    } else {
+  const handleSelectAll = () => {
+    const isAllSelected = processedData.length > 0 && selectedIds.size >= processedData.length;
+    if (isAllSelected) {
       setSelectedIds(new Set());
+      if (onShowToast) onShowToast('info', 'Deselected all records.');
+    } else {
+      const allIds = new Set(processedData.map((m) => m.id));
+      setSelectedIds(allIds);
+      if (onShowToast) onShowToast('info', `Selected all ${processedData.length} records throughout report.`);
     }
   };
 
@@ -437,7 +503,7 @@ export default function SalesPersonMaster({
       return;
     }
 
-    const dupSp = salespersons.find(
+    const dupSp = data.find(
       (s) =>
         s.salesperson &&
         s.salesperson.trim().toLowerCase() === cleanSalesperson.toLowerCase() &&
@@ -855,7 +921,7 @@ export default function SalesPersonMaster({
               </div>
 
               {/* Row 3: Address (textarea), Created By, Created Date */}
-              <div className="apex-form-grid-3">
+              <div className={selectedRecord && selectedRecord.id ? "apex-form-grid-3" : "apex-form-grid-1"}>
                 <div className="apex-form-field">
                   <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
                     Address
@@ -877,114 +943,120 @@ export default function SalesPersonMaster({
                   />
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
-                    Created By
-                  </label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={formData.created_by}
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem 0.75rem',
-                      borderRadius: '6px',
-                      border: '1px dashed #cbd5e1',
-                      backgroundColor: '#f8fafc',
-                      color: '#64748b',
-                      fontSize: '0.85rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
+                {selectedRecord && selectedRecord.id && (
+                  <>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
+                        Created By
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        value={formData.created_by}
+                        style={{
+                          width: '100%',
+                          padding: '0.45rem 0.75rem',
+                          borderRadius: '6px',
+                          border: '1px dashed #cbd5e1',
+                          backgroundColor: '#f8fafc',
+                          color: '#64748b',
+                          fontSize: '0.85rem',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
 
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
-                    Created Date
-                  </label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={formData.created_date}
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem 0.75rem',
-                      borderRadius: '6px',
-                      border: '1px dashed #cbd5e1',
-                      backgroundColor: '#f8fafc',
-                      color: '#64748b',
-                      fontSize: '0.85rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
+                        Created Date
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        value={formData.created_date}
+                        style={{
+                          width: '100%',
+                          padding: '0.45rem 0.75rem',
+                          borderRadius: '6px',
+                          border: '1px dashed #cbd5e1',
+                          backgroundColor: '#f8fafc',
+                          color: '#64748b',
+                          fontSize: '0.85rem',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* Row 4: Modified By, Modified Date, Total Contacts */}
-              <div className="apex-form-grid-3">
-                <div className="apex-form-field">
-                  <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
-                    Modified By
-                  </label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={formData.modified_by}
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem 0.75rem',
-                      borderRadius: '6px',
-                      border: '1px dashed #cbd5e1',
-                      backgroundColor: '#f8fafc',
-                      color: '#64748b',
-                      fontSize: '0.85rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
+              {/* Row 4: Modified By, Modified Date, Total Contacts (Only visible when editing an existing record) */}
+              {selectedRecord && selectedRecord.id && (
+                <div className="apex-form-grid-3">
+                  <div className="apex-form-field">
+                    <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
+                      Modified By
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={formData.modified_by}
+                      style={{
+                        width: '100%',
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px dashed #cbd5e1',
+                        backgroundColor: '#f8fafc',
+                        color: '#64748b',
+                        fontSize: '0.85rem',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
 
-                <div className="apex-form-field">
-                  <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
-                    Modified Date
-                  </label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={formData.modified_date}
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem 0.75rem',
-                      borderRadius: '6px',
-                      border: '1px dashed #cbd5e1',
-                      backgroundColor: '#f8fafc',
-                      color: '#64748b',
-                      fontSize: '0.85rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
+                  <div className="apex-form-field">
+                    <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
+                      Modified Date
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={formData.modified_date}
+                      style={{
+                        width: '100%',
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px dashed #cbd5e1',
+                        backgroundColor: '#f8fafc',
+                        color: '#64748b',
+                        fontSize: '0.85rem',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
 
-                <div className="apex-form-field">
-                  <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
-                    Total Contacts
-                  </label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={formData.contact_count}
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem 0.75rem',
-                      borderRadius: '6px',
-                      border: '1px dashed #cbd5e1',
-                      backgroundColor: '#f8fafc',
-                      color: '#64748b',
-                      fontSize: '0.85rem',
-                      outline: 'none',
-                    }}
-                  />
+                  <div className="apex-form-field">
+                    <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
+                      Total Contacts
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={formData.contact_count}
+                      style={{
+                        width: '100%',
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px dashed #cbd5e1',
+                        backgroundColor: '#f8fafc',
+                        color: '#64748b',
+                        fontSize: '0.85rem',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Action Buttons Bar */}
               <div className="apex-form-actions-row">
@@ -992,16 +1064,6 @@ export default function SalesPersonMaster({
                   type="button"
                   className="btn-apex-cancel"
                   onClick={handleCancel}
-                  style={{
-                    padding: '0.45rem 1.25rem',
-                    fontSize: '0.85rem',
-                    fontWeight: 500,
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    background: '#ffffff',
-                    color: '#334155',
-                    cursor: 'pointer',
-                  }}
                 >
                   Cancel
                 </button>
@@ -1028,18 +1090,9 @@ export default function SalesPersonMaster({
 
                   <button
                     type="submit"
-                    style={{
-                      padding: '0.45rem 1.25rem',
-                      fontSize: '0.85rem',
-                      fontWeight: 600,
-                      borderRadius: '6px',
-                      border: 'none',
-                      backgroundColor: '#102a43',
-                      color: '#ffffff',
-                      cursor: 'pointer',
-                    }}
+                    className="btn-apex-create"
                   >
-                    Apply Changes
+                    {selectedRecord && selectedRecord.id ? 'Apply Changes' : 'Create'}
                   </button>
                 </div>
               </div>
@@ -1181,7 +1234,9 @@ export default function SalesPersonMaster({
                   <table className="apex-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                     <thead>
                       <tr style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                        <th style={{ width: '40px', padding: '0.6rem 0.5rem', textAlign: 'center' }}></th>
+                        <th style={{ width: '40px', padding: '0.6rem 0.5rem', textAlign: 'center' }}>
+                          <span style={{ fontSize: '0.9rem', color: '#64748b' }}>✎</span>
+                        </th>
                         <th style={{ padding: '0.6rem 0.75rem', fontWeight: 600, color: '#1e293b' }}>Email Address</th>
                         <th style={{ padding: '0.6rem 0.75rem', fontWeight: 600, color: '#1e293b', textAlign: 'right' }}>Email Daily Limit</th>
                         <th style={{ padding: '0.6rem 0.75rem', fontWeight: 600, color: '#1e293b' }}>Is Active</th>
@@ -1374,59 +1429,63 @@ export default function SalesPersonMaster({
                       </select>
                     </div>
 
-                    <div className="apex-form-field">
-                      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
-                        Created By
-                      </label>
-                      <input
-                        type="text"
-                        readOnly
-                        value={emailFormData.created_by}
-                        style={{
-                          width: '100%',
-                          padding: '0.45rem 0.75rem',
-                          borderRadius: '6px',
-                          border: '1px dashed #cbd5e1',
-                          backgroundColor: '#f8fafc',
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
+                    {selectedEmail && selectedEmail.email_id && (
+                      <>
+                        <div className="apex-form-field">
+                          <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
+                            Created By
+                          </label>
+                          <input
+                            type="text"
+                            readOnly
+                            value={emailFormData.created_by}
+                            style={{
+                              width: '100%',
+                              padding: '0.45rem 0.75rem',
+                              borderRadius: '6px',
+                              border: '1px dashed #cbd5e1',
+                              backgroundColor: '#f8fafc',
+                              color: '#64748b',
+                              fontSize: '0.85rem',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
 
-                    <div className="apex-form-field">
-                      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
-                        Created Date
-                      </label>
-                      <div style={{ position: 'relative', width: '100%' }}>
-                        <input
-                          type="text"
-                          value={emailFormData.created_date}
-                          onChange={(e) => setEmailFormData({ ...emailFormData, created_date: e.target.value })}
-                          style={{
-                            width: '100%',
-                            padding: '0.45rem 2rem 0.45rem 0.75rem',
-                            borderRadius: '6px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '0.85rem',
-                            outline: 'none',
-                          }}
-                        />
-                        <span
-                          style={{
-                            position: 'absolute',
-                            right: '8px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            color: '#94a3b8',
-                            pointerEvents: 'none',
-                          }}
-                        >
-                          <IconCalendar size={14} />
-                        </span>
-                      </div>
-                    </div>
+                        <div className="apex-form-field">
+                          <label style={{ display: 'block', fontWeight: 600, fontSize: '0.825rem', color: '#1e293b', marginBottom: '0.35rem' }}>
+                            Created Date
+                          </label>
+                          <div style={{ position: 'relative', width: '100%' }}>
+                            <input
+                              type="text"
+                              value={emailFormData.created_date}
+                              onChange={(e) => setEmailFormData({ ...emailFormData, created_date: e.target.value })}
+                              style={{
+                                width: '100%',
+                                padding: '0.45rem 2rem 0.45rem 0.75rem',
+                                borderRadius: '6px',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '0.85rem',
+                                outline: 'none',
+                              }}
+                            />
+                            <span
+                              style={{
+                                position: 'absolute',
+                                right: '8px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                color: '#94a3b8',
+                                pointerEvents: 'none',
+                              }}
+                            >
+                              <IconCalendar size={14} />
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Form Action Buttons matching Screenshot 2 */}
@@ -1437,16 +1496,6 @@ export default function SalesPersonMaster({
                       onClick={() => {
                         setEmailViewMode('table');
                         setSelectedEmail(null);
-                      }}
-                      style={{
-                        padding: '0.45rem 1.25rem',
-                        fontSize: '0.85rem',
-                        fontWeight: 500,
-                        borderRadius: '6px',
-                        border: '1px solid #cbd5e1',
-                        background: '#ffffff',
-                        color: '#334155',
-                        cursor: 'pointer',
                       }}
                     >
                       Cancel
@@ -1474,16 +1523,7 @@ export default function SalesPersonMaster({
 
                       <button
                         type="submit"
-                        style={{
-                          padding: '0.45rem 1.25rem',
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                          borderRadius: '6px',
-                          border: 'none',
-                          backgroundColor: '#102a43',
-                          color: '#ffffff',
-                          cursor: 'pointer',
-                        }}
+                        className="btn-apex-create"
                       >
                         {selectedEmail && selectedEmail.email_id ? 'Apply Changes' : 'Create'}
                       </button>
@@ -1523,142 +1563,29 @@ export default function SalesPersonMaster({
             Contact Count
           </div>
 
-          {/* Sub-report Toolbar */}
-          <div
-            style={{
-              padding: '0.75rem 1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              borderBottom: '1px solid #e2e8f0',
-              flexWrap: 'wrap',
-              gap: '0.5rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ position: 'relative', width: '220px' }}>
-                <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                  <IconSearch size={15} />
-                </span>
-                <input
-                  type="text"
-                  className="apex-form-input"
-                  placeholder="Search"
-                  value={contactsSearchInput}
-                  onChange={(e) => setContactsSearchInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      setContactsSearch(contactsSearchInput);
-                      setContactsPage(1);
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '34px',
-                    paddingLeft: '32px',
-                    paddingRight: '10px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '0.825rem',
-                    backgroundColor: '#ffffff',
-                  }}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setContactsSearch(contactsSearchInput);
-                  setContactsPage(1);
-                }}
-                style={{
-                  height: '34px',
-                  padding: '0 14px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  fontSize: '0.825rem',
-                  fontWeight: 600,
-                  color: '#1e293b',
-                  cursor: 'pointer',
-                }}
-              >
-                Go
-              </button>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.825rem', color: '#64748b' }}>
-                <span>Rows</span>
-                <select
-                  value={contactsLimit}
-                  onChange={(e) => {
-                    const val = e.target.value === 'all' ? 10000 : parseInt(e.target.value, 10);
-                    setContactsLimit(val);
-                    setContactsPage(1);
-                  }}
-                  style={{
-                    padding: '0.35rem 0.5rem',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '0.825rem',
-                    outline: 'none',
-                    background: '#ffffff',
-                  }}
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value="all">All</option>
-                </select>
-              </div>
-
-              <ApexActionsMenu
-                onSelectColumns={() => {}}
-                onFilter={() => {}}
-                onChart={() => {}}
-                onAggregate={() => {}}
-                onDownload={() => {}}
-              />
-            </div>
-
-            {/* Sub-report Pagination */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem', color: '#475569' }}>
-              <span>
-                {contactsTotal === 0 ? '0 of 0' : `${contactsStartRow} - ${contactsEndRow} of ${contactsTotal}`}
-              </span>
-              <button
-                type="button"
-                disabled={contactsPage <= 1}
-                onClick={() => setContactsPage((p) => Math.max(1, p - 1))}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: contactsPage <= 1 ? 'not-allowed' : 'pointer',
-                  opacity: contactsPage <= 1 ? 0.4 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '2px',
-                }}
-              >
-                <IconChevronLeft size={16} />
-              </button>
-              <button
-                type="button"
-                disabled={contactsPage >= contactsTotalPages}
-                onClick={() => setContactsPage((p) => Math.min(contactsTotalPages, p + 1))}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: contactsPage >= contactsTotalPages ? 'not-allowed' : 'pointer',
-                  opacity: contactsPage >= contactsTotalPages ? 0.4 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '2px',
-                }}
-              >
-                <IconChevronRight size={16} />
-              </button>
-            </div>
+          {/* Child Report Toolbar matching Oracle APEX standard */}
+          <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0' }}>
+            <ApexReportToolbar
+              search={contactsSearchInput}
+              onSearchChange={setContactsSearchInput}
+              onSearchSubmit={() => {
+                setContactsSearch(contactsSearchInput);
+                setContactsPage(1);
+              }}
+              rows={contactsLimit}
+              onRowsChange={(newRows) => {
+                setContactsLimit(newRows);
+                setContactsPage(1);
+              }}
+              showActions={showContactsActions}
+              onToggleActions={() => setShowContactsActions(!showContactsActions)}
+              onCloseActions={() => setShowContactsActions(false)}
+              onDownload={handleDownloadContactsCsv}
+              onRefresh={loadChildContacts}
+              page={contactsPage}
+              total={contactsTotal}
+              onPageChange={setContactsPage}
+            />
           </div>
 
           {/* Sub-report Table */}
@@ -1666,7 +1593,9 @@ export default function SalesPersonMaster({
             <table className="apex-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
               <thead>
                 <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                  <th style={{ width: '40px', padding: '0.6rem 0.5rem', textAlign: 'center' }}></th>
+                  <th style={{ width: '40px', padding: '0.6rem 0.5rem', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b' }}>✎</span>
+                  </th>
                   {SALES_PERSON_CONTACT_COLUMNS.map((col) => (
                     <th
                       key={col.key}
@@ -1904,13 +1833,63 @@ export default function SalesPersonMaster({
               </select>
             </div>
 
-            <ApexActionsMenu
-              onSelectColumns={() => setShowColumnsModal(true)}
-              onFilter={() => setShowFilterModal(true)}
-              onChart={() => setShowChartModal(true)}
-              onAggregate={() => setShowAggregateModal(true)}
-              onDownload={() => {}}
-            />
+            <div className="apex-actions-wrapper" style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className="btn-apex-actions"
+                onClick={() => setShowMasterActions((prev) => !prev)}
+                style={{
+                  height: '34px',
+                  padding: '0 12px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '4px',
+                  fontSize: '0.825rem',
+                  fontWeight: 600,
+                  color: '#1e293b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                <span>Actions</span>
+                <IconChevronDown size={13} />
+              </button>
+
+              <ApexActionsMenu
+                isOpen={showMasterActions}
+                onClose={() => setShowMasterActions(false)}
+                  isEditableGrid={true}
+                  hasSelection={selectedIds.size > 0}
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={() => setSelectedIds(new Set())}
+                columns={SALES_PERSON_COLUMNS}
+                data={data}
+                reportId="salesperson_master"
+                onOpenColumns={() => setShowColumnsModal(true)}
+                onOpenFilter={() => setShowFilterModal(true)}
+                onOpenChart={() => setShowChartModal(true)}
+                onOpenAggregate={() => setShowAggregateModal(true)}
+                onDownload={handleDownloadMasterCsv}
+                onRefresh={loadData}
+                currentRows={limit}
+                onChangeRows={(newRows) => {
+                  setLimit(newRows === 'all' ? 10000 : newRows);
+                  setPage(1);
+                }}
+                onResetReport={() => {
+                  setSearch('');
+                  setSearchInput('');
+                  setActiveFilters([]);
+                  setActiveAggregations([]);
+                  setVisibleColumns(DEFAULT_COLUMN_KEYS);
+                  setLimit(50);
+                  setPage(1);
+                  if (onShowToast) onShowToast('info', 'Report reset to default.');
+                }}
+              />
+            </div>
           </div>
 
           {/* Right Toolbar Action Buttons matching Screenshot 2: Upload, Create, Delete Selected */}
@@ -2037,51 +2016,74 @@ export default function SalesPersonMaster({
           </button>
         </div>
 
+        {/* Active APEX Filter Banner */}
+        <ApexActiveFilterBanner headerFilter={headerFilter} onClear={handleClearHeaderFilter} />
+
         {/* Main Table */}
         <div style={{ overflowX: 'auto' }}>
-          <table className="apex-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+          <table className="apex-table apex-master-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ width: '40px', padding: '0.6rem 0.5rem', textAlign: 'center' }}></th>
+                <th style={{ width: '40px', padding: '0.6rem 0.5rem', textAlign: 'center' }}>
+                  <span
+                    style={{ cursor: 'pointer', fontSize: '1rem', color: '#1e293b' }}
+                    title="Select Columns"
+                    onClick={() => setShowColumnsModal(true)}
+                  >
+                    ✎
+                  </span>
+                </th>
                 <th style={{ width: '80px', padding: '0.6rem 0.5rem', textAlign: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <input
-                      type="checkbox"
-                      checked={data.length > 0 && selectedIds.size === data.length}
-                      onChange={handleSelectAll}
-                      style={{ cursor: 'pointer' }}
-                    />
+                          type="checkbox"
+                          checked={processedData.length > 0 && selectedIds.size >= processedData.length}
+                          ref={(el) => {
+                            if (el) {
+                              el.indeterminate = selectedIds.size > 0 && selectedIds.size < processedData.length;
+                            }
+                          }}
+                          onChange={handleSelectAll}
+                          style={{ cursor: 'pointer' }}
+                          title={
+                            selectedIds.size >= processedData.length && processedData.length > 0
+                              ? `All ${processedData.length} records selected`
+                              : `Select all ${processedData.length} records throughout report`
+                          }
+                        />
                   </div>
                 </th>
-                {SALES_PERSON_COLUMNS.filter((c) => visibleColumns.includes(c.key)).map((col) => (
-                  <th
-                    key={col.key}
-                    onClick={() => {
-                      if (sortBy === col.key) {
-                        setSortOrder((prev) => (prev === 'ASC' ? 'DESC' : 'ASC'));
-                      } else {
-                        setSortBy(col.key);
-                        setSortOrder('ASC');
-                      }
-                    }}
-                    style={{
-                      padding: '0.6rem 0.75rem',
-                      fontWeight: 600,
-                      color: '#334155',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <span>{col.label}</span>
-                      {sortBy === col.key && (
-                        <span style={{ fontSize: '0.7rem' }}>
-                          {sortOrder === 'ASC' ? '▲' : '▼'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                ))}
+                {SALES_PERSON_COLUMNS.filter((c) => visibleColumns.includes(c.key)).map((col) => {
+                  const isNumber = col.key === 'id' || col.key.includes('count');
+                  return (
+                    <th
+                      key={col.key}
+                      className={isNumber ? 'col-number' : ''}
+                      onClick={(e) => handleHeaderClick(e, col)}
+                      style={{
+                        padding: '0.6rem 0.75rem',
+                        fontWeight: 600,
+                        color: '#1e293b',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        whiteSpace: 'nowrap',
+                        transition: 'background-color 0.15s ease',
+                      }}
+                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+                      onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                      title={`Click to sort, filter, or configure ${col.label}`}
+                    >
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span>{col.label}</span>
+                        {sortKey === col.key && (
+                          <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>
+                            {sortDir === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -2091,14 +2093,14 @@ export default function SalesPersonMaster({
                     Loading Sales Person records...
                   </td>
                 </tr>
-              ) : data.length === 0 ? (
+              ) : processedData.length === 0 ? (
                 <tr>
                   <td colSpan={visibleColumns.length + 2} style={{ textAlign: 'center', padding: '2.5rem', color: '#94a3b8' }}>
                     No Sales Person records found.
                   </td>
                 </tr>
               ) : (
-                data.map((row) => (
+                processedData.map((row) => (
                   <tr
                     key={row.id}
                     style={{
@@ -2301,6 +2303,8 @@ export default function SalesPersonMaster({
           </div>
         </div>
       )}
+      {/* Interactive Column Header Actions Menu */}
+      <ApexColumnHeaderMenu headerMenu={headerMenu} onClose={closeHeaderMenu} />
     </div>
   );
 }

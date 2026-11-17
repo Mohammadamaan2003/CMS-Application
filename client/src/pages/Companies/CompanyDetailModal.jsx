@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Modal from '../../components/Modal';
+import ApexInteractiveReport from '../../components/ApexInteractiveReport';
 import {
   IconBuilding,
   IconGlobe,
@@ -17,6 +18,45 @@ export default function CompanyDetailModal({
   onEdit,
   onAddContact,
 }) {
+  const companyContactColumns = useMemo(() => [
+    {
+      key: 'name',
+      label: 'Name',
+      minWidth: '150px',
+      getValue: (c) => `${c.first_name || ''} ${c.last_name || ''}`.trim(),
+      render: (c) => (
+        <span style={{ fontWeight: 600 }}>
+          {c.first_name} {c.last_name}
+        </span>
+      ),
+    },
+    {
+      key: 'job_title',
+      label: 'Job Title',
+      minWidth: '130px',
+      getValue: (c) => c.job_title || '',
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      minWidth: '160px',
+      getValue: (c) => c.email || '',
+      render: (c) => (
+        c.email ? (
+          <a href={`mailto:${c.email}`} style={{ color: '#0284c7' }}>
+            {c.email}
+          </a>
+        ) : '—'
+      ),
+    },
+    {
+      key: 'phone',
+      label: 'Phone',
+      minWidth: '120px',
+      getValue: (c) => c.phone || '',
+    },
+  ], []);
+
   if (!company) return null;
 
   const formatDate = (isoStr) => {
@@ -133,56 +173,23 @@ export default function CompanyDetailModal({
 
         {/* Linked Contacts Section */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-            <h4 style={{ fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <IconUsers size={18} style={{ color: 'var(--primary)' }} />
-              Linked Contacts ({contacts.length})
-            </h4>
-            {onAddContact && (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => onAddContact(company.id)}
-              >
-                <IconPlus size={14} /> Add Contact Here
-              </button>
-            )}
-          </div>
-
-          {contacts.length === 0 ? (
-            <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '8px', border: '1px dashed var(--border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              No contacts currently linked to {company.name}.
-            </div>
-          ) : (
-            <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
-              <table className="data-table" style={{ fontSize: '0.875rem' }}>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Job Title</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {contacts.map((contact) => (
-                    <tr key={contact.id}>
-                      <td style={{ fontWeight: 600 }}>
-                        {contact.first_name} {contact.last_name}
-                      </td>
-                      <td>{contact.job_title || '—'}</td>
-                      <td>
-                        <a href={`mailto:${contact.email}`} style={{ color: 'var(--primary)' }}>
-                          {contact.email}
-                        </a>
-                      </td>
-                      <td>{contact.phone || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <ApexInteractiveReport
+            columns={companyContactColumns}
+            data={contacts}
+            rowsPerPage={10}
+            emptyMessage={`No contacts currently linked to ${company.name}.`}
+            toolbarButtons={
+              onAddContact && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => onAddContact(company.id)}
+                >
+                  <IconPlus size={14} /> Add Contact Here
+                </button>
+              )
+            }
+          />
         </div>
       </div>
 

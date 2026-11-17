@@ -9,6 +9,8 @@ import ApexAggregateModal from '../../components/ApexAggregateModal';
 import ActiveAggregationsBar from '../../components/ActiveAggregationsBar';
 import ApexColumnHeaderMenu from '../../components/ApexColumnHeaderMenu';
 import ApexActiveFilterBanner from '../../components/ApexActiveFilterBanner';
+import ApexReportToolbar from '../../components/ApexReportToolbar';
+import ApexInteractiveReport from '../../components/ApexInteractiveReport';
 import { useApexColumnMenu } from '../../utils/useApexColumnMenu';
 import {
   IconSearch,
@@ -66,17 +68,27 @@ export const TECHNOLOGY_MASTER_COLUMNS = [
 const DEFAULT_MASTER_KEYS = TECHNOLOGY_MASTER_COLUMNS.map((c) => c.key);
 
 export const CHILD_COMPANY_COLUMNS = [
-  { key: 'id', label: 'ID' },
-  { key: 'contact_count', label: 'Contact Count' },
-  { key: 'company_name', label: 'Company Name' },
-  { key: 'employee_size', label: 'Employee Size' },
-  { key: 'company_type', label: 'Company Type' },
-  { key: 'country', label: 'Country' },
-  { key: 'city', label: 'City' },
-  { key: 'technology', label: 'Technology' },
-  { key: 'industry', label: 'Industry' },
-  { key: 'email', label: 'Email' },
-  { key: 'website', label: 'Website' },
+  { key: 'id', label: 'ID', width: '80px', getValue: (r) => r.id },
+  { key: 'contact_count', label: 'Contact Count', width: '110px', align: 'center', getValue: (r) => Number(r.contact_count || 0) },
+  { key: 'company_name', label: 'Company Name', minWidth: '220px', getValue: (r) => r.company_name || r.comp_name || '' },
+  { key: 'employee_size', label: 'Employee Size', minWidth: '120px', getValue: (r) => r.employee_size || '' },
+  { key: 'company_type', label: 'Company Type', minWidth: '130px', getValue: (r) => (r.company_type && r.company_type !== 'undefined' ? r.company_type : '') },
+  { key: 'country', label: 'Country', minWidth: '130px', getValue: (r) => r.country || '' },
+  { key: 'city', label: 'City', minWidth: '130px', getValue: (r) => r.city || '' },
+  { key: 'technology', label: 'Technology', minWidth: '140px', getValue: (r) => r.technology || '' },
+  { key: 'industry', label: 'Industry', minWidth: '160px', getValue: (r) => r.industry || '' },
+  { key: 'email', label: 'Email', minWidth: '160px', getValue: (r) => r.email || '' },
+  {
+    key: 'website',
+    label: 'Website',
+    minWidth: '180px',
+    getValue: (r) => r.website || '',
+    render: (comp) => comp.website ? (
+      <a href={comp.website.startsWith('http') ? comp.website : `https://${comp.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8', textDecoration: 'underline' }}>
+        {comp.website}
+      </a>
+    ) : '—',
+  },
 ];
 
 export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm, onNavigateToContactForm }) {
@@ -85,7 +97,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
     try {
       const saved = localStorage.getItem('apex_technology_active_form');
       if (saved) return 'form';
-    } catch (e) {}
+    } catch (e) { }
     return 'report';
   });
 
@@ -93,7 +105,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
     try {
       const saved = localStorage.getItem('apex_technology_active_form');
       if (saved) return JSON.parse(saved);
-    } catch (e) {}
+    } catch (e) { }
     return null;
   });
 
@@ -126,7 +138,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
           modified_date: rec.modified_date || '11/10/2026',
         };
       }
-    } catch (e) {}
+    } catch (e) { }
     return {
       master_technology: '',
       technology_category: 'CRM',
@@ -180,7 +192,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
     try {
       const saved = localStorage.getItem('technology_master_visible_columns');
       if (saved) return JSON.parse(saved);
-    } catch (e) {}
+    } catch (e) { }
     return DEFAULT_MASTER_KEYS;
   });
 
@@ -280,12 +292,15 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
   };
 
   // Selection Checkboxes
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = new Set(masterList.map((m) => m.id));
-      setSelectedIds(allIds);
-    } else {
+  const handleSelectAll = () => {
+    const isAllSelected = processedMasterList.length > 0 && selectedIds.size >= processedMasterList.length;
+    if (isAllSelected) {
       setSelectedIds(new Set());
+      if (onShowToast) onShowToast('info', 'Deselected all records.');
+    } else {
+      const allIds = new Set(processedMasterList.map((m) => m.id));
+      setSelectedIds(allIds);
+      if (onShowToast) onShowToast('info', `Selected all ${processedMasterList.length} records throughout report.`);
     }
   };
 
@@ -336,7 +351,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
     setViewMode('form');
     try {
       localStorage.setItem('apex_technology_active_form', JSON.stringify({ isNew: true, ...newForm }));
-    } catch (e) {}
+    } catch (e) { }
   };
 
   // Open Form Edit
@@ -365,7 +380,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
       setFormData(f);
       try {
         localStorage.setItem('apex_technology_active_form', JSON.stringify({ ...record, ...f }));
-      } catch (e) {}
+      } catch (e) { }
     } catch (err) {
       console.warn('Error loading single technology:', err.message);
     }
@@ -377,7 +392,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
     setSelectedRecord(null);
     try {
       localStorage.removeItem('apex_technology_active_form');
-    } catch (e) {}
+    } catch (e) { }
   };
 
   // Save / Apply Changes
@@ -460,7 +475,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
         try {
           const cRes = await api.getCompanies({ technology: newTech, limit: 1 });
           if (cRes.success) newCount = cRes.total || newCount;
-        } catch (e) {}
+        } catch (e) { }
 
         setFormData((prev) => ({
           ...prev,
@@ -541,7 +556,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
         defaultVisibleKeys={DEFAULT_MASTER_KEYS}
         onApply={(newKeys) => {
           setMasterVisibleKeys(newKeys);
-          try { localStorage.setItem('technology_master_visible_columns', JSON.stringify(newKeys)); } catch (e) {}
+          try { localStorage.setItem('technology_master_visible_columns', JSON.stringify(newKeys)); } catch (e) { }
         }}
       />
 
@@ -646,7 +661,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
                           try {
                             const cRes = await api.getCompanies({ technology: val, limit: 1 });
                             if (cRes.success) cnt = cRes.total || 0;
-                          } catch (err) {}
+                          } catch (err) { }
                         }
                       }
                       setFormData((prev) => ({
@@ -703,25 +718,27 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
               </div>
             </div>
 
-            {/* Audit Fields */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>Created By</label>
-                <input type="text" readOnly style={{ border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b' }} className="form-control-input" value={formData.created_by} />
+            {/* Audit Fields (Only visible when editing an existing record) */}
+            {selectedRecord && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>Created By</label>
+                  <input type="text" readOnly style={{ border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b' }} className="form-control-input" value={formData.created_by} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>Created Date</label>
+                  <input type="text" readOnly style={{ border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b' }} className="form-control-input" value={formatAppDate(formData.created_date)} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>Modified By</label>
+                  <input type="text" readOnly style={{ border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b' }} className="form-control-input" value={formData.modified_by} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>Modified Date</label>
+                  <input type="text" readOnly style={{ border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b' }} className="form-control-input" value={formatAppDate(formData.modified_date)} />
+                </div>
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>Created Date</label>
-                <input type="text" readOnly style={{ border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b' }} className="form-control-input" value={formatAppDate(formData.created_date)} />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>Modified By</label>
-                <input type="text" readOnly style={{ border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b' }} className="form-control-input" value={formData.modified_by} />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem' }}>Modified Date</label>
-                <input type="text" readOnly style={{ border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc', color: '#64748b' }} className="form-control-input" value={formatAppDate(formData.modified_date)} />
-              </div>
-            </div>
+            )}
 
             {/* Form Footer */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
@@ -740,7 +757,7 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
                     Delete
                   </button>
                 )}
-                <button type="submit" className="btn-apex-top">
+                <button type="submit" className="btn-apex-create">
                   {selectedRecord ? 'Apply Changes' : 'Create'}
                 </button>
               </div>
@@ -758,189 +775,45 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem',
-                  marginBottom: '1rem',
+              <ApexInteractiveReport
+                reportTitle={`Companies for ${formData.technology || formData.master_technology || 'Technology'}`}
+                badge={childTotal}
+                columns={CHILD_COMPANY_COLUMNS}
+                data={childCompanies}
+                total={childTotal}
+                page={childPage}
+                onPageChange={setChildPage}
+                rowsPerPage={childRows}
+                onRowsPerPageChange={(nr) => { setChildRows(nr); setChildPage(1); }}
+                search={childSearch}
+                onSearchChange={setChildSearch}
+                onSearchSubmit={() => { setActiveChildSearch(childSearch.trim()); setChildPage(1); }}
+                isServerSide={true}
+                isLoading={loadingChild}
+                renderLeadingCell={(comp) => (
+                  <button
+                    type="button"
+                    className="table-action-icon-btn"
+                    title={`Edit Company #${comp.id}`}
+                    onClick={() => {
+                      if (onNavigateToCompanyForm) {
+                        onNavigateToCompanyForm(comp.id, 'master_technology', window.location.hash);
+                      }
+                    }}
+                  >
+                    <IconFilePenLine size={14} />
+                  </button>
+                )}
+                onRefresh={loadChildCompanies}
+                onReset={() => {
+                  setChildSearch('');
+                  setActiveChildSearch('');
+                  setChildPage(1);
+                  setChildRows(50);
                 }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <form onSubmit={(e) => { e.preventDefault(); setActiveChildSearch(childSearch.trim()); setChildPage(1); }} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                    <div style={{ position: 'relative', width: '220px' }}>
-                      <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                        <IconSearch size={15} />
-                      </span>
-                      <input
-                        type="text"
-                        className="apex-form-input"
-                        placeholder="Search linked companies..."
-                        value={childSearch}
-                        onChange={(e) => setChildSearch(e.target.value)}
-                        style={{
-                          width: '100%',
-                          height: '34px',
-                          paddingLeft: '32px',
-                          paddingRight: '10px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.825rem',
-                          backgroundColor: '#ffffff',
-                        }}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      style={{
-                        height: '34px',
-                        padding: '0 14px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '4px',
-                        fontSize: '0.825rem',
-                        fontWeight: 600,
-                        color: '#1e293b',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Go
-                    </button>
-                  </form>
-
-                  <div className="apex-rows-select-group">
-                    <span>Rows</span>
-                    <select
-                      className="apex-rows-select"
-                      value={childRows}
-                      onChange={(e) => {
-                        const val = e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10);
-                        setChildRows(val);
-                        setChildPage(1);
-                      }}
-                    >
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                      <option value="all">All</option>
-                    </select>
-                  </div>
-
-                  <div className="apex-actions-wrapper">
-                    <button type="button" className="btn-apex-actions" onClick={() => setShowChildActions((prev) => !prev)}>
-                      <span>Actions</span>
-                      <IconChevronDown size={13} />
-                    </button>
-                    <ApexActionsMenu
-                      isOpen={showChildActions}
-                      onClose={() => setShowChildActions(false)}
-                      onOpenColumns={() => setShowChildColumnsModal(true)}
-                      onDownload={handleDownloadChildCsv}
-                      onRefresh={loadChildCompanies}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Range strip */}
-              <div className="apex-pagination-strip" style={{ marginBottom: '0.5rem' }}>
-                <span>{childStartIdx} - {childEndIdx} of {childTotal.toLocaleString()}</span>
-                <button
-                  type="button"
-                  className="pagination-nav-btn"
-                  disabled={childPage <= 1}
-                  onClick={() => setChildPage((p) => Math.max(1, p - 1))}
-                  title="Previous Page"
-                >
-                  <IconChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  className="pagination-nav-btn"
-                  disabled={childEndIdx >= childTotal}
-                  onClick={() => setChildPage((p) => p + 1)}
-                  title="Next Page"
-                >
-                  <IconChevronRight size={16} />
-                </button>
-              </div>
-
-              <div style={{ overflowX: 'auto' }}>
-                <table className="dense-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '38px', textAlign: 'center' }}>
-                      <span
-                        style={{ cursor: 'pointer', fontSize: '1rem', color: '#1e293b' }}
-                        title="Select Columns"
-                        onClick={() => setShowChildColumnsModal(true)}
-                      >
-                        ✎
-                      </span>
-                    </th>
-                      {CHILD_COMPANY_COLUMNS.filter((c) => childVisibleKeys.includes(c.key)).map((col) => (
-                        <th key={col.key}>{col.label}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loadingChild ? (
-                      <tr><td colSpan={childVisibleKeys.length + 1} style={{ textAlign: 'center', padding: '2rem' }}>Loading companies...</td></tr>
-                    ) : childCompanies.length === 0 ? (
-                      <tr><td colSpan={childVisibleKeys.length + 1} style={{ textAlign: 'center', padding: '2rem' }}>No companies found for this technology.</td></tr>
-                    ) : (
-                      childCompanies.map((comp) => (
-                        <tr key={comp.id}>
-                          <td style={{ textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              className="table-action-icon-btn"
-                              title={`Edit Company #${comp.id}`}
-                              onClick={() => {
-                                if (onNavigateToCompanyForm) {
-                                  onNavigateToCompanyForm(comp.id, 'master_technology', window.location.hash);
-                                }
-                              }}
-                            >
-                              <IconFilePenLine size={14} />
-                            </button>
-                          </td>
-                          {childVisibleKeys.includes('id') && <td>{comp.id}</td>}
-                          {childVisibleKeys.includes('contact_count') && (
-                            <td style={{ textAlign: 'center', fontWeight: comp.contact_count > 0 ? 600 : 400 }}>
-                              {comp.contact_count}
-                            </td>
-                          )}
-                          {childVisibleKeys.includes('company_name') && <td style={{ fontWeight: 600 }}>{comp.company_name}</td>}
-                          {childVisibleKeys.includes('employee_size') && <td>{comp.employee_size || '—'}</td>}
-                          {childVisibleKeys.includes('company_type') && (
-                            <td>{comp.company_type && comp.company_type !== 'undefined' ? comp.company_type : '—'}</td>
-                          )}
-                          {childVisibleKeys.includes('country') && <td>{comp.country || '—'}</td>}
-                          {childVisibleKeys.includes('city') && <td>{comp.city || '—'}</td>}
-                          {childVisibleKeys.includes('technology') && <td>{comp.technology || '—'}</td>}
-                          {childVisibleKeys.includes('industry') && <td>{comp.industry || '—'}</td>}
-                          {childVisibleKeys.includes('email') && <td>{comp.email || '—'}</td>}
-                          {childVisibleKeys.includes('website') && (
-                            <td>
-                              {comp.website ? (
-                                <a href={comp.website.startsWith('http') ? comp.website : `https://${comp.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8', textDecoration: 'underline' }}>
-                                  {comp.website}
-                                </a>
-                              ) : (
-                                '—'
-                              )}
-                            </td>
-                          )}
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                onDownload={handleDownloadChildCsv}
+                onShowToast={onShowToast}
+              />
             </div>
           )}
         </div>
@@ -1032,338 +905,359 @@ export default function TechnologyMaster({ onShowToast, onNavigateToCompanyForm,
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <form onSubmit={(e) => { e.preventDefault(); setActiveMasterSearch(masterSearch.trim()); setMasterPage(1); }} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                <div style={{ position: 'relative', width: '220px' }}>
-                  <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                    <IconSearch size={15} />
-                  </span>
-                  <input
-                    type="text"
-                    className="apex-form-input"
-                    placeholder="Search"
-                    value={masterSearch}
-                    onChange={(e) => setMasterSearch(e.target.value)}
+                  <div style={{ position: 'relative', width: '220px' }}>
+                    <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
+                      <IconSearch size={15} />
+                    </span>
+                    <input
+                      type="text"
+                      className="apex-form-input"
+                      placeholder="Search"
+                      value={masterSearch}
+                      onChange={(e) => setMasterSearch(e.target.value)}
+                      style={{
+                        width: '100%',
+                        height: '34px',
+                        paddingLeft: '32px',
+                        paddingRight: '10px',
+                        borderRadius: '4px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.825rem',
+                        backgroundColor: '#ffffff',
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
                     style={{
-                      width: '100%',
                       height: '34px',
-                      paddingLeft: '32px',
-                      paddingRight: '10px',
-                      borderRadius: '4px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '0.825rem',
+                      padding: '0 14px',
                       backgroundColor: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '4px',
+                      fontSize: '0.825rem',
+                      fontWeight: 600,
+                      color: '#1e293b',
+                      cursor: 'pointer',
                     }}
+                  >
+                    Go
+                  </button>
+                </form>
+
+                <div className="apex-rows-select-group">
+                  <span>Rows</span>
+                  <select
+                    className="apex-rows-select"
+                    value={masterRows}
+                    onChange={(e) => {
+                      const val = e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10);
+                      setMasterRows(val);
+                      setMasterPage(1);
+                    }}
+                  >
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="all">All</option>
+                  </select>
+                </div>
+
+                <div className="apex-actions-wrapper">
+                  <button type="button" className="btn-apex-actions" onClick={() => setShowMasterActions((prev) => !prev)}>
+                    <span>Actions</span>
+                    <IconChevronDown size={13} />
+                  </button>
+                  <ApexActionsMenu
+                    isOpen={showMasterActions}
+                    onClose={() => setShowMasterActions(false)}
+                  isEditableGrid={true}
+                  hasSelection={selectedIds.size > 0}
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={() => setSelectedIds(new Set())}
+                    onOpenColumns={() => setShowMasterColumnsModal(true)}
+                    onOpenFilter={() => setShowMasterFilterModal(true)}
+                    onOpenAggregate={() => setShowAggregateModal(true)}
+                    columns={TECHNOLOGY_MASTER_COLUMNS}
+                    data={masterList}
+                    reportId="technology_master"
+                    onApplySort={(rules) => {
+                      if (rules && rules[0] && rules[0].key) {
+                        handleMenuSort(rules[0].key, rules[0].dir || 'asc');
+                      }
+                    }}
+                    onDownload={handleDownloadMasterCsv}
+                    onOpenChart={() => setShowMasterChartModal(true)}
+                    onRefresh={loadMasterData}
+                    onResetReport={() => {
+                      setMasterVisibleKeys(DEFAULT_MASTER_KEYS);
+                      try { localStorage.removeItem('technology_master_visible_columns'); } catch (e) { }
+                      setActiveMasterSearch('');
+                      setMasterSearch('');
+                      setFilters({ technology: '', technology_category: '', created_date: '', modified_date: '' });
+                      setAppliedFilters({});
+                      setMasterRows(50);
+                      setMasterPage(1);
+                    }}
+                    onChangeRows={(r) => { setMasterRows(r); setMasterPage(1); }}
+                    currentRows={masterRows}
                   />
                 </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => setShowUploadModal(true)}
                   style={{
                     height: '34px',
-                    padding: '0 14px',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '4px',
+                    padding: '0 16px',
+                    backgroundColor: '#102a43',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
                     fontSize: '0.825rem',
                     fontWeight: 600,
-                    color: '#1e293b',
                     cursor: 'pointer',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
                   }}
+                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#0b1d30')}
+                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#102a43')}
                 >
-                  Go
+                  Upload
                 </button>
-              </form>
 
-              <div className="apex-rows-select-group">
-                <span>Rows</span>
-                <select
-                  className="apex-rows-select"
-                  value={masterRows}
-                  onChange={(e) => {
-                    const val = e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10);
-                    setMasterRows(val);
-                    setMasterPage(1);
+                <button
+                  type="button"
+                  onClick={handleOpenCreate}
+                  style={{
+                    height: '34px',
+                    padding: '0 16px',
+                    backgroundColor: '#102a43',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '0.825rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
                   }}
+                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#0b1d30')}
+                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#102a43')}
                 >
-                  <option value="10">10</option>
-                  <option value="25">25</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                  <option value="all">All</option>
-                </select>
-              </div>
-
-              <div className="apex-actions-wrapper">
-                <button type="button" className="btn-apex-actions" onClick={() => setShowMasterActions((prev) => !prev)}>
-                  <span>Actions</span>
-                  <IconChevronDown size={13} />
+                  Create
                 </button>
-                <ApexActionsMenu
-                  isOpen={showMasterActions}
-                  onClose={() => setShowMasterActions(false)}
-                  onOpenColumns={() => setShowMasterColumnsModal(true)}
-                  onOpenFilter={() => setShowMasterFilterModal(true)}
-                  onOpenAggregate={() => setShowAggregateModal(true)}
-                  onOpenGroupBy={() => setShowMasterChartModal(true)}
-                  onDownload={handleDownloadMasterCsv}
-                  onOpenChart={() => setShowMasterChartModal(true)}
-                  onRefresh={loadMasterData}
-                  onResetReport={() => {
-                    setMasterVisibleKeys(DEFAULT_MASTER_KEYS);
-                    try { localStorage.removeItem('technology_master_visible_columns'); } catch (e) {}
-                    setActiveMasterSearch('');
-                    setMasterSearch('');
-                    setFilters({ technology: '', technology_category: '', created_date: '', modified_date: '' });
-                    setAppliedFilters({});
-                    setMasterRows(50);
-                    setMasterPage(1);
+
+                <button
+                  type="button"
+                  onClick={handleBatchDelete}
+                  disabled={selectedIds.size === 0}
+                  style={{
+                    height: '34px',
+                    padding: '0 16px',
+                    backgroundColor: selectedIds.size > 0 ? '#dc2626' : '#102a43',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '0.825rem',
+                    fontWeight: 600,
+                    cursor: selectedIds.size > 0 ? 'pointer' : 'not-allowed',
+                    opacity: selectedIds.size > 0 ? 1 : 0.85,
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
                   }}
-                  onChangeRows={(r) => { setMasterRows(r); setMasterPage(1); }}
-                  currentRows={masterRows}
-                />
+                  title={selectedIds.size > 0 ? `Delete ${selectedIds.size} selected` : 'Select rows to delete'}
+                >
+                  Delete Selected {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+                </button>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setShowUploadModal(true)}
-                style={{
-                  height: '34px',
-                  padding: '0 16px',
-                  backgroundColor: '#102a43',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '0.825rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#0b1d30')}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#102a43')}
-              >
-                Upload
-              </button>
-
-              <button
-                type="button"
-                onClick={handleOpenCreate}
-                style={{
-                  height: '34px',
-                  padding: '0 16px',
-                  backgroundColor: '#102a43',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '0.825rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#0b1d30')}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#102a43')}
-              >
-                Create
-              </button>
-
-              <button
-                type="button"
-                onClick={handleBatchDelete}
-                disabled={selectedIds.size === 0}
-                style={{
-                  height: '34px',
-                  padding: '0 16px',
-                  backgroundColor: selectedIds.size > 0 ? '#dc2626' : '#102a43',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '0.825rem',
-                  fontWeight: 600,
-                  cursor: selectedIds.size > 0 ? 'pointer' : 'not-allowed',
-                  opacity: selectedIds.size > 0 ? 1 : 0.85,
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-                }}
-                title={selectedIds.size > 0 ? `Delete ${selectedIds.size} selected` : 'Select rows to delete'}
-              >
-                Delete Selected {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
-              </button>
+            {/* Pagination strip */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '0.825rem',
+                color: '#475569',
+                padding: '0.4rem 0.25rem 0.75rem',
+                borderBottom: '1px solid #f1f5f9',
+              }}
+            >
+              <span>{masterStartIdx} - {masterEndIdx} of {masterTotal.toLocaleString()}</span>
+              <div style={{ display: 'flex', gap: '2px' }}>
+                <button
+                  type="button"
+                  disabled={masterPage <= 1}
+                  onClick={() => setMasterPage((p) => Math.max(1, p - 1))}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: masterPage <= 1 ? 'not-allowed' : 'pointer',
+                    color: masterPage <= 1 ? '#cbd5e1' : '#475569',
+                    padding: '2px 4px',
+                  }}
+                >
+                  <IconChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  disabled={masterEndIdx >= masterTotal}
+                  onClick={() => setMasterPage((p) => p + 1)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: masterEndIdx >= masterTotal ? 'not-allowed' : 'pointer',
+                    color: masterEndIdx >= masterTotal ? '#cbd5e1' : '#475569',
+                    padding: '2px 4px',
+                  }}
+                >
+                  <IconChevronRight size={16} />
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Pagination strip */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '0.825rem',
-              color: '#475569',
-              padding: '0.4rem 0.25rem 0.75rem',
-              borderBottom: '1px solid #f1f5f9',
-            }}
-          >
-            <span>{masterStartIdx} - {masterEndIdx} of {masterTotal.toLocaleString()}</span>
-            <div style={{ display: 'flex', gap: '2px' }}>
-              <button
-                type="button"
-                disabled={masterPage <= 1}
-                onClick={() => setMasterPage((p) => Math.max(1, p - 1))}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: masterPage <= 1 ? 'not-allowed' : 'pointer',
-                  color: masterPage <= 1 ? '#cbd5e1' : '#475569',
-                  padding: '2px 4px',
-                }}
-              >
-                <IconChevronLeft size={16} />
-              </button>
-              <button
-                type="button"
-                disabled={masterEndIdx >= masterTotal}
-                onClick={() => setMasterPage((p) => p + 1)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: masterEndIdx >= masterTotal ? 'not-allowed' : 'pointer',
-                  color: masterEndIdx >= masterTotal ? '#cbd5e1' : '#475569',
-                  padding: '2px 4px',
-                }}
-              >
-                <IconChevronRight size={16} />
-              </button>
-            </div>
-          </div>
+            {/* Active APEX Filter Banner */}
+            <ApexActiveFilterBanner headerFilter={headerFilter} onClear={handleClearHeaderFilter} />
 
-          {/* Active APEX Filter Banner */}
-          <ApexActiveFilterBanner headerFilter={headerFilter} onClear={handleClearHeaderFilter} />
+            {/* Active Aggregations */}
+            <ActiveAggregationsBar
+              aggregations={aggregations}
+              data={processedMasterList}
+              onEditAggregation={() => setShowAggregateModal(true)}
+              onRemoveAggregation={(id) => setAggregations((prev) => prev.filter((a) => a.id !== id))}
+              onClearAll={() => setAggregations([])}
+            />
 
-          {/* Active Aggregations */}
-          <ActiveAggregationsBar
-            aggregations={aggregations}
-            data={processedMasterList}
-            onEditAggregation={() => setShowAggregateModal(true)}
-            onRemoveAggregation={(id) => setAggregations((prev) => prev.filter((a) => a.id !== id))}
-            onClearAll={() => setAggregations([])}
-          />
-
-          {/* Master Table matching Screenshot 3 */}
-          <div style={{ overflowX: 'auto' }}>
-            {loadingMaster ? (
-              <div style={{ padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>Loading technology report...</div>
-            ) : processedMasterList.length === 0 ? (
-              <div style={{ padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>No technology records found.</div>
-            ) : (
-              <table className="dense-table">
-                <thead>
-                  <tr>
-                    {/* Column 1: Edit/Select Columns Icon header (matching standard report) */}
-                    <th style={{ width: '40px', textAlign: 'center' }}>
-                      <span
-                        style={{ cursor: 'pointer', fontSize: '1rem', color: '#1e293b' }}
-                        title="Select Columns"
-                        onClick={() => setShowMasterColumnsModal(true)}
-                      >
-                        ✎
-                      </span>
-                    </th>
-                    {/* Column 2: Selected Checkbox Column with Select-All */}
-                    <th style={{ width: '80px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <input
+            {/* Master Table matching Screenshot 3 */}
+            <div style={{ overflowX: 'auto' }}>
+              {loadingMaster ? (
+                <div style={{ padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>Loading technology report...</div>
+              ) : processedMasterList.length === 0 ? (
+                <div style={{ padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>No technology records found.</div>
+              ) : (
+                <table className="dense-table">
+                  <thead>
+                    <tr>
+                      {/* Column 1: Edit/Select Columns Icon header (matching standard report) */}
+                      <th style={{ width: '40px', textAlign: 'center' }}>
+                        <span
+                          style={{ cursor: 'pointer', fontSize: '1rem', color: '#1e293b' }}
+                          title="Select Columns"
+                          onClick={() => setShowMasterColumnsModal(true)}
+                        >
+                          ✎
+                        </span>
+                      </th>
+                      {/* Column 2: Selected Checkbox Column with Select-All */}
+                      <th style={{ width: '80px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <input
                           type="checkbox"
-                          checked={processedMasterList.length > 0 && selectedIds.size === processedMasterList.length}
+                          checked={processedMasterList.length > 0 && selectedIds.size >= processedMasterList.length}
+                          ref={(el) => {
+                            if (el) {
+                              el.indeterminate = selectedIds.size > 0 && selectedIds.size < processedMasterList.length;
+                            }
+                          }}
                           onChange={handleSelectAll}
                           style={{ cursor: 'pointer' }}
+                          title={
+                            selectedIds.size >= processedMasterList.length && processedMasterList.length > 0
+                              ? `All ${processedMasterList.length} records selected`
+                              : `Select all ${processedMasterList.length} records throughout report`
+                          }
                         />
-                      </div>
-                    </th>
-                    {/* Dynamic Data Columns with interactive APEX header actions */}
-                    {TECHNOLOGY_MASTER_COLUMNS.filter((c) => masterVisibleKeys.includes(c.key)).map((col) => {
-                      const isNumber = col.key.includes('count');
-                      const isCenter = col.key === 'validation_status' || col.key.includes('date');
-                      return (
-                        <th
-                          key={col.key}
-                          className={isNumber ? 'col-number' : isCenter ? 'col-center' : ''}
-                          onClick={(e) => handleHeaderClick(e, col)}
-                          style={{
-                            cursor: 'pointer',
-                            userSelect: 'none',
-                            whiteSpace: 'nowrap',
-                            transition: 'background-color 0.15s ease',
-                          }}
-                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
-                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                          title={`Click to sort, filter, or configure ${col.label}`}
-                        >
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            <span>{col.label}</span>
-                            {sortKey === col.key && (
-                              <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>
-                                {sortDir === 'asc' ? '↑' : '↓'}
-                              </span>
-                            )}
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {processedMasterList.map((row) => (
-                    <tr key={row.id}>
-                      <td style={{ textAlign: 'center' }}>
-                        <button
-                          type="button"
-                          className="table-action-icon-btn apex-edit-icon-btn"
-                          title="Edit Technology Record"
-                          onClick={() => handleOpenEdit(row)}
-                        >
-                          <IconFilePenLine size={15} color="#2563eb" />
-                        </button>
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(row.id)}
-                          onChange={() => handleToggleRow(row.id)}
-                          style={{ cursor: 'pointer' }}
-                        />
-                      </td>
-                      {masterVisibleKeys.includes('master_technology') && (
-                        <td style={{ fontWeight: 600 }}>{row.master_technology || '—'}</td>
-                      )}
-                      {masterVisibleKeys.includes('master_technology_category') && (
-                        <td>{row.master_technology_category || '—'}</td>
-                      )}
-                      {masterVisibleKeys.includes('master_technology_count') && (
-                        <td style={{ textAlign: 'center', fontWeight: 600 }}>{Number(row.master_technology_count || 0).toLocaleString()}</td>
-                      )}
-                      {masterVisibleKeys.includes('company_technology') && (
-                        <td>{row.company_technology || '—'}</td>
-                      )}
-                      {masterVisibleKeys.includes('company_technology_count') && (
-                        <td style={{ textAlign: 'center' }}>{Number(row.company_technology_count || 0).toLocaleString()}</td>
-                      )}
-                      {masterVisibleKeys.includes('validation_status') && (
-                        <td>
-                          <span className={`badge ${row.validation_status === 'DATA IN BOTH' ? 'badge-primary' : 'badge-secondary'}`}>
-                            {row.validation_status || 'DATA IN BOTH'}
-                          </span>
-                        </td>
-                      )}
-                      {masterVisibleKeys.includes('created_date') && (
-                        <td>{formatAppDate(row.created_date)}</td>
-                      )}
-                      {masterVisibleKeys.includes('modified_date') && (
-                        <td>{formatAppDate(row.modified_date)}</td>
-                      )}
+                        </div>
+                      </th>
+                      {/* Dynamic Data Columns with interactive APEX header actions */}
+                      {TECHNOLOGY_MASTER_COLUMNS.filter((c) => masterVisibleKeys.includes(c.key)).map((col) => {
+                        const isNumber = col.key.includes('count');
+                        const isCenter = col.key === 'validation_status' || col.key.includes('date');
+                        return (
+                          <th
+                            key={col.key}
+                            className={isNumber ? 'col-number' : isCenter ? 'col-center' : ''}
+                            onClick={(e) => handleHeaderClick(e, col)}
+                            style={{
+                              cursor: 'pointer',
+                              userSelect: 'none',
+                              whiteSpace: 'nowrap',
+                              transition: 'background-color 0.15s ease',
+                            }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                            title={`Click to sort, filter, or configure ${col.label}`}
+                          >
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <span>{col.label}</span>
+                              {sortKey === col.key && (
+                                <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>
+                                  {sortDir === 'asc' ? '↑' : '↓'}
+                                </span>
+                              )}
+                            </div>
+                          </th>
+                        );
+                      })}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {processedMasterList.map((row) => (
+                      <tr key={row.id}>
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            className="table-action-icon-btn apex-edit-icon-btn"
+                            title="Edit Technology Record"
+                            onClick={() => handleOpenEdit(row)}
+                          >
+                            <IconFilePenLine size={15} color="#2563eb" />
+                          </button>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(row.id)}
+                            onChange={() => handleToggleRow(row.id)}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        </td>
+                        {masterVisibleKeys.includes('master_technology') && (
+                          <td style={{ fontWeight: 600 }}>{row.master_technology || '—'}</td>
+                        )}
+                        {masterVisibleKeys.includes('master_technology_category') && (
+                          <td>{row.master_technology_category || '—'}</td>
+                        )}
+                        {masterVisibleKeys.includes('master_technology_count') && (
+                          <td style={{ textAlign: 'center', fontWeight: 600 }}>{Number(row.master_technology_count || 0).toLocaleString()}</td>
+                        )}
+                        {masterVisibleKeys.includes('company_technology') && (
+                          <td>{row.company_technology || '—'}</td>
+                        )}
+                        {masterVisibleKeys.includes('company_technology_count') && (
+                          <td style={{ textAlign: 'center' }}>{Number(row.company_technology_count || 0).toLocaleString()}</td>
+                        )}
+                        {masterVisibleKeys.includes('validation_status') && (
+                          <td>
+                            <span className={`badge ${row.validation_status === 'DATA IN BOTH' ? 'badge-primary' : 'badge-secondary'}`}>
+                              {row.validation_status || 'DATA IN BOTH'}
+                            </span>
+                          </td>
+                        )}
+                        {masterVisibleKeys.includes('created_date') && (
+                          <td>{formatAppDate(row.created_date)}</td>
+                        )}
+                        {masterVisibleKeys.includes('modified_date') && (
+                          <td>{formatAppDate(row.modified_date)}</td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>

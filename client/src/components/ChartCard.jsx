@@ -15,6 +15,7 @@ export default function ChartCard({
 
   return (
     <div
+      className="apex-chart-card"
       style={{
         background: '#ffffff',
         borderRadius: '10px',

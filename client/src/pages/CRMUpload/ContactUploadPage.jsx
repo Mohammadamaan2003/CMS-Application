@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '../../api/client';
 import ValidationRulesModal from '../../components/ValidationRulesModal';
+import ApexActionsMenu from '../../components/ApexActionsMenu';
+import ApexHelpModal from '../../components/ApexHelpModal';
 import {
   IconUploadCloud,
   IconDownload,
   IconChevronRight,
   IconChevronLeft,
+  IconChevronDown,
   IconCheckCircle,
   IconAlertTriangle,
   IconRefresh,
@@ -261,6 +264,9 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
     }
   };
 
+  // Re-check alias for ApexActionsMenu and revert handlers
+  const handleRecheckValidation = handleRecheck;
+
   // STEP 2: Inline Cell Edit
   const handleCellChange = (index, field, value) => {
     setEditableRows((prev) => {
@@ -336,6 +342,71 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
         );
       }
     });
+  };
+
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  const handleSelectAll = () => {
+    setSelectedRowIndices(new Set(editableRows.map((_, i) => i)));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedRowIndices(new Set());
+  };
+
+  const handleInvertSelection = () => {
+    const next = new Set();
+    editableRows.forEach((_, i) => {
+      if (!selectedRowIndices.has(i)) next.add(i);
+    });
+    setSelectedRowIndices(next);
+  };
+
+  const handleCopyToClipboard = () => {
+    const rowsToCopy = selectedRowIndices.size > 0
+      ? editableRows.filter((_, i) => selectedRowIndices.has(i))
+      : editableRows;
+    if (rowsToCopy.length === 0) return;
+    const headers = ['Contact Name', 'Company Name', 'Designation', 'Corporate Email', 'Phone', 'Country'];
+    const lines = [headers.join('\t')];
+    rowsToCopy.forEach((r) => {
+      lines.push([r.contact_name || '', r.comp_name || '', r.designation || '', r.corporate_email || '', r.phone || '', r.country || ''].join('\t'));
+    });
+    navigator.clipboard.writeText(lines.join('\n'));
+    if (onShowToast) onShowToast('success', `Copied ${rowsToCopy.length} rows to clipboard (TSV).`);
+  };
+
+  const handleRevertEdits = () => {
+    if (window.confirm('Revert all unsaved staging edits back to the initial validation results?')) {
+      handleRecheckValidation();
+      if (onShowToast) onShowToast('info', 'Reverted staging rows.');
+    }
+  };
+
+  const handleDownloadStagingCsv = () => {
+    if (editableRows.length === 0) return;
+    const headers = ['Contact Name', 'Company Name', 'Designation', 'Position Type', 'Corporate Email', 'Phone', 'Country', 'Status'];
+    const lines = [headers.join(',')];
+    editableRows.forEach((r) => {
+      lines.push([
+        `"${r.contact_name || ''}"`,
+        `"${r.comp_name || ''}"`,
+        `"${r.designation || ''}"`,
+        `"${r.position_type || ''}"`,
+        `"${r.corporate_email || ''}"`,
+        `"${r.phone || ''}"`,
+        `"${r.country || ''}"`,
+        `"${r.row_status || ''}"`
+      ].join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `contact_staging_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (onShowToast) onShowToast('success', `Exported ${editableRows.length} staging rows to CSV.`);
   };
 
   // STEP 2: Download Error Rows CSV
@@ -532,15 +603,13 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
             <button
               type="button"
               onClick={onNavigateToContacts}
+              className="btn-secondary btn-apex-cancel"
               style={{
                 height: '36px',
                 padding: '0 1.25rem',
-                backgroundColor: '#f1f5f9',
-                border: '1px solid #cbd5e1',
                 borderRadius: '4px',
                 fontSize: '0.825rem',
                 fontWeight: 600,
-                color: '#334155',
                 cursor: 'pointer',
               }}
             >
@@ -557,13 +626,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   width: '24px',
                   height: '24px',
                   borderRadius: '50%',
-                  backgroundColor: currentStep > 1 ? '#10b981' : '#071531',
+                  backgroundColor: currentStep > 1 ? '#10b981' : currentStep === 1 ? 'var(--primary-blue, #2563eb)' : 'var(--bg-muted, #15223c)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '0.75rem',
                   fontWeight: 700,
+                  boxShadow: currentStep === 1 ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
                 }}
               >
                 {currentStep > 1 ? '✓' : '1'}
@@ -572,14 +642,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 style={{
                   fontSize: '0.85rem',
                   fontWeight: currentStep === 1 ? 700 : 500,
-                  color: currentStep === 1 ? '#071531' : '#64748b',
+                  color: currentStep === 1 ? 'var(--text-main, #f8fafc)' : 'var(--text-muted, #94a3b8)',
                 }}
               >
                 Upload Contact
               </span>
             </div>
 
-            <div style={{ width: '40px', height: '1px', backgroundColor: '#cbd5e1' }} />
+            <div style={{ width: '40px', height: '1px', backgroundColor: 'var(--border, #334155)' }} />
 
             {/* Step 2 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -588,14 +658,15 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   width: '24px',
                   height: '24px',
                   borderRadius: '50%',
-                  backgroundColor: currentStep > 2 ? '#10b981' : currentStep === 2 ? '#071531' : '#f1f5f9',
-                  color: currentStep >= 2 ? '#ffffff' : '#94a3b8',
-                  border: currentStep < 2 ? '1px solid #cbd5e1' : 'none',
+                  backgroundColor: currentStep > 2 ? '#10b981' : currentStep === 2 ? 'var(--primary-blue, #2563eb)' : 'var(--bg-muted, #15223c)',
+                  color: currentStep >= 2 ? '#ffffff' : 'var(--text-muted, #94a3b8)',
+                  border: currentStep < 2 ? '1px solid var(--border, #334155)' : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '0.75rem',
                   fontWeight: 700,
+                  boxShadow: currentStep === 2 ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
                 }}
               >
                 {currentStep > 2 ? '✓' : '2'}
@@ -604,14 +675,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 style={{
                   fontSize: '0.85rem',
                   fontWeight: currentStep === 2 ? 700 : 500,
-                  color: currentStep === 2 ? '#071531' : '#64748b',
+                  color: currentStep === 2 ? 'var(--text-main, #f8fafc)' : 'var(--text-muted, #94a3b8)',
                 }}
               >
                 Validate & Preview
               </span>
             </div>
 
-            <div style={{ width: '40px', height: '1px', backgroundColor: '#cbd5e1' }} />
+            <div style={{ width: '40px', height: '1px', backgroundColor: 'var(--border, #334155)' }} />
 
             {/* Step 3 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -620,14 +691,15 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   width: '24px',
                   height: '24px',
                   borderRadius: '50%',
-                  backgroundColor: currentStep === 3 ? '#071531' : '#f1f5f9',
-                  color: currentStep === 3 ? '#ffffff' : '#94a3b8',
-                  border: currentStep < 3 ? '1px solid #cbd5e1' : 'none',
+                  backgroundColor: currentStep === 3 ? 'var(--primary-blue, #2563eb)' : 'var(--bg-muted, #15223c)',
+                  color: currentStep === 3 ? '#ffffff' : 'var(--text-muted, #94a3b8)',
+                  border: currentStep < 3 ? '1px solid var(--border, #334155)' : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '0.75rem',
                   fontWeight: 700,
+                  boxShadow: currentStep === 3 ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
                 }}
               >
                 3
@@ -636,7 +708,7 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 style={{
                   fontSize: '0.85rem',
                   fontWeight: currentStep === 3 ? 700 : 500,
-                  color: currentStep === 3 ? '#071531' : '#64748b',
+                  color: currentStep === 3 ? 'var(--text-main, #f8fafc)' : 'var(--text-muted, #94a3b8)',
                 }}
               >
                 Import
@@ -651,16 +723,13 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 type="button"
                 disabled={!selectedFile || validating}
                 onClick={handleProceedToValidate}
+                className="btn-primary"
                 style={{
                   height: '36px',
                   padding: '0 1.25rem',
-                  backgroundColor: !selectedFile || validating ? '#94a3b8' : '#071531',
-                  color: '#ffffff',
-                  border: 'none',
                   borderRadius: '4px',
                   fontSize: '0.825rem',
                   fontWeight: 600,
-                  cursor: !selectedFile || validating ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -675,18 +744,13 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 type="button"
                 onClick={handleProceedToImport}
                 disabled={validationSummary.new + validationSummary.update === 0}
+                className="btn-primary"
                 style={{
                   height: '36px',
                   padding: '0 1.25rem',
-                  backgroundColor:
-                    validationSummary.new + validationSummary.update === 0 ? '#94a3b8' : '#071531',
-                  color: '#ffffff',
-                  border: 'none',
                   borderRadius: '4px',
                   fontSize: '0.825rem',
                   fontWeight: 600,
-                  cursor:
-                    validationSummary.new + validationSummary.update === 0 ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -709,7 +773,7 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 style={{
                   fontSize: '0.9rem',
                   fontWeight: 600,
-                  color: '#1e293b',
+                  color: 'var(--text-main, #f8fafc)',
                   minWidth: '120px',
                 }}
               >
@@ -723,11 +787,12 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   height: '38px',
                   minWidth: '240px',
                   padding: '0 12px',
-                  border: '2px solid #3b82f6',
+                  border: '1px solid var(--border, #38bdf8)',
                   borderRadius: '6px',
                   fontSize: '0.875rem',
                   outline: 'none',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: 'var(--bg-input, #0b1325)',
+                  color: 'var(--text-main, #f8fafc)',
                   cursor: 'pointer',
                 }}
               >
@@ -738,22 +803,20 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
               <button
                 type="button"
                 onClick={() => setShowValidationRules(true)}
+                className="btn-outline"
                 style={{
                   height: '38px',
                   padding: '0 12px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
                   borderRadius: '6px',
                   fontSize: '0.8rem',
-                  fontWeight: 500,
-                  color: '#475569',
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
                 }}
               >
-                <span>ⓘ</span> Validation Rules
+                <span style={{ color: '#38bdf8' }}>ⓘ</span> Validation Rules
               </button>
             </div>
 
@@ -764,7 +827,7 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   display: 'block',
                   fontSize: '0.8rem',
                   fontWeight: 600,
-                  color: '#475569',
+                  color: 'var(--text-main, #f8fafc)',
                   marginBottom: '0.5rem',
                 }}
               >
@@ -777,13 +840,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current && fileInputRef.current.click()}
                 style={{
-                  border: `2px dashed ${isDragging ? '#2563eb' : '#cbd5e1'}`,
+                  border: `2px dashed ${isDragging ? '#38bdf8' : 'var(--border, #334155)'}`,
                   borderRadius: '6px',
                   padding: '2.5rem 1.5rem',
                   textAlign: 'center',
-                  backgroundColor: isDragging ? '#eff6ff' : '#f8fafc',
+                  backgroundColor: isDragging ? 'var(--primary-light, rgba(56, 189, 248, 0.12))' : 'var(--bg-surface, #101a2f)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 }}
               >
                 <input
@@ -798,13 +862,13 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   style={{ display: 'none' }}
                 />
 
-                <IconUploadCloud size={36} style={{ color: '#64748b', marginBottom: '0.75rem' }} />
+                <IconUploadCloud size={36} style={{ color: 'var(--accent-blue, #38bdf8)', marginBottom: '0.75rem' }} />
 
-                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b', marginBottom: '0.25rem' }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main, #f8fafc)', marginBottom: '0.35rem' }}>
                   {selectedFile ? selectedFile.name : 'Choose File or drag and drop here'}
                 </div>
 
-                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)' }}>
                   Supported formats: .CSV, .XLSX, .XLS &bull; Maximum file size: 10 MB
                 </div>
               </div>
@@ -814,10 +878,10 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   style={{
                     marginTop: '0.75rem',
                     padding: '8px 12px',
-                    backgroundColor: '#fee2e2',
-                    border: '1px solid #fca5a5',
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid #ef4444',
                     borderRadius: '4px',
-                    color: '#991b1b',
+                    color: '#fca5a5',
                     fontSize: '0.8rem',
                   }}
                 >
@@ -834,9 +898,9 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 style={{
                   height: '38px',
                   padding: '0 16px',
-                  backgroundColor: '#071531',
-                  color: '#ffffff',
-                  border: 'none',
+                  backgroundColor: 'var(--bg-muted, #15223c)',
+                  color: 'var(--text-main, #f8fafc)',
+                  border: '1px solid var(--border, rgba(56, 189, 248, 0.4))',
                   borderRadius: '4px',
                   fontSize: '0.825rem',
                   fontWeight: 600,
@@ -844,9 +908,11 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                <IconDownload size={15} /> Download Template
+                <IconDownload size={15} style={{ color: '#38bdf8' }} /> Download Template
               </button>
             </div>
           </div>
@@ -859,16 +925,19 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
           <div>
             {/* Card 1: Summary Bar & Mini Table */}
             <div
+              className="upload-summary-card apex-card"
               style={{
+                backgroundColor: 'var(--bg-surface, #ffffff)',
                 borderRadius: '6px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border, #e2e8f0)',
                 marginBottom: '1.5rem',
                 overflow: 'hidden',
               }}
             >
               <div
+                className="upload-card-header"
                 style={{
-                  backgroundColor: '#071531',
+                  backgroundColor: 'var(--bg-card-header, #071531)',
                   color: '#ffffff',
                   padding: '0.75rem 1rem',
                   fontSize: '0.95rem',
@@ -878,11 +947,11 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 Summary
               </div>
 
-              <div style={{ padding: '1rem', backgroundColor: '#ffffff' }}>
-                <div style={{ maxWidth: '420px', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.8rem' }}>
+              <div className="upload-summary-content" style={{ padding: '1rem', backgroundColor: 'var(--bg-surface, #ffffff)' }}>
+                <div className="upload-summary-box" style={{ maxWidth: '420px', border: '1px solid var(--border, #e2e8f0)', borderRadius: '4px' }}>
+                  <table className="upload-summary-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.8rem' }}>
                     <thead>
-                      <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
+                      <tr style={{ backgroundColor: 'var(--bg-table-header, #f8fafc)', borderBottom: '1px solid var(--border, #e2e8f0)', color: 'var(--text-muted, #475569)' }}>
                         <th style={{ padding: '8px' }}>Total ↑</th>
                         <th style={{ padding: '8px' }}>New</th>
                         <th style={{ padding: '8px' }}>Update</th>
@@ -890,15 +959,15 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td style={{ padding: '10px', fontWeight: 600 }}>{validationSummary.total}</td>
-                        <td style={{ padding: '10px', color: '#2563eb', fontWeight: 600 }}>{validationSummary.new}</td>
-                        <td style={{ padding: '10px', color: '#7c3aed', fontWeight: 600 }}>{validationSummary.update}</td>
-                        <td style={{ padding: '10px', color: '#dc2626', fontWeight: 600 }}>{validationSummary.errors}</td>
+                      <tr style={{ backgroundColor: 'var(--bg-surface, #ffffff)' }}>
+                        <td className="summary-val-total" style={{ padding: '10px', fontWeight: 600, color: 'var(--text-main, #0f172a)' }}>{validationSummary.total}</td>
+                        <td className="summary-val-new" style={{ padding: '10px', color: 'var(--success, #2563eb)', fontWeight: 600 }}>{validationSummary.new}</td>
+                        <td className="summary-val-update" style={{ padding: '10px', color: 'var(--primary, #7c3aed)', fontWeight: 600 }}>{validationSummary.update}</td>
+                        <td className="summary-val-errors" style={{ padding: '10px', color: 'var(--danger, #dc2626)', fontWeight: 600 }}>{validationSummary.errors}</td>
                       </tr>
                     </tbody>
                   </table>
-                  <div style={{ padding: '6px 12px', borderTop: '1px solid #f1f5f9', fontSize: '0.75rem', color: '#64748b', textAlign: 'right' }}>
+                  <div className="upload-summary-pagination" style={{ padding: '6px 12px', borderTop: '1px solid var(--border, #f1f5f9)', fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', textAlign: 'right', backgroundColor: 'var(--bg-surface, #ffffff)' }}>
                     1 - 1
                   </div>
                 </div>
@@ -907,16 +976,19 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
 
             {/* Card 2: Preview - fix any red rows, then Import Source */}
             <div
+              className="upload-preview-card apex-card"
               style={{
                 borderRadius: '6px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border, #e2e8f0)',
+                backgroundColor: 'var(--bg-surface, #ffffff)',
                 overflow: 'hidden',
               }}
             >
               {/* Card Header with Re-Check button */}
               <div
+                className="upload-card-header"
                 style={{
-                  backgroundColor: '#071531',
+                  backgroundColor: 'var(--bg-card-header, #071531)',
                   color: '#ffffff',
                   padding: '0.75rem 1rem',
                   display: 'flex',
@@ -932,10 +1004,11 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   type="button"
                   onClick={handleRecheck}
                   disabled={rechecking}
+                  className="btn-toolbar-recheck"
                   style={{
-                    backgroundColor: '#ffffff',
-                    color: '#071531',
-                    border: 'none',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255, 255, 255, 0.4)',
                     borderRadius: '4px',
                     padding: '6px 14px',
                     fontSize: '0.8rem',
@@ -946,16 +1019,17 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                     gap: '6px',
                   }}
                 >
-                  <IconRefresh size={14} /> {rechecking ? 'Re-Checking...' : 'Re-Check'}
+                  <IconRefresh size={14} className={rechecking ? 'spin' : ''} /> {rechecking ? 'Re-Checking...' : 'Re-Check'}
                 </button>
               </div>
 
               {/* Interactive Toolbar */}
               <div
+                className="upload-preview-toolbar"
                 style={{
                   padding: '0.75rem 1rem',
-                  backgroundColor: '#ffffff',
-                  borderBottom: '1px solid #f1f5f9',
+                  backgroundColor: 'var(--bg-muted, #f8fafc)',
+                  borderBottom: '1px solid var(--border, #e2e8f0)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -966,7 +1040,7 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 {/* Search */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <span style={{ position: 'absolute', left: '10px', color: '#94a3b8' }}>
+                    <span style={{ position: 'absolute', left: '10px', color: 'var(--text-muted, #94a3b8)' }}>
                       <IconSearch size={14} />
                     </span>
                     <input
@@ -974,15 +1048,18 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
                       placeholder="Search: All Text Columns"
+                      className="upload-search-input"
                       style={{
                         height: '32px',
                         width: '220px',
                         paddingLeft: '30px',
                         paddingRight: '8px',
                         fontSize: '0.8rem',
-                        border: '1px solid #cbd5e1',
+                        border: '1px solid var(--border, #cbd5e1)',
                         borderRadius: '4px',
                         outline: 'none',
+                        backgroundColor: 'var(--bg-input, #ffffff)',
+                        color: 'var(--text-main, #0f172a)',
                       }}
                     />
                   </div>
@@ -992,14 +1069,16 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                       setPage(1);
                       setSearchQuery(searchInput);
                     }}
+                    className="btn-toolbar-action"
                     style={{
                       height: '32px',
                       padding: '0 10px',
-                      backgroundColor: '#f8fafc',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: 'var(--bg-surface, #ffffff)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
                       fontSize: '0.8rem',
                       fontWeight: 600,
+                      color: 'var(--text-main, #334155)',
                       cursor: 'pointer',
                     }}
                   >
@@ -1010,71 +1089,62 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                 {/* Toolbar Buttons: Actions, Edit, Save, Add Row, Reset */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {/* Actions Dropdown */}
-                  <div style={{ position: 'relative' }}>
+                  <div className="apex-actions-wrapper" style={{ position: 'relative' }}>
                     <button
                       type="button"
+                      className="btn-apex-actions btn-toolbar-action"
                       onClick={() => setShowActionsDropdown(!showActionsDropdown)}
                       style={{
                         height: '32px',
-                        padding: '0 10px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
+                        padding: '0 12px',
+                        backgroundColor: 'var(--bg-surface, #ffffff)',
+                        border: '1px solid var(--border, #cbd5e1)',
                         borderRadius: '4px',
                         fontSize: '0.8rem',
+                        fontWeight: 600,
+                        color: 'var(--text-main, #334155)',
                         cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
                       }}
                     >
-                      Actions ▾
+                      <span>Actions</span>
+                      <IconChevronDown size={13} />
                     </button>
-                    {showActionsDropdown && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '36px',
-                          right: 0,
-                          width: '180px',
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '4px',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                          zIndex: 50,
-                        }}
-                        onMouseLeave={() => setShowActionsDropdown(false)}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowActionsDropdown(false);
-                            handleDownloadErrorRows();
-                          }}
-                          style={{
-                            width: '100%',
-                            padding: '8px 12px',
-                            textAlign: 'left',
-                            fontSize: '0.8rem',
-                            border: 'none',
-                            backgroundColor: 'transparent',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                          }}
-                        >
-                          <IconDownload size={14} /> Download Errors
-                        </button>
-                      </div>
-                    )}
+
+                    <ApexActionsMenu
+                      isOpen={showActionsDropdown}
+                      onClose={() => setShowActionsDropdown(false)}
+                      isEditableGrid={true}
+                      hasSelection={selectedRowIndices.size > 0}
+                      onSelectAll={handleSelectAll}
+                      onDeselectAll={handleDeselectAll}
+                      onInvertSelection={handleInvertSelection}
+                      onCopyToClipboard={handleCopyToClipboard}
+                      onRevertEdits={handleRevertEdits}
+                      onDeleteSelected={handleDeleteSelected}
+                      onDownload={handleDownloadStagingCsv}
+                      onOpenHelp={() => setShowHelpModal(true)}
+                      onRefresh={handleRecheck}
+                      onChangeRows={(r) => {
+                        setRowsPerPage(r === 'all' ? editableRows.length : r);
+                        setPage(1);
+                      }}
+                      currentRows={rowsPerPage}
+                    />
                   </div>
 
                   <button
                     type="button"
                     onClick={() => setIsEditingGrid(!isEditingGrid)}
+                    className="btn-toolbar-action"
                     style={{
                       height: '32px',
                       padding: '0 12px',
-                      backgroundColor: isEditingGrid ? '#e0f2fe' : '#ffffff',
-                      color: isEditingGrid ? '#0284c7' : '#334155',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: isEditingGrid ? 'var(--primary, #2563eb)' : 'var(--bg-surface, #ffffff)',
+                      color: isEditingGrid ? '#ffffff' : 'var(--text-main, #334155)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
                       fontSize: '0.8rem',
                       fontWeight: 600,
@@ -1090,10 +1160,11 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   <button
                     type="button"
                     onClick={handleRecheck}
+                    className="btn-primary"
                     style={{
                       height: '32px',
                       padding: '0 14px',
-                      backgroundColor: '#071531',
+                      backgroundColor: 'var(--primary, #2563eb)',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '4px',
@@ -1108,14 +1179,16 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   <button
                     type="button"
                     onClick={handleAddRow}
+                    className="btn-toolbar-action"
                     style={{
                       height: '32px',
                       padding: '0 12px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: 'var(--bg-surface, #ffffff)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
                       fontSize: '0.8rem',
                       fontWeight: 600,
+                      color: 'var(--text-main, #334155)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -1128,14 +1201,15 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                   <button
                     type="button"
                     onClick={handleProceedToValidate}
+                    className="btn-toolbar-action"
                     style={{
                       height: '32px',
                       padding: '0 10px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: 'var(--bg-surface, #ffffff)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
                       fontSize: '0.8rem',
-                      color: '#64748b',
+                      color: 'var(--text-muted, #64748b)',
                       cursor: 'pointer',
                     }}
                   >
@@ -1145,10 +1219,10 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
               </div>
 
               {/* Table Grid */}
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
+              <div className="upload-preview-table-wrapper dense-table-wrapper" style={{ overflowX: 'auto', backgroundColor: 'var(--bg-surface, #ffffff)' }}>
+                <table className="upload-preview-table dense-table apex-report-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#475569' }}>
+                    <tr style={{ backgroundColor: 'var(--bg-table-header, #f8fafc)', borderBottom: '2px solid var(--border, #e2e8f0)', color: 'var(--text-muted, #475569)' }}>
                       <th style={{ padding: '8px 10px', width: '36px' }}>#</th>
                       <th style={{ padding: '8px 10px' }}>Row</th>
                       <th style={{ padding: '8px 10px' }}>Status</th>
@@ -1173,24 +1247,23 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                       return (
                         <tr
                           key={globalIdx}
+                          className={`upload-table-row ${hasErr ? 'error-row' : ''}`}
                           style={{
-                            borderBottom: '1px solid #f1f5f9',
-                            backgroundColor: hasErr ? '#fef2f2' : '#ffffff',
+                            borderBottom: '1px solid var(--border, #f1f5f9)',
+                            borderLeft: hasErr ? '3px solid var(--danger, #dc2626)' : '3px solid transparent',
                           }}
                         >
-                          <td style={{ padding: '8px 10px', color: '#64748b' }}>{globalIdx + 1}</td>
-                          <td style={{ padding: '8px 10px', fontWeight: 600 }}>{r.excel_row_no}</td>
+                          <td style={{ padding: '8px 10px', color: 'var(--text-muted, #64748b)' }}>{globalIdx + 1}</td>
+                          <td style={{ padding: '8px 10px', fontWeight: 600, color: 'var(--text-main, #334155)' }}>{r.excel_row_no}</td>
                           <td style={{ padding: '8px 10px' }}>
                             <span
+                              className={`status-badge ${hasErr ? 'error' : r.row_status === 'UPDATE' ? 'update' : 'new'}`}
                               style={{
                                 display: 'inline-block',
                                 padding: '2px 8px',
                                 borderRadius: '12px',
                                 fontSize: '0.725rem',
                                 fontWeight: 700,
-                                backgroundColor: hasErr ? '#fee2e2' : '#dcfce7',
-                                color: hasErr ? '#991b1b' : '#166534',
-                                border: `1px solid ${hasErr ? '#fca5a5' : '#86efac'}`,
                               }}
                             >
                               {hasErr ? 'ERROR' : r.row_status || 'VALID'}
@@ -1208,12 +1281,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                                   width: '100%',
                                   padding: '4px 6px',
                                   fontSize: '0.8rem',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #cbd5e1)',
                                   borderRadius: '3px',
+                                  backgroundColor: 'var(--bg-input, #ffffff)',
+                                  color: 'var(--text-main, #0f172a)',
                                 }}
                               />
                             ) : (
-                              <span style={{ fontWeight: 600, color: '#1e293b' }}>{r.contact_name || '—'}</span>
+                              <span style={{ fontWeight: 600, color: 'var(--text-main, #1e293b)' }}>{r.contact_name || '—'}</span>
                             )}
                           </td>
 
@@ -1227,12 +1302,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                                   width: '100%',
                                   padding: '4px 6px',
                                   fontSize: '0.8rem',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #cbd5e1)',
                                   borderRadius: '3px',
+                                  backgroundColor: 'var(--bg-input, #ffffff)',
+                                  color: 'var(--text-main, #0f172a)',
                                 }}
                               />
                             ) : (
-                              <span>{r.comp_name || '—'}</span>
+                              <span style={{ color: 'var(--text-main, #1e293b)' }}>{r.comp_name || '—'}</span>
                             )}
                           </td>
 
@@ -1246,12 +1323,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                                   width: '100%',
                                   padding: '4px 6px',
                                   fontSize: '0.8rem',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #cbd5e1)',
                                   borderRadius: '3px',
+                                  backgroundColor: 'var(--bg-input, #ffffff)',
+                                  color: 'var(--text-main, #0f172a)',
                                 }}
                               />
                             ) : (
-                              <span>{r.designation || '—'}</span>
+                              <span style={{ color: 'var(--text-main, #1e293b)' }}>{r.designation || '—'}</span>
                             )}
                           </td>
 
@@ -1265,12 +1344,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                                   width: '100%',
                                   padding: '4px 6px',
                                   fontSize: '0.8rem',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #cbd5e1)',
                                   borderRadius: '3px',
+                                  backgroundColor: 'var(--bg-input, #ffffff)',
+                                  color: 'var(--text-main, #0f172a)',
                                 }}
                               />
                             ) : (
-                              <span>{r.pos_type || '—'}</span>
+                              <span style={{ color: 'var(--text-main, #1e293b)' }}>{r.pos_type || '—'}</span>
                             )}
                           </td>
 
@@ -1284,12 +1365,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                                   width: '100%',
                                   padding: '4px 6px',
                                   fontSize: '0.8rem',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #cbd5e1)',
                                   borderRadius: '3px',
+                                  backgroundColor: 'var(--bg-input, #ffffff)',
+                                  color: 'var(--text-main, #0f172a)',
                                 }}
                               />
                             ) : (
-                              <span>{r.country || '—'}</span>
+                              <span style={{ color: 'var(--text-main, #1e293b)' }}>{r.country || '—'}</span>
                             )}
                           </td>
 
@@ -1303,12 +1386,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                                   width: '100%',
                                   padding: '4px 6px',
                                   fontSize: '0.8rem',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #cbd5e1)',
                                   borderRadius: '3px',
+                                  backgroundColor: 'var(--bg-input, #ffffff)',
+                                  color: 'var(--text-main, #0f172a)',
                                 }}
                               />
                             ) : (
-                              <span>{r.comp_email || '—'}</span>
+                              <span style={{ color: 'var(--text-main, #1e293b)' }}>{r.comp_email || '—'}</span>
                             )}
                           </td>
 
@@ -1322,12 +1407,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                                   width: '100%',
                                   padding: '4px 6px',
                                   fontSize: '0.8rem',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #cbd5e1)',
                                   borderRadius: '3px',
+                                  backgroundColor: 'var(--bg-input, #ffffff)',
+                                  color: 'var(--text-main, #0f172a)',
                                 }}
                               />
                             ) : (
-                              <span>{r.contact_phone || '—'}</span>
+                              <span style={{ color: 'var(--text-main, #1e293b)' }}>{r.contact_phone || '—'}</span>
                             )}
                           </td>
 
@@ -1341,12 +1428,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                                   width: '100%',
                                   padding: '4px 6px',
                                   fontSize: '0.8rem',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #cbd5e1)',
                                   borderRadius: '3px',
+                                  backgroundColor: 'var(--bg-input, #ffffff)',
+                                  color: 'var(--text-main, #0f172a)',
                                 }}
                               />
                             ) : (
-                              <span>{r.contact_mobile || '—'}</span>
+                              <span style={{ color: 'var(--text-main, #1e293b)' }}>{r.contact_mobile || '—'}</span>
                             )}
                           </td>
 
@@ -1360,12 +1449,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                                   width: '100%',
                                   padding: '4px 6px',
                                   fontSize: '0.8rem',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #cbd5e1)',
                                   borderRadius: '3px',
+                                  backgroundColor: 'var(--bg-input, #ffffff)',
+                                  color: 'var(--text-main, #0f172a)',
                                 }}
                               />
                             ) : (
-                              <span>{r.linkedin_url || '—'}</span>
+                              <span style={{ color: 'var(--text-main, #1e293b)' }}>{r.linkedin_url || '—'}</span>
                             )}
                           </td>
 
@@ -1379,12 +1470,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                                   width: '100%',
                                   padding: '4px 6px',
                                   fontSize: '0.8rem',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #cbd5e1)',
                                   borderRadius: '3px',
+                                  backgroundColor: 'var(--bg-input, #ffffff)',
+                                  color: 'var(--text-main, #0f172a)',
                                 }}
                               />
                             ) : (
-                              <span>{r.salesperson || '—'}</span>
+                              <span style={{ color: 'var(--text-main, #1e293b)' }}>{r.salesperson || '—'}</span>
                             )}
                           </td>
 
@@ -1392,21 +1485,18 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                           <td style={{ padding: '6px 8px', minWidth: '180px' }}>
                             {hasErr ? (
                               <span
+                                className="report-error-cell-text"
                                 style={{
-                                  display: 'inline-block',
-                                  backgroundColor: '#fee2e2',
-                                  color: '#991b1b',
-                                  border: '1px solid #fca5a5',
-                                  borderRadius: '4px',
-                                  padding: '2px 6px',
-                                  fontSize: '0.75rem',
-                                  lineHeight: 1.25,
+                                  color: 'var(--danger, #f87171)',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 500,
+                                  lineHeight: 1.35,
                                 }}
                               >
                                 {r.error_msg}
                               </span>
                             ) : (
-                              <span style={{ color: '#10b981', fontSize: '0.75rem' }}>✓ OK</span>
+                              <span style={{ color: 'var(--success, #34d399)', fontSize: '0.8rem', fontWeight: 500 }}>✓ OK</span>
                             )}
                           </td>
                         </tr>
@@ -1418,15 +1508,16 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
 
               {/* Pagination Bar */}
               <div
+                className="upload-preview-footer"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.75rem 1rem',
-                  backgroundColor: '#ffffff',
-                  borderTop: '1px solid #f1f5f9',
+                  backgroundColor: 'var(--bg-surface, #ffffff)',
+                  borderTop: '1px solid var(--border, #f1f5f9)',
                   fontSize: '0.8rem',
-                  color: '#64748b',
+                  color: 'var(--text-muted, #64748b)',
                 }}
               >
                 <span>
@@ -1438,13 +1529,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                     type="button"
                     disabled={page <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="btn-toolbar-action"
                     style={{
                       height: '28px',
                       width: '28px',
-                      backgroundColor: page <= 1 ? '#f8fafc' : '#ffffff',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: page <= 1 ? 'var(--bg-muted, #f8fafc)' : 'var(--bg-surface, #ffffff)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
-                      color: page <= 1 ? '#cbd5e1' : '#334155',
+                      color: page <= 1 ? 'var(--text-disabled, #cbd5e1)' : 'var(--text-main, #334155)',
                       cursor: page <= 1 ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -1457,13 +1549,14 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
                     type="button"
                     disabled={page >= totalPages}
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="btn-toolbar-action"
                     style={{
                       height: '28px',
                       width: '28px',
-                      backgroundColor: page >= totalPages ? '#f8fafc' : '#ffffff',
-                      border: '1px solid #cbd5e1',
+                      backgroundColor: page >= totalPages ? 'var(--bg-muted, #f8fafc)' : 'var(--bg-surface, #ffffff)',
+                      border: '1px solid var(--border, #cbd5e1)',
                       borderRadius: '4px',
-                      color: page >= totalPages ? '#cbd5e1' : '#334155',
+                      color: page >= totalPages ? 'var(--text-disabled, #cbd5e1)' : 'var(--text-main, #334155)',
                       cursor: page >= totalPages ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -1697,6 +1790,13 @@ export default function ContactUploadPage({ onShowToast, onNavigateToContacts, o
         isOpen={showValidationRules}
         onClose={() => setShowValidationRules(false)}
         type="contact"
+      />
+
+      {/* Standard Actions Help Modal */}
+      <ApexHelpModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        isEditableGrid={true}
       />
     </div>
   );
