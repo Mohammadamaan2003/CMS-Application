@@ -8623,3 +8623,233 @@ tfoot td {
 [data-theme="dark"] [style*="border-right: 1px solid rgb(241, 245, 249)"] {
   border-right-color: #334155 !important;
 }
+
+
+/* =======================================================================
+   BLUE THEME NUCLEAR INLINE-STYLE OVERRIDE
+   -----------------------------------------------------------------------
+   Mirrors the dark-mode nuclear block above, scoped to .apex-theme-blue
+   and [data-theme="blue"]. Uses rgb() values because React normalises
+   hex colours to rgb() when writing to the DOM style attribute.
+   ======================================================================= */
+
+/* ── 1. White backgrounds  #ffffff = rgb(255,255,255) ── */
+.apex-theme-blue [style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-blue [style*="background: rgb(255, 255, 255)"],
+[data-theme="blue"] [style*="background-color: rgb(255, 255, 255)"],
+[data-theme="blue"] [style*="background: rgb(255, 255, 255)"] {
+  background-color: #111C2E !important;
+  background:       #111C2E !important;
+  color: #F1F5F9 !important;
+  border-color: #26364F !important;
+}
+
+/* ── 2. Very light gray  #f8fafc = rgb(248,250,252) ── */
+.apex-theme-blue [style*="background-color: rgb(248, 250, 252)"],
+.apex-theme-blue [style*="background: rgb(248, 250, 252)"],
+[data-theme="blue"] [style*="background-color: rgb(248, 250, 252)"],
+[data-theme="blue"] [style*="background: rgb(248, 250, 252)"] {
+  background-color: #0F1B2D !important;
+  background:       #0F1B2D !important;
+  color: #E2E8F0 !important;
+}
+
+/* ── 3. Light gray  #f1f5f9 = rgb(241,245,249) ── (prob-badge, subtotal rows) */
+.apex-theme-blue [style*="background-color: rgb(241, 245, 249)"],
+.apex-theme-blue [style*="background: rgb(241, 245, 249)"],
+[data-theme="blue"] [style*="background-color: rgb(241, 245, 249)"],
+[data-theme="blue"] [style*="background: rgb(241, 245, 249)"] {
+  background-color: #15223d !important;
+  background:       #15223d !important;
+  color: #E2E8F0 !important;
+}
+
+/* ── 4. Near-white  #fafafa = rgb(250,250,250) ── */
+.apex-theme-blue [style*="background-color: rgb(250, 250, 250)"],
+[data-theme="blue"] [style*="background-color: rgb(250, 250, 250)"] {
+  background-color: #111C2E !important;
+  color: #E2E8F0 !important;
+}
+
+/* ── 5. Light gray #f5f5f5 = rgb(245,245,245) ── */
+.apex-theme-blue [style*="background-color: rgb(245, 245, 245)"],
+[data-theme="blue"] [style*="background-color: rgb(245, 245, 245)"] {
+  background-color: #111C2E !important;
+  color: #E2E8F0 !important;
+}
+
+/* ── 6. Blue tint active-filter chips  #eff6ff = rgb(239,246,255) ── */
+.apex-theme-blue [style*="background-color: rgb(239, 246, 255)"],
+[data-theme="blue"] [style*="background-color: rgb(239, 246, 255)"] {
+  background-color: #1a2c4a !important;
+  color: #93c5fd !important;
+  border-color: #1e40af !important;
+}
+
+/* ── 7. Blue tint selected rows  #f0f9ff = rgb(240,249,255) ── */
+.apex-theme-blue [style*="background-color: rgb(240, 249, 255)"],
+[data-theme="blue"] [style*="background-color: rgb(240, 249, 255)"] {
+  background-color: #1a2c4a !important;
+  color: #bfdbfe !important;
+}
+
+/* ── 8. Dark text colours → light in blue mode ── */
+.apex-theme-blue [style*="color: rgb(15, 23, 42)"],
+[data-theme="blue"] [style*="color: rgb(15, 23, 42)"] {
+  color: #F1F5F9 !important;
+}
+.apex-theme-blue [style*="color: rgb(30, 41, 59)"],
+[data-theme="blue"] [style*="color: rgb(30, 41, 59)"] {
+  color: #F1F5F9 !important;
+}
+.apex-theme-blue [style*="color: rgb(51, 65, 85)"],
+[data-theme="blue"] [style*="color: rgb(51, 65, 85)"] {
+  color: #CBD5E1 !important;
+}
+.apex-theme-blue [style*="color: rgb(71, 85, 105)"],
+[data-theme="blue"] [style*="color: rgb(71, 85, 105)"] {
+  color: #94A3B8 !important;
+}
+.apex-theme-blue [style*="color: rgb(100, 116, 139)"],
+[data-theme="blue"] [style*="color: rgb(100, 116, 139)"] {
+  color: #94A3B8 !important;
+}
+.apex-theme-blue [style*="color: rgb(55, 65, 81)"],
+[data-theme="blue"] [style*="color: rgb(55, 65, 81)"] {
+  color: #CBD5E1 !important;
+}
+
+/* ── 9. Light borders → blue-navy borders ── */
+.apex-theme-blue [style*="border-color: rgb(226, 232, 240)"],
+.apex-theme-blue [style*="border-color: rgb(203, 213, 225)"],
+[data-theme="blue"] [style*="border-color: rgb(226, 232, 240)"],
+[data-theme="blue"] [style*="border-color: rgb(203, 213, 225)"] {
+  border-color: #26364F !important;
+}
+
+/* ── 10. Prob-badge in blue mode ── */
+.apex-theme-blue .prob-badge,
+[data-theme="blue"] .prob-badge {
+  background-color: #1e3a5f !important;
+  color: #93c5fd !important;
+}
+
+/* ── 11. Table row hover via JS → navy hover in blue mode ── */
+.apex-theme-blue .apex-master-table tbody tr:hover,
+.apex-theme-blue table tbody tr:hover,
+[data-theme="blue"] .apex-master-table tbody tr:hover,
+[data-theme="blue"] table tbody tr:hover {
+  background-color: #15223d !important;
+  color: #F1F5F9 !important;
+}
+
+/* ── 12. Table subtotal / header rows with explicit light bg ── */
+.apex-theme-blue tr[style*="background-color: rgb(241, 245, 249)"],
+[data-theme="blue"] tr[style*="background-color: rgb(241, 245, 249)"] {
+  background-color: #15223d !important;
+  color: #E2E8F0 !important;
+  border-color: #26364F !important;
+}
+.apex-theme-blue tr[style*="background-color: rgb(248, 250, 252)"],
+[data-theme="blue"] tr[style*="background-color: rgb(248, 250, 252)"] {
+  background-color: #0F1B2D !important;
+  color: #E2E8F0 !important;
+  border-color: #26364F !important;
+}
+.apex-theme-blue tr[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="blue"] tr[style*="background-color: rgb(255, 255, 255)"] {
+  background-color: #111C2E !important;
+  color: #F1F5F9 !important;
+}
+
+/* ── 13. Span / badge with inline light bg (prob-badge fallback by rgb) ── */
+.apex-theme-blue span[style*="background-color: rgb(241, 245, 249)"],
+[data-theme="blue"] span[style*="background-color: rgb(241, 245, 249)"] {
+  background-color: #1e3a5f !important;
+  color: #93c5fd !important;
+}
+.apex-theme-blue span[style*="background-color: rgb(248, 250, 252)"],
+[data-theme="blue"] span[style*="background-color: rgb(248, 250, 252)"] {
+  background-color: #15223d !important;
+  color: #E2E8F0 !important;
+}
+.apex-theme-blue span[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="blue"] span[style*="background-color: rgb(255, 255, 255)"] {
+  background-color: #111C2E !important;
+  color: #F1F5F9 !important;
+}
+.apex-theme-blue span[style*="background: rgb(241, 245, 249)"],
+[data-theme="blue"] span[style*="background: rgb(241, 245, 249)"] {
+  background-color: #1e3a5f !important;
+  color: #93c5fd !important;
+}
+
+/* ── 14. All inputs/selects/textareas — broad nuclear fallback ── */
+.apex-theme-blue input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.apex-theme-blue select,
+.apex-theme-blue textarea,
+[data-theme="blue"] input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+[data-theme="blue"] select,
+[data-theme="blue"] textarea {
+  background-color: #0a1120 !important;
+  color: #F1F5F9 !important;
+  border-color: #243556 !important;
+}
+
+/* ── 15. Form containers with light bg ── */
+.apex-theme-blue form[style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-blue form[style*="background: rgb(255, 255, 255)"],
+[data-theme="blue"] form[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="blue"] form[style*="background: rgb(255, 255, 255)"] {
+  background-color: #111C2E !important;
+  background:       #111C2E !important;
+  border-color: #26364F !important;
+  color: #F1F5F9 !important;
+}
+.apex-theme-blue form[style*="background-color: rgb(248, 250, 252)"],
+.apex-theme-blue form[style*="background: rgb(248, 250, 252)"],
+[data-theme="blue"] form[style*="background-color: rgb(248, 250, 252)"],
+[data-theme="blue"] form[style*="background: rgb(248, 250, 252)"] {
+  background-color: #0F1B2D !important;
+  background:       #0F1B2D !important;
+  border-color: #26364F !important;
+}
+
+/* ── 16. th with light bg (pivot/breakdown table headers) ── */
+.apex-theme-blue th[style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-blue th[style*="background-color: rgb(248, 250, 252)"],
+.apex-theme-blue th[style*="background-color: rgb(241, 245, 249)"],
+[data-theme="blue"] th[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="blue"] th[style*="background-color: rgb(248, 250, 252)"],
+[data-theme="blue"] th[style*="background-color: rgb(241, 245, 249)"] {
+  background-color: #0F1B2D !important;
+  color: #E2E8F0 !important;
+  border-color: #26364F !important;
+}
+
+/* ── 17. td with explicit white/light bg (breakdown table data cells) ── */
+.apex-theme-blue td[style*="background-color: rgb(255, 255, 255)"],
+.apex-theme-blue td[style*="background-color: rgb(250, 250, 250)"],
+[data-theme="blue"] td[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="blue"] td[style*="background-color: rgb(250, 250, 250)"] {
+  background-color: #111C2E !important;
+  color: #F1F5F9 !important;
+}
+
+/* ── 18. Dense table wrapper with inline white bg ── */
+.apex-theme-blue .dense-table-wrapper[style*="background"],
+[data-theme="blue"] .dense-table-wrapper[style*="background"] {
+  background-color: #0d1a2f !important;
+  background:       #0d1a2f !important;
+  border-color: #26364F !important;
+}
+
+/* ── 19. Light border shorthand  #f1f5f9 as border-bottom/right ── */
+.apex-theme-blue [style*="border-bottom: 1px solid rgb(241, 245, 249)"],
+[data-theme="blue"] [style*="border-bottom: 1px solid rgb(241, 245, 249)"] {
+  border-bottom-color: #26364F !important;
+}
+.apex-theme-blue [style*="border-right: 1px solid rgb(241, 245, 249)"],
+[data-theme="blue"] [style*="border-right: 1px solid rgb(241, 245, 249)"] {
+  border-right-color: #26364F !important;
+}
